@@ -76,3 +76,10 @@ RadarSession.java e RadarGatt.java são implementação local de observações R
 com documentação normativa Android readRemoteRssi/onReadRemoteRssi; não copiam
 protocolo Huami ou dados pessoais. Sem GPS, posições inferidas ou modelo de
 distância. Testes de rádio são sintéticos no host até teste físico explícito.
+
+## Incremento 0.5
+
+RadarFeedback, RadarVisualModel, RadarPulseView e modo contínuo são código local
+sobre as mesmas APIs Android. Sem biblioteca nova, GPS ou modelo espacial.
+O usuário relatou que o snapshot0.4 abriu sem erro e bateria74% coincidiu com
+a tela; não houve captura/telemetria ou comparação individual dos demais campos.

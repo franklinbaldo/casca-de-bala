@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * All calls on one thread; clock is elapsedRealtime milliseconds, not wall time.
  */
 public final class RadarSession {
+    public enum Mode { MANUAL, CONTINUOUS }
     public enum Origin { SYNTHETIC, OUR_APP }
     public enum Stage { CONNECTING, READY, MEASURING, ENDED }
     public enum Reason { NONE, CONNECT_TIMEOUT, READ_TIMEOUT, DISCONNECTED, PERMISSION, BLUETOOTH_OFF, UNAVAILABLE, FAILED, CANCELLED, BACKGROUND, SESSION_LIMIT, POINT_LIMIT, CLOCK }
@@ -36,25 +37,29 @@ public final class RadarSession {
         }
     }
     public static final class Snapshot {
-        public final Stage stage;public final Reason reason;public final Origin origin;
+        public final Stage stage;public final Reason reason;public final Origin origin;public final Mode mode;
+        public final List<Sample> recentSamples;public final Sample latestSample;public final int completedCount;public final long observedAtMs;
         public final List<Point> points;public final int pendingSamples,attempts;public final long generation;
-        Snapshot(RadarSession m){stage=m.stage;reason=m.reason;origin=m.origin;generation=m.generation;points=Collections.unmodifiableList(new ArrayList<>(m.points));pendingSamples=m.samples.size();attempts=m.attempts;}
+        Snapshot(RadarSession m){mode=m.mode;recentSamples=Collections.unmodifiableList(new ArrayList<>(m.recent));latestSample=m.recent.peekLast();completedCount=m.nextPointId-1;observedAtMs=m.lastNow;stage=m.stage;reason=m.reason;origin=m.origin;generation=m.generation;points=Collections.unmodifiableList(new ArrayList<>(m.points));pendingSamples=m.samples.size();attempts=m.attempts;}
     }
     private static final AtomicLong GENERATIONS=new AtomicLong();
+    private final Mode mode;private final ArrayDeque<Sample> recent=new ArrayDeque<>();private int nextPointId=1;
     private final long generation=GENERATIONS.incrementAndGet();private final Transport transport;private final Observer observer;private final Origin origin;
     private final List<Point> points=new ArrayList<>();private final List<Sample> samples=new ArrayList<>();
     private Stage stage=Stage.CONNECTING;private Reason reason=Reason.NONE;private boolean started,pending;
     private long lastNow,sessionEnd,connectEnd,blockStart,blockEnd,requestedAt,requestEnd,nextAt;private int attempts,failures;
-    public RadarSession(Transport transport,Observer observer,Origin origin){this.transport=Objects.requireNonNull(transport);this.observer=Objects.requireNonNull(observer);this.origin=Objects.requireNonNull(origin);}
+    public RadarSession(Transport transport,Observer observer,Origin origin){this(transport,observer,origin,Mode.MANUAL);}
+    public RadarSession(Transport transport,Observer observer,Origin origin,Mode mode){this.mode=Objects.requireNonNull(mode);this.transport=Objects.requireNonNull(transport);this.observer=Objects.requireNonNull(observer);this.origin=Objects.requireNonNull(origin);}
     public long generation(){return generation;}
     public Snapshot snapshot(){return new Snapshot(this);}
-    public void start(long now){if(started)throw new IllegalStateException("one-shot");if(now<0||now>Long.MAX_VALUE-120000)throw new IllegalArgumentException("clock");started=true;lastNow=now;sessionEnd=now+120000;connectEnd=now+15000;publish();}
-    private boolean clock(long now){if(!started)throw new IllegalStateException("not started");if(stage==Stage.ENDED)return false;if(now<lastNow){stop(Reason.CLOCK,lastNow);return false;}lastNow=now;return true;}
+    public void start(long now){if(started)throw new IllegalStateException("one-shot");if(now<0||now>Long.MAX_VALUE-120000)throw new IllegalArgumentException("clock");started=true;lastNow=now;sessionEnd=mode==Mode.MANUAL?now+120000:Long.MAX_VALUE;connectEnd=now+15000;publish();}
+    private boolean clock(long now){if(!started)throw new IllegalStateException("not started");if(stage==Stage.ENDED)return false;if(now<lastNow||now>Long.MAX_VALUE-120000){stop(Reason.CLOCK,lastNow);return false;}lastNow=now;return true;}
     public void connected(long token,long now){if(token!=generation||stage!=Stage.CONNECTING||!clock(now))return;if(now>=connectEnd){stop(Reason.CONNECT_TIMEOUT,now);return;}stage=Stage.READY;publish();}
     public boolean measure(long now){
         if(!clock(now)||stage!=Stage.READY)return false;
         if(now>=sessionEnd){stop(Reason.SESSION_LIMIT,now);return false;}
-        if(points.size()>=8){stop(Reason.POINT_LIMIT,now);return false;}
+        if(mode==Mode.MANUAL&&points.size()>=8||nextPointId==Integer.MAX_VALUE){stop(Reason.POINT_LIMIT,now);return false;}
+        if(mode==Mode.CONTINUOUS&&now<nextAt)return false;
         samples.clear();attempts=failures=0;blockStart=now;blockEnd=Math.min(sessionEnd,now+10000);stage=Stage.MEASURING;issue(now);return true;
     }
     private void issue(long now){
@@ -68,18 +73,19 @@ public final class RadarSession {
         if(now>=requestEnd){stop(Reason.READ_TIMEOUT,now);return;}
         if(callbackAt<requestedAt||callbackAt>now)return;
         pending=false;
-        if(status==0&&rssi>=-127&&rssi<=126)samples.add(new Sample(requestedAt,callbackAt,now,rssi));else failures++;
+        if(status==0&&rssi>=-127&&rssi<=126){Sample sample=new Sample(requestedAt,callbackAt,now,rssi);samples.add(sample);recent.addLast(sample);if(recent.size()>12)recent.removeFirst();}else failures++;
         advance(now);
     }
-    private void advance(long now){if(attempts>=6){finishPoint(now,Reason.NONE);stage=Stage.READY;publish();}else{nextAt=now+1000;publish();}}
+    private void advance(long now){if(attempts>=6){finishPoint(now,Reason.NONE);stage=Stage.READY;nextAt=now+1000;publish();}else{nextAt=now+1000;publish();}}
     private void finishPoint(long now,Reason stopped){
         Point previous=null;for(int i=points.size()-1;i>=0;i--)if(points.get(i).median!=null){previous=points.get(i);break;}
-        points.add(new Point(points.size()+1,blockStart,now,samples,attempts,failures,stopped,previous));samples.clear();pending=false;
+        points.add(new Point(nextPointId++,blockStart,now,samples,attempts,failures,stopped,previous));if(mode==Mode.CONTINUOUS&&points.size()>8)points.remove(0);samples.clear();pending=false;
     }
     public void tick(long now){
         if(!clock(now))return;
         if(now>=sessionEnd){stop(Reason.SESSION_LIMIT,now);return;}
         if(stage==Stage.CONNECTING&&now>=connectEnd){stop(Reason.CONNECT_TIMEOUT,now);return;}
+        if(mode==Mode.CONTINUOUS&&stage==Stage.READY){if(now>=nextAt)measure(now);return;}
         if(stage!=Stage.MEASURING)return;
         // RSSI callbacks have no per-request ID. A missing callback ends the GATT
         // session; never reuse it for a new point that could accept the late result.

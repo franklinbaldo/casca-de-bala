@@ -1,3 +1,39 @@
+# Validação 0.5 — 25/10/2026
+
+Esta seção cobre a fonte0.5; o relatório antigo abaixo é histórico da exportação
+0.4 e não atribui automaticamente aqueles ensaios a este incremento.
+
+| Ensaio0.5 | Resultado |
+| --- | --- |
+| cargo test --locked --offline | PASS, 58 testes |
+| cargo fmt --all -- --check | PASS |
+| cargo clippy --locked --offline --all-targets -- -D warnings | PASS |
+| android-bridge/run_host.sh | PASS, nove harnesses, JNI/Rust reais e transporte sintético |
+| android-bridge/run_survey_host.sh | PASS, dois harnesses sintéticos |
+| android-bridge/run_worker_host.sh | PASS, backend sintético |
+| Gradle offline estrito compile/lint/assemble repetido | PASS; APKs idênticos com mesma chave temporária |
+| lintDebug | PASS, 0 erros, 17 avisos |
+| testDebugUnitTest | NOT_RUN: NO-SOURCE; não há suite Gradle de testes unitários |
+| Assinatura APKv2 e zipalign -P16 -4 | PASS |
+| APK/ART, TalkBack, fontes grandes, modo claro/escuro e rotação físicos0.5 | NOT_RUN |
+| RSSI/Band real0.5 | NOT_RUN |
+
+Os avisos lint são14 recursos antigos não usados,1 candidato a plural (ordinal
+da janela),1 construtor de view programática não disponível ao editor e1 regra
+de backup Android12. Não são falhas ocultadas como testes físicos. Geometria
+240..480dp e contraste das duas paletas foram verificados em modelo Java host,
+não por renderização Android. Não há screenshot de UI Android desta versão.
+
+A primeira compilação parou por entradas nativas ausentes na cópia isolada.
+Após confirmar identidade de18 fontes/receita nativos com0.4, as duas bibliotecas
+foram reutilizadas e o build passou; novo build NDK nesta rodada: NOT_RUN.
+
+Teste físico0.4 por relato do usuário: leitura básica bateria74%, diálogo de
+snapshot abriu sem erro e mostrou74 igual à tela. Sem captura/telemetria; somente
+bateria comparada explicitamente. Não valida cada revisão/horário nem RSSI.
+
+## Relatório histórico da exportação0.4
+
 # Validação da fonte isolada — 25/10/2026
 
 Esta cópia foi compilada fora do monorepo, sem histórico Git, submódulo ou código

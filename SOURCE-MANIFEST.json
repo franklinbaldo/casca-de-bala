@@ -25,8 +25,8 @@
     },
     {
       "path": "BUILDING.md",
-      "bytes": 6255,
-      "sha256": "bf8fd1588bde48f2a8504c6ba23c6fae18113e37754303b7f1efb03cc18994ca"
+      "bytes": 6573,
+      "sha256": "c4db5608df776fd138adc46e5ad4fbf2b25b336bb796bac8f074a6e60a9d7794"
     },
     {
       "path": "Cargo.lock",
@@ -55,13 +55,13 @@
     },
     {
       "path": "PROVENANCE.md",
-      "bytes": 4754,
-      "sha256": "f826710443340abaa23d94975a92271798492d622a2e257b3a02aa05a0f7edb7"
+      "bytes": 5096,
+      "sha256": "9cf4ad08bfcd80b7ebf621b2a037174003aabd4c6c5859c017a74be168850757"
     },
     {
       "path": "README.md",
-      "bytes": 4245,
-      "sha256": "fe5d266f65db89a9e0cb692a9adff8e5997ddafead5382fb7ca19a759984c118"
+      "bytes": 4574,
+      "sha256": "0cea487f4b540125fd891f54baa1fc6890b0db37ee0541a9e8d35f27c5cc416a"
     },
     {
       "path": "android-app/README.md",
@@ -76,12 +76,12 @@
     {
       "path": "android-app/app/build.gradle",
       "bytes": 1418,
-      "sha256": "6532416fb771f02f707bb7adaa8472b3be7d3906c9a0ef2694dfc32ff6721f40"
+      "sha256": "0c5e7bdd7e0ab727161467efad99dcb3c8d935a91ea85518fbb9c5116a7c89c3"
     },
     {
       "path": "android-app/app/src/main/AndroidManifest.xml",
-      "bytes": 918,
-      "sha256": "97a50c8692f14ac979a6a0d98ff7e56cc09f1b1957fa25de6618bc8ad5b403cc"
+      "bytes": 886,
+      "sha256": "8aebd197d3d1dc4c87fdea5675867a74bc2c22609396b424010d23d906e202af"
     },
     {
       "path": "android-app/app/src/main/assets/NOTICE.txt",
@@ -90,8 +90,8 @@
     },
     {
       "path": "android-app/app/src/main/assets/PROVENANCE.txt",
-      "bytes": 4754,
-      "sha256": "f826710443340abaa23d94975a92271798492d622a2e257b3a02aa05a0f7edb7"
+      "bytes": 5096,
+      "sha256": "9cf4ad08bfcd80b7ebf621b2a037174003aabd4c6c5859c017a74be168850757"
     },
     {
       "path": "android-app/app/src/main/java/org/workspace/band7/app/BasicGattReader.java",
@@ -105,18 +105,33 @@
     },
     {
       "path": "android-app/app/src/main/java/org/workspace/band7/app/MainActivity.java",
-      "bytes": 27014,
-      "sha256": "7b6f141298a9bcdce73a777ed7caf5e63f20227fbf8ad67a03ebb672392af9e9"
+      "bytes": 32141,
+      "sha256": "7d473c73afab0681ed7d222fe9d4a56724d5c5a6a73bd012fbb0be83f964f263"
     },
     {
       "path": "android-app/app/src/main/java/org/workspace/band7/app/RadarGatt.java",
-      "bytes": 3853,
-      "sha256": "345f0c7f6fcc74d66a91f53c613cd9444c60c3df6da49862e5f1dac9da108670"
+      "bytes": 3869,
+      "sha256": "c0af2dc505c5d89780d9c90ad67371cee20c608d30b8ce995114203047e801a1"
+    },
+    {
+      "path": "android-app/app/src/main/java/org/workspace/band7/app/RadarPulseView.java",
+      "bytes": 2429,
+      "sha256": "4d27161d1f68e920f56291578691ecb7990785fd32d2474f47380e4e9422431d"
     },
     {
       "path": "android-app/app/src/main/res/values/strings.xml",
-      "bytes": 12574,
-      "sha256": "cf3190f6c8220353b9b7268bff2628bee3dbe2eb8394671022d78d3dab9781de"
+      "bytes": 15349,
+      "sha256": "6de0fd152e61c9d42fe25fd7f654c3c987859d4acb74f4975fab0467953652d6"
+    },
+    {
+      "path": "android-app/app/src/main/res/values/styles.xml",
+      "bytes": 419,
+      "sha256": "bcab9e0a6a119fbc5dace78e51b1bd120cd27d481c904d419fe3315b80861291"
+    },
+    {
+      "path": "android-app/app/src/main/res/values-night/styles.xml",
+      "bytes": 415,
+      "sha256": "fffbffc06e7a8772b366ce07cc7a1200a3941f2bb4f86905acf3d68a6698e483"
     },
     {
       "path": "android-app/build-apk.sh",
@@ -180,8 +195,13 @@
     },
     {
       "path": "android-bridge/run_host.sh",
-      "bytes": 1465,
-      "sha256": "e43f0b4d3be609814e8e310ca87459f12b92b389ebb8e4d727cbe68125ab7005"
+      "bytes": 1606,
+      "sha256": "15c71f8feaef0e863f2786abf4a957d16eaf1c406d032aba64f3292b58abd0e7"
+    },
+    {
+      "path": "android-bridge/run_survey_host.sh",
+      "bytes": 698,
+      "sha256": "87ff88addad58c14116cdee19355d090fc9691001e5710d936da883740c1ef8f"
     },
     {
       "path": "android-bridge/run_worker_host.sh",
@@ -234,14 +254,29 @@
       "sha256": "f8bd97c73cb997f2b3b156631218ae94716d4f7c72a1d774e68dd77e70a8040e"
     },
     {
+      "path": "android-bridge/src/org/workspace/band7/RadarFeedback.java",
+      "bytes": 2579,
+      "sha256": "78d5487954faf528e15adfed54b1527a81fe5b83cf47b77051bba04ee4175de3"
+    },
+    {
       "path": "android-bridge/src/org/workspace/band7/RadarSession.java",
-      "bytes": 7661,
-      "sha256": "711608be1db27e9655680481947f5a80c6d3f0c2e37c0c9e08d25b51c7cb380f"
+      "bytes": 8749,
+      "sha256": "8d35d25e717b25689e651247162bda58f7829a5d99757feb630510e413d320c0"
+    },
+    {
+      "path": "android-bridge/src/org/workspace/band7/RadarVisualModel.java",
+      "bytes": 1625,
+      "sha256": "3065df7c1d5d6c4b7a21305fc19c8f4f35b61d4e06f7dc9eb88a336c5cd66f34"
     },
     {
       "path": "android-bridge/src/org/workspace/band7/ReadViewModel.java",
       "bytes": 3612,
       "sha256": "b84f79cdeb916aa70afdb14736c68693df1e404dc1221dae588119c40855cd43"
+    },
+    {
+      "path": "android-bridge/src/org/workspace/band7/SurveySession.java",
+      "bytes": 9389,
+      "sha256": "d204adce9cff7a6bc057a475c997a97172a4a82d88831afe94e22d2619de299c"
     },
     {
       "path": "android-bridge/tests/org/workspace/band7/ActivityWorkerTest.java",
@@ -279,9 +314,24 @@
       "sha256": "61f64278471bcfc8ce170e1a9a8f4f1a061f3c414fb871d40bfde23635d11b9a"
     },
     {
+      "path": "android-bridge/tests/org/workspace/band7/RadarContinuousTest.java",
+      "bytes": 1969,
+      "sha256": "8580e112fd9897c6d4112b77ab822834afcc63d87692295266a3a50d1b6adcae"
+    },
+    {
+      "path": "android-bridge/tests/org/workspace/band7/RadarFeedbackTest.java",
+      "bytes": 2322,
+      "sha256": "bb7a9bebe7cd57c973d33610bcadaadf59e9afea65fa4aa853e13ce549040da9"
+    },
+    {
       "path": "android-bridge/tests/org/workspace/band7/RadarSessionTest.java",
       "bytes": 6592,
       "sha256": "6a5494048e51ff329075e715f0d2f4f21af3044e669eb0dbe00d4e7159ecea0a"
+    },
+    {
+      "path": "android-bridge/tests/org/workspace/band7/SurveySessionTest.java",
+      "bytes": 8582,
+      "sha256": "6ad8d775abe364422574b39baddb7584d096281dbb5f7c06a247828f8f190c5d"
     },
     {
       "path": "bench/size.mjs",
@@ -355,8 +405,8 @@
     },
     {
       "path": "docs/radar.md",
-      "bytes": 4775,
-      "sha256": "e1fc06eda50754d73d17de021c27186e4e991fe02b1841b9959f7569bba6b23f"
+      "bytes": 3581,
+      "sha256": "32fbad3cf539fd78b79d38b9795336bab96e5eb90ae1027c0bee0442cde3319a"
     },
     {
       "path": "docs/recovery.md",
@@ -364,9 +414,19 @@
       "sha256": "f2061945a6f191a3ca2bab0190bc5a89d624341bb10e51b1b6bfa1b94af4da4b"
     },
     {
+      "path": "docs/releases/0.5.json",
+      "bytes": 2439,
+      "sha256": "f0fe7082bd24264a58885ed88af730c0612394502d4f18348a0f95e0af0c48f2"
+    },
+    {
       "path": "docs/roadmap.md",
       "bytes": 6060,
       "sha256": "0bee34bfdcc3c7afd4c2c82c69c48fe33b4ef80abed77b84aeb2b205da085d33"
+    },
+    {
+      "path": "docs/survey-session.md",
+      "bytes": 11039,
+      "sha256": "8a1fe5163218645a628a78b094ca5ba8c3ac7ea338b4ab7397dbfbcd5fbd9440"
     },
     {
       "path": "docs/sync-session.md",
@@ -375,8 +435,8 @@
     },
     {
       "path": "docs/validation.md",
-      "bytes": 5619,
-      "sha256": "4f0a624b4e6c37bb0c3d560e73b9d0274ff01feeb53613a4bcefdfb93aaa222b"
+      "bytes": 7587,
+      "sha256": "8df3ea49bb71bd7b944d380419b8027ed4c0804ec7fc83260852e278570cc934"
     },
     {
       "path": "ffi/README.md",

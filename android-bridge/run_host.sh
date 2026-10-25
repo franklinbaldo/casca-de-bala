@@ -20,3 +20,6 @@ java -cp "$TEST_BUILD/classes" org.workspace.band7.BondedFlowTest
 java -Xcheck:jni -Djava.library.path="$TEST_BUILD" -cp "$TEST_BUILD/classes" org.workspace.band7.BasicSnapshotSmoke "$CRATE_ROOT/target/debug/band7-terminal"
 
 java -cp "$TEST_BUILD/classes" org.workspace.band7.RadarSessionTest
+
+java -cp "$TEST_BUILD/classes" org.workspace.band7.RadarContinuousTest
+java -cp "$TEST_BUILD/classes" org.workspace.band7.RadarFeedbackTest

@@ -70,11 +70,11 @@ O script prepare-local-java.sh só se aplica a imagens Java reduzidas: exige
 JAVA_SOURCE_HOME e JAVA_COPY_HOME explícitos e copia módulos existentes, sem
 instalar ou alterar o JDK original. JDK21 completo não precisa desse workaround.
 
-## APK laboratorial0.4
+## APK laboratorial0.5
 
 Nenhum APK é distribuído com esta fonte. O script build-apk.sh contém a receita
 laboratorial preexistente: gera chave debug temporária, testa e apaga a chave.
-Foi executado para o APK0.4 com chave temporária removida ao terminar.
+Foi executado para o APK0.5 com chave temporária removida ao terminar.
 As duas gerações com essa mesma chave foram idênticas. Recompilar com outra
 chave muda o certificado e pode impedir atualização no lugar. Para uma release futura, decidir identidade
 de assinatura e gerar APK somente junto com fonte correspondente validada.
@@ -125,3 +125,8 @@ O teste copia a configuração Android para diretório temporário e executa Gra
 help estrito/offline em três casos: metadata original, checksum AGP divergente e
 checksum AGP ausente. Não executa build-apk.sh, assemble ou keytool; comprova falha
 sem escrever o XML e sem rede. Logs de paths temporários não são distribuídos.
+
+Na entrega0.5, Rust/C/receita nativa são idênticos à0.4 (18 arquivos de entrada
+comparados byte a byte). Bibliotecas arm64 foram reutilizadas dessa compilação
+NDK27 validada; o build nativo não foi reexecutado na0.5. A receita acima permite
+recriá-las a partir desta fonte. Java Android/UI foram recompilados.

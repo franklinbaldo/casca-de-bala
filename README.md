@@ -1,19 +1,17 @@
-# Casca de Bala · laboratório0.4
+# Casca de Bala · laboratório0.5
 
 Repositório: https://github.com/franklinbaldo/casca-de-bala .
-Esta fonte está preparada para esse destino; a publicação é feita separadamente.
-No APK0.4 o nome exibido ainda é Minha pulseira — laboratório. Mantivemos
-o binário já validado, sem reconstruí-lo apenas para trocar o nome.
+A versão 0.4 permanece preservada. Esta versão 0.5 acrescenta busca contínua e feedback visual de RSSI.
 O packageId org.workspace.band7.basicreader e os contratos permanecem iguais.
 
-Instalador separado: **band7-basic-reader-0.4-lab-arm64.apk**, Android12+ ARM64.
-Fonte correspondente: **band7-basic-reader-0.4-lab-source.tar.gz** (não instalador).
+Instalador separado: **casca-de-bala-0.5-lab-arm64.apk**, Android12+ ARM64.
+Fonte correspondente: **band7-basic-reader-0.5-lab-source.tar.gz** (não instalador).
 O APK0.3 anterior permanece uma alternativa estável sem radar.
 
 Aplicativo Android pessoal para **Xiaomi Smart Band 7 comum**, com núcleo Rust e
 console local. Licença do projeto: **AGPL-3.0-or-later**, com avisos de terceiros
 preservados em [PROVENANCE.md](PROVENANCE.md) e [third_party](third_party/).
-Este pacote contém a fonte correspondente ao APK0.4; não inclui APK, SDK, chaves ou dados pessoais.
+Este pacote contém a fonte correspondente ao APK0.5; não inclui APK, SDK, chaves ou dados pessoais.
 
 ## O que funciona e qual é a evidência
 
@@ -26,7 +24,9 @@ Este pacote contém a fonte correspondente ao APK0.4; não inclui APK, SDK, chav
   futuras retornando unsupported. `capabilities` e `validate-card` são offline.
 - Snapshot básico: Android → Java/JNI → Rust e replay pelo terminal, preservando
   horário, origem declarada e leituras parciais. Testado com fixtures sintéticas
-  no host e compilado para Android; a API nova ainda não foi exercitada em ART.
+  no host. Na versão 0.4 o usuário relatou bateria 74% igual na tela e no diálogo
+  validado pelo Rust, sem erro. Somente bateria foi comparada explicitamente.
+  Esse relato não confirma cada revisão/horário, rádio RSSI ou transporte remoto.
   Não existe transporte remoto Android→MCP implementado.
 - Históricos Activity8/HR6/SpO2, SQLite, fragmentação Huami, filas e retomada:
   componentes executáveis offline com testes sintéticos, sem coleta física.
@@ -34,8 +34,12 @@ Este pacote contém a fonte correspondente ao APK0.4; não inclui APK, SDK, chav
   O candidato histórico permanece installable:false; Product ID não define
   automaticamente target/deviceSource.
 
-O [radar básico](docs/radar.md) compara RSSI de conexão em paradas marcadas
-explicitamente; é código Android real com testes host, ainda sem teste físico.
+O [radar visual contínuo](docs/radar.md) anima o recebimento de sinal válido,
+mostra mediana recente, qualidade e tendência entre janelas automáticas.
+Não exige clicar em cada parada, não desenha alvo em posição/ângulo fictício
+e não estima distância. O histórico mostra ordem temporal, não mapa espacial.
+O usuário relatou abrir o radar0.4 e medir paradas, mas não confirmou valores
+RSSI; a coleta e a UX0.5 ainda exigem teste físico.
 Mapa GPS/deslocamento, autenticação Huami, coleta completa
 de saúde, comunicação independente com miniapp, gestão real de aplicativos e
 firmware próprio permanecem planejados ou em investigação. Não há Bash na Band,

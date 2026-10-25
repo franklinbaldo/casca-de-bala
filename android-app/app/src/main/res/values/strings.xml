@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">Minha pulseira — laboratório</string>
-    <string name="home_title">Minha pulseira</string>
-    <string name="home_subtitle">Veja a bateria e as informações disponíveis. Esta versão só faz leitura.</string>
+    <string name="app_name">Casca de Bala — laboratório</string>
+    <string name="home_title">Casca de Bala</string>
+    <string name="home_subtitle">Leia bateria e identificação. Procure sua pulseira com sinal Bluetooth ao vivo.</string>
     <string name="find">Encontrar minha pulseira</string>
     <string name="find_again">Buscar novamente</string>
     <string name="read_again">Ler novamente</string>
@@ -59,7 +59,7 @@
     <string name="pnp_details">Fabricante: 0x%1$04X\nProduto: 0x%2$04X\nVersão do produto: 0x%3$04X\n\nEsses códigos não determinam a região ou o alvo de miniapp. Nenhum endereço Bluetooth é exibido.</string>
     <string name="pnp_missing">Os códigos de produto não ficaram disponíveis nesta leitura.</string>
     <string name="close">Fechar</string>
-    <string name="version">Laboratório 0.4 · radar por sinal e leitura básica</string>
+    <string name="version">Laboratório 0.5 · radar por sinal e leitura básica</string>
     <string name="bonded">Já vinculadas ao celular</string>
     <string name="nearby">Buscar por perto</string>
     <string name="bonded_home_help">Sua pulseira já foi vinculada ao Bluetooth do celular? Comece pela lista de vinculadas. Também é possível buscar anúncios por perto.</string>
@@ -83,19 +83,19 @@
     <string name="snapshot_explanation">Esta resposta usa a leitura já mostrada na tela. Compare bateria, revisões e horário. O botão não lê a pulseira novamente, não envia dados e não conecta ao MCP. A origem declarada é o aplicativo; valores ausentes e erros permanecem explícitos.</string>
     <string name="snapshot_error">Não foi possível validar o snapshot no núcleo Rust. Os dados da tela foram preservados. Esta mensagem não indica falha da pulseira.</string>
     <string name="license_action">Licença e código-fonte</string>
-    <string name="license_explanation">Band 7 terminal · laboratório 0.4
+    <string name="license_explanation">Band 7 terminal · laboratório 0.5
 
 Licença: GNU Affero General Public License, versão 3 ou posterior (AGPL-3.0-or-later).
 
 Referências e derivações Gadgetbridge: José Rebelo e demais contribuidores, com avisos preservados. As licenças permissivas das dependências continuam aplicáveis; seus avisos acompanham o APK.
 
-Código correspondente a esta versão: band7-basic-reader-0.4-lab-source.tar.gz, oferecido junto ao instalador pelo mesmo canal. Esse arquivo é fonte, não instalador. Se não o recebeu, solicite-o ao distribuidor.
+Código correspondente a esta versão: band7-basic-reader-0.5-lab-source.tar.gz, oferecido junto ao instalador pelo mesmo canal. Esse arquivo é fonte, não instalador. Se não o recebeu, solicite-o ao distribuidor.
 
 O texto completo da AGPL v3 segue abaixo; a opção por versões posteriores consta nos avisos e metadados do projeto.</string>
     <string name="license_unavailable">O texto da licença não pôde ser aberto. Consulte LICENSE no código-fonte correspondente.</string>
     <string name="radar_open">Radar da pulseira</string>
     <string name="radar_title">Radar por força de sinal</string>
-    <string name="radar_description">Selecione a pulseira vinculada. Ande, pare e meça: comparamos o sinal entre suas paradas. Sem GPS, metros, direção ou posição estimada.</string>
+    <string name="radar_description">Busca contínua por sinal Bluetooth, enquanto esta tela estiver aberta. Sem posição, metros ou direção estimados.</string>
     <string name="radar_connecting">Conectando para medir sinal…</string>
     <string name="radar_wait">Aguarde a conexão com a pulseira escolhida. Nenhum pareamento será iniciado.</string>
     <string name="radar_ready">Pronto para marcar um ponto</string>
@@ -127,4 +127,38 @@ Amostras: %3$d · dispersão %4$.1f dB
     <string name="radar_limit">Limite desta busca atingido: até 2 minutos ou 8 pontos. Você pode começar outra busca.</string>
     <string name="radar_cancelled">Você encerrou a busca. Nenhuma medição continua em segundo plano.</string>
     <string name="radar_failed">Não foi possível continuar a medição. Os pontos disponíveis permanecem; nenhum sinal ausente virou distância ou posição.</string>
+    <string name="live_guide">Deixe a pulseira parada. Caminhe com o celular.</string>
+    <string name="live_no_position">Força do sinal · posição não estimada</string>
+    <string name="live_pause">Pausar busca</string>
+    <string name="live_resume">Continuar busca</string>
+    <string name="live_home">Voltar ao início</string>
+    <string name="live_waiting">Aguardando leitura de sinal</string>
+    <string name="live_warmup">Recebendo as primeiras leituras</string>
+    <string name="live_stale">Sem leitura nova de sinal</string>
+    <string name="live_paused">Busca pausada ou encerrada</string>
+    <string name="live_receiving">Recebendo sinal continuamente</string>
+    <string name="live_warmer">↑ Sinal mais forte</string>
+    <string name="live_colder">↓ Sinal mais fraco</string>
+    <string name="live_similar">≈ Sinal sem diferença clara</string>
+    <string name="live_metric">%1$.0f
+dBm</string>
+    <string name="live_initial_count">%1$d/3
+leituras</string>
+    <string name="live_missing_metric">—
+RSSI</string>
+    <string name="live_paused_metric">Pausa</string>
+    <string name="live_dial_access">Radar visual. %1$s. Toque para %2$s.</string>
+    <string name="live_counter">Janela %1$d · leituras: %2$d / 6 · tentativas: %3$d</string>
+    <string name="live_paused_help">A conexão foi encerrada. Nenhuma medição continua em segundo plano. Use Continuar ou escolha a pulseira para uma conexão nova.</string>
+    <string name="live_old_reading">Último sinal recebido há %1$d s. Não é uma leitura atual; nenhuma posição foi estimada.</string>
+    <string name="live_comparison_wait">A imagem pulsa só quando chega RSSI válido. A comparação precisa de duas janelas úteis; pode permanecer inconclusiva. Não precisa clicar para coletar cada janela.</string>
+    <string name="live_signal_only">A tendência compara janelas de sinal. Paredes e orientação podem mudar o RSSI: mais forte não garante estar mais perto. Sem metros ou direção estimados.</string>
+    <string name="live_best_pending">Maior sinal: aguardando uma janela útil</string>
+    <string name="live_best">Maior mediana no histórico visível: janela %1$d · %2$.1f dBm</string>
+    <string name="live_history">Últimas janelas · ordem no tempo, não posições</string>
+    <string name="live_history_empty">Sem janela concluída. A coleta começa automaticamente após conectar.</string>
+    <string name="live_window_title">✓ Janela %1$d registrada</string>
+    <string name="live_window_count">Leituras: %1$d · tentativas: %2$d · falhas: %3$d</string>
+    <string name="live_window_missing">Nenhum RSSI válido nesta janela. Isso não significa sinal zero ou pulseira fora de alcance.</string>
+    <string name="live_window_median">Mediana %1$.1f dBm</string>
 </resources>

@@ -1,0 +1,73 @@
+{
+  "versionName": "0.5-lab",
+  "versionCode": 5,
+  "date_utc": "2026-10-25",
+  "canonicalBase": "018c0109cf010691ef488f860d266282f6886dab",
+  "license": "AGPL-3.0-or-later",
+  "apk": {
+    "filename": "casca-de-bala-0.5-lab-arm64.apk",
+    "bytes": 2958671,
+    "sha256": "1c927facc3274e1bab7baccf1c5d699943a04011502368d8867cdbd17b4a865b",
+    "minSdk": 31,
+    "targetSdk": 35,
+    "abi": "arm64-v8a",
+    "packageId": "org.workspace.band7.basicreader",
+    "certificateSha256": "2221818ef690f6916287f1a809c502cea1e7ae134dc52dec7f763eb283b25045",
+    "signing": "temporary debug key removed; different certificate may require uninstalling only previous laboratory app"
+  },
+  "permissions": [
+    "android.permission.BLUETOOTH_CONNECT",
+    "android.permission.BLUETOOTH_SCAN (neverForLocation)"
+  ],
+  "sourceFilename": "band7-basic-reader-0.5-lab-source.tar.gz",
+  "tests": {
+    "rust": "PASS 58",
+    "fmt": "PASS",
+    "clippy": "PASS",
+    "jniHost": "PASS",
+    "surveyHost": "PASS",
+    "workerHost": "PASS",
+    "androidBuildStrictOffline": "PASS",
+    "sameKeyRepeatedApk": "PASS",
+    "lint": "PASS 0 errors /17 warnings",
+    "signature": "PASS v2",
+    "alignment": "PASS 16KiB",
+    "gradleUnitTests": "NOT_RUN NO-SOURCE",
+    "androidRuntimeUI": "NOT_RUN",
+    "physicalRssi05": "NOT_RUN",
+    "nativeRebuild05": "NOT_RUN; byte-identical inputs and libraries reused from0.4"
+  },
+  "nativeReuse": {
+    "comparedInputs": [
+      "Cargo.toml",
+      "Cargo.lock",
+      "android-bridge/band7_jni.c",
+      "android-app/build-native.sh",
+      "src/activity_db.rs",
+      "src/basic_snapshot.rs",
+      "src/event_db.rs",
+      "src/ffi.rs",
+      "src/gatt_basics.rs",
+      "src/gatt_bridge.rs",
+      "src/health_samples.rs",
+      "src/huami_chunk.rs",
+      "src/ingestion.rs",
+      "src/lib.rs",
+      "src/main.rs",
+      "src/microvm.rs",
+      "src/sync_session.rs",
+      "ffi/band7.h"
+    ],
+    "hashes": {
+      "libband7_terminal.so": "f02e8cf756f39ed004709b3e820b80f63c408055651bb6b8f9143e4531ae6fce",
+      "libband7_jni.so": "4c7e37b15b81d54c6ded96ecc81ff0daa36cff42b39039feaf2d0ed059ffe3c8"
+    }
+  },
+  "limits": [
+    "No target position, bearing, distance or probability estimated",
+    "No location/network/camera/health permission",
+    "No background monitoring",
+    "Remote MCP transport not implemented",
+    "User reported0.4 battery74 matching snapshot; only battery explicitly compared"
+  ]
+}

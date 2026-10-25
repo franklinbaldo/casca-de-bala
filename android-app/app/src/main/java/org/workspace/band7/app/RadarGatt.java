@@ -16,7 +16,7 @@ final class RadarGatt {
         model=new RadarSession(new Transport(){
             public boolean read(long generation){if(context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)!=PackageManager.PERMISSION_GRANTED)throw new SecurityException();return gatt!=null&&gatt.readRemoteRssi();}
             public void close(){cleanup();}
-        },observer::accept,Origin.OUR_APP);
+        },observer::accept,Origin.OUR_APP,Mode.CONTINUOUS);
     }
     private boolean permitted(){return context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)==PackageManager.PERMISSION_GRANTED;}
     void connect(BluetoothDevice selected){

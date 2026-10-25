@@ -27,6 +27,8 @@ public final class MainActivity extends Activity {
     private BleDiscovery discovery;private BasicGattReader reader;private Snapshot snapshot;
     private BluetoothDevice selectedDevice;private String selectedName;private long readAttempt,rowGeneration=-1,diagnosticRequestId;
     private DiscoverySession.Status searchStatus=DiscoverySession.Status.CANCELLED;
+    private RadarVisualModel.Palette colors;private ScrollView page;private TextView subtitle;
+    private RadarPulseView radarPulse;private FrameLayout radarDial;private TextView radarMetric,radarCounter,radarBest,radarGuide;private ProgressBar radarSamples;
     private int rowCount;private TextView title,status,body,battery,hardware,software,time,device;
     private Button primary,secondary,cancel,details,diagnostic;private ProgressBar progress;private LinearLayout rows,batteryCard,infoCard;
     private RadarGatt radarReader;private RadarSession.Snapshot radarSnapshot;private boolean selectingRadar;
@@ -45,23 +47,35 @@ public final class MainActivity extends Activity {
     }
     @Override public void onCreate(Bundle state){
         super.onCreate(state);askedConnect=state!=null&&state.getBoolean("asked_connect",false);askedScan=state!=null&&state.getBoolean("asked_scan",false);
+        colors=RadarVisualModel.palette((getResources().getConfiguration().uiMode&android.content.res.Configuration.UI_MODE_NIGHT_MASK)==android.content.res.Configuration.UI_MODE_NIGHT_YES);
         // Screenshots are intentionally permitted. No FLAG_SECURE or identifier input.
-        ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);
-        LinearLayout root=column();root.setPadding(dp(20),dp(24),dp(20),dp(24));scroll.addView(root);
+        ScrollView scroll=new ScrollView(this);page=scroll;scroll.setFillViewport(true);scroll.setBackgroundColor(colors.background);
+        getWindow().setDecorFitsSystemWindows(false);scroll.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.displayCutout());v.setPadding(bars.left,bars.top,bars.right,bars.bottom);return insets;});
+        LinearLayout root=column();root.setPadding(dp(16),dp(12),dp(16),dp(20));scroll.addView(root);
         title=text(root,R.string.home_title,30);title.setAccessibilityHeading(true);
-        text(root,R.string.home_subtitle,18);space(root,16);
+        subtitle=text(root,R.string.home_subtitle,18);space(root,16);
         status=text(root,R.string.home_title,22);status.setAccessibilityHeading(true);status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
         body=text(root,R.string.home_subtitle,17);progress=new ProgressBar(this);root.addView(progress);progress.setVisibility(View.GONE);
         primary=button(root,R.string.find);secondary=button(root,R.string.choose_another);cancel=button(root,R.string.cancel);
         primary.setOnClickListener(v->{if(primaryAction!=null)primaryAction.run();});secondary.setOnClickListener(v->{if(secondaryAction!=null)secondaryAction.run();});cancel.setOnClickListener(v->cancelCurrent());
         radarOpen=button(root,R.string.radar_open);radarOpen.setOnClickListener(v->beginRadar());
         rows=column();root.addView(rows);space(root,16);
-        radarPanel=column();root.addView(radarPanel);radarStatus=text(radarPanel,R.string.radar_connecting,21);
-        radarHelp=text(radarPanel,R.string.radar_help,17);radarMeasure=button(radarPanel,R.string.radar_measure);
-        radarMeasure.setOnClickListener(v->{if(radarReader!=null)radarReader.measure();});
-        radarEnd=button(radarPanel,R.string.radar_end);radarEnd.setOnClickListener(v->{if(radarReader!=null)radarReader.stop(RadarSession.Reason.CANCELLED);});
-        radarChoose=button(radarPanel,R.string.radar_choose);radarChoose.setOnClickListener(v->beginRadar());
-        text(radarPanel,R.string.radar_map_title,20).setAccessibilityHeading(true);radarPoints=column();radarPanel.addView(radarPoints);
+        radarPanel=column();root.addView(radarPanel);
+        radarGuide=text(radarPanel,R.string.live_guide,17);
+        radarDial=new FrameLayout(this);radarPanel.addView(radarDial,new LinearLayout.LayoutParams(-1,dp(180)));
+        radarPulse=new RadarPulseView(this,colors);radarDial.addView(radarPulse,new FrameLayout.LayoutParams(-1,-1));
+        radarMetric=new TextView(this);radarMetric.setGravity(Gravity.CENTER);radarMetric.setTextColor(colors.text);radarMetric.setMaxLines(3);
+        radarMetric.setAutoSizeTextTypeUniformWithConfiguration(18,44,1,android.util.TypedValue.COMPLEX_UNIT_SP);radarMetric.setPadding(dp(44),dp(12),dp(44),dp(12));radarMetric.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        radarDial.addView(radarMetric,new FrameLayout.LayoutParams(-1,-1));radarDial.setFocusable(true);radarDial.setOnClickListener(v->toggleRadar());
+        text(radarPanel,R.string.live_no_position,16);
+        radarStatus=text(radarPanel,R.string.radar_connecting,28);radarStatus.setTypeface(null,android.graphics.Typeface.BOLD);radarStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        radarCounter=text(radarPanel,R.string.live_waiting,18);radarSamples=signalBar(radarPanel);radarSamples.setMax(6);
+        radarMeasure=button(radarPanel,R.string.live_pause);radarMeasure.setBackgroundTintList(android.content.res.ColorStateList.valueOf(colors.accent));radarMeasure.setTextColor(colors.onAccent);radarMeasure.setOnClickListener(v->toggleRadar());
+        radarHelp=text(radarPanel,R.string.radar_help,17);
+        radarEnd=button(radarPanel,R.string.live_home);radarEnd.setOnClickListener(v->leaveRadar());
+        radarChoose=button(radarPanel,R.string.choose_another);radarChoose.setOnClickListener(v->beginRadar());
+        radarBest=text(radarPanel,R.string.live_best_pending,20);radarBest.setAccessibilityHeading(true);
+        text(radarPanel,R.string.live_history,22).setAccessibilityHeading(true);radarPoints=column();radarPanel.addView(radarPoints);
         device=text(root,R.string.home_title,18);batteryCard=card(root);text(batteryCard,R.string.battery,18).setAccessibilityHeading(true);
         battery=text(batteryCard,R.string.waiting,34);infoCard=card(root);text(infoCard,R.string.information,20).setAccessibilityHeading(true);
         text(infoCard,R.string.hardware,16);hardware=text(infoCard,R.string.not_available,20);
@@ -103,9 +117,9 @@ public final class MainActivity extends Activity {
     private int dp(int value){return Math.round(value*getResources().getDisplayMetrics().density);}
     private LinearLayout column(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);return l;}
     private void space(LinearLayout parent,int height){View v=new View(this);parent.addView(v,new LinearLayout.LayoutParams(1,dp(height)));}
-    private TextView text(LinearLayout parent,int resource,int size){TextView t=new TextView(this);t.setText(resource);t.setTextSize(size);t.setTextColor(Color.rgb(25,37,38));t.setPadding(0,dp(5),0,dp(5));parent.addView(t,new LinearLayout.LayoutParams(-1,-2));return t;}
-    private Button button(LinearLayout parent,int resource){Button b=new Button(this);b.setText(resource);b.setAllCaps(false);b.setMinHeight(dp(56));b.setPadding(dp(12),dp(8),dp(12),dp(8));parent.addView(b,new LinearLayout.LayoutParams(-1,-2));return b;}
-    private LinearLayout card(LinearLayout root){LinearLayout c=column();c.setPadding(dp(16),dp(12),dp(16),dp(12));GradientDrawable bg=new GradientDrawable();bg.setColor(Color.rgb(239,245,243));bg.setCornerRadius(dp(12));c.setBackground(bg);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.setMargins(0,dp(8),0,dp(8));root.addView(c,p);return c;}
+    private TextView text(LinearLayout parent,int resource,int size){TextView t=new TextView(this);t.setText(resource);t.setTextSize(size);t.setTextColor(colors.text);t.setPadding(0,dp(5),0,dp(5));parent.addView(t,new LinearLayout.LayoutParams(-1,-2));return t;}
+    private Button button(LinearLayout parent,int resource){Button b=new Button(this);b.setText(resource);b.setAllCaps(false);b.setTextColor(colors.text);b.setMinHeight(dp(56));b.setPadding(dp(12),dp(8),dp(12),dp(8));parent.addView(b,new LinearLayout.LayoutParams(-1,-2));return b;}
+    private LinearLayout card(LinearLayout root){LinearLayout c=column();c.setPadding(dp(16),dp(12),dp(16),dp(12));GradientDrawable bg=new GradientDrawable();bg.setColor(colors.surface);bg.setStroke(dp(1),colors.track);bg.setCornerRadius(dp(12));c.setBackground(bg);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.setMargins(0,dp(8),0,dp(8));root.addView(c,p);return c;}
     private void set(TextView view,int resource){set(view,getString(resource));}
     private void set(TextView view,String value){if(!view.getText().toString().equals(value))view.setText(value);}
     private PermissionDecision.State permission(String name,boolean asked){return new PermissionDecision.State(checkSelfPermission(name)==PackageManager.PERMISSION_GRANTED,asked,shouldShowRequestPermissionRationale(name));}
@@ -146,7 +160,7 @@ public final class MainActivity extends Activity {
     private void startRadar(){
         if(!resumed)return;screen=Screen.RADAR;interrupted=false;long attempt=++readAttempt;
         if(reader!=null){reader.close();reader=null;}if(radarReader!=null)radarReader.stop(RadarSession.Reason.CANCELLED);
-        radarSnapshot=null;radarReader=new RadarGatt(this,value->{if(attempt!=readAttempt)return;radarSnapshot=value;if(resumed)render();});radarReader.connect(selectedDevice);
+        radarSnapshot=null;radarReader=new RadarGatt(this,value->{if(attempt!=readAttempt)return;radarSnapshot=value;if(resumed)render();});radarReader.connect(selectedDevice);page.post(()->page.smoothScrollTo(0,0));
     }
     private void cancelCurrent(){findIntent.cancel();if(screen==Screen.SEARCH){discovery.close();return;}if(reader!=null)reader.close(Cause.CANCELLED);}
     private void openSettings(boolean bluetooth){findIntent.external(ForegroundAction.Wait.SETTINGS);Intent intent=bluetooth?new Intent(Settings.ACTION_BLUETOOTH_SETTINGS):new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+getPackageName()));startActivity(intent);}
@@ -157,6 +171,7 @@ public final class MainActivity extends Activity {
         if(!findIntent.waiting()){selectedDevice=null;if(screen!=Screen.RADAR)screen=snapshot==null?Screen.HOME:Screen.DEVICE;homeMessage=R.string.background_help;}super.onStop();}
     @Override protected void onSaveInstanceState(Bundle out){out.putBoolean("asked_connect",askedConnect);out.putBoolean("asked_scan",askedScan);super.onSaveInstanceState(out);}
     private void render(){
+        title.setTextSize(screen==Screen.RADAR?18:30);subtitle.setVisibility(screen==Screen.RADAR?View.GONE:View.VISIBLE);status.setVisibility(screen==Screen.RADAR?View.GONE:View.VISIBLE);body.setVisibility(screen==Screen.RADAR?View.GONE:View.VISIBLE);
         boolean reading=screen==Screen.DEVICE&&snapshot!=null&&(snapshot.stage==Stage.CONNECTING||snapshot.stage==Stage.DISCOVERING||snapshot.stage==Stage.READING);
         boolean searching=screen==Screen.SEARCH&&(searchStatus==DiscoverySession.Status.SEARCHING||searchStatus==DiscoverySession.Status.READING_BONDED);
         progress.setVisibility(reading||searching?View.VISIBLE:View.GONE);cancel.setVisibility(reading||searching?View.VISIBLE:View.GONE);
@@ -183,7 +198,7 @@ public final class MainActivity extends Activity {
             case CHANGING:set(status,R.string.bluetooth_changing);set(body,R.string.bluetooth_changing);primaryAction=()->beginFind(route,selectingRadar);set(primary,R.string.bonded_refresh);break;
             case OFF:set(status,R.string.bluetooth_off);set(body,R.string.bluetooth_off);secondary.setVisibility(View.VISIBLE);set(secondary,R.string.bluetooth_settings);secondaryAction=()->openSettings(true);break;
             case UNAVAILABLE:set(status,R.string.bluetooth_unavailable);set(body,R.string.bluetooth_unavailable);break;
-            case SEARCH_ERROR:set(status,route==Route.BONDED?R.string.bonded_failed:R.string.search_failed);set(body,route==Route.BONDED?R.string.bonded_failed:R.string.search_failed);set(primary,R.string.find_again);primaryAction=()->beginFind(route);break;
+            case SEARCH_ERROR:set(status,route==Route.BONDED?R.string.bonded_failed:R.string.search_failed);set(body,route==Route.BONDED?R.string.bonded_failed:R.string.search_failed);set(primary,R.string.find_again);primaryAction=()->beginFind(route,selectingRadar);break;
             case RADAR:set(status,R.string.radar_title);set(body,R.string.radar_description);renderRadar();break;
             case DEVICE:
                 if(snapshot==null)break;
@@ -199,30 +214,38 @@ public final class MainActivity extends Activity {
     }
     @Override public Object onRetainNonConfigurationInstance(){if(screen!=Screen.RADAR)return null;if(radarReader!=null)radarReader.stop(RadarSession.Reason.BACKGROUND);return radarSnapshot;}
     @Override protected void onDestroy(){if(radarReader!=null)radarReader.stop(RadarSession.Reason.BACKGROUND);if(discovery!=null)discovery.dispose();super.onDestroy();}
+    private ProgressBar signalBar(LinearLayout parent){
+        ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);bar.setMax(100);bar.setProgressTintList(android.content.res.ColorStateList.valueOf(colors.accent));bar.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(colors.track));parent.addView(bar,new LinearLayout.LayoutParams(-1,dp(32)));return bar;
+    }
+    private void toggleRadar(){
+        if(radarSnapshot!=null&&radarSnapshot.stage!=RadarSession.Stage.ENDED){if(radarReader!=null)radarReader.stop(RadarSession.Reason.CANCELLED);}
+        else if(selectedDevice!=null)startRadar();else beginRadar();
+    }
+    private void leaveRadar(){if(radarReader!=null){radarReader.stop(RadarSession.Reason.CANCELLED);radarReader=null;}screen=Screen.HOME;selectingRadar=false;selectedDevice=null;render();page.smoothScrollTo(0,0);}
+    private int reasonText(RadarSession.Reason reason){switch(reason){case PERMISSION:return R.string.permission_denied;case BLUETOOTH_OFF:return R.string.bluetooth_off;case BACKGROUND:return R.string.radar_background;case READ_TIMEOUT:case CONNECT_TIMEOUT:return R.string.radar_timeout;case DISCONNECTED:return R.string.radar_disconnected;case CANCELLED:return R.string.live_paused_help;default:return R.string.radar_failed;}}
     private void renderRadar(){
-        RadarSession.Snapshot value=radarSnapshot;boolean ready=value!=null&&value.stage==RadarSession.Stage.READY&&radarReader!=null;
-        radarMeasure.setEnabled(ready);radarEnd.setVisibility(value!=null&&value.stage!=RadarSession.Stage.ENDED?View.VISIBLE:View.GONE);
-        radarChoose.setVisibility(value!=null&&value.stage==RadarSession.Stage.ENDED?View.VISIBLE:View.GONE);
-        if(value==null)return;
-        switch(value.stage){
-            case CONNECTING:set(radarStatus,R.string.radar_connecting);set(radarHelp,R.string.radar_wait);break;
-            case READY:set(radarStatus,R.string.radar_ready);set(radarHelp,R.string.radar_help);break;
-            case MEASURING:set(radarStatus,getString(R.string.radar_sampling,value.pendingSamples,6));set(radarHelp,R.string.radar_still);break;
-            default:
-                set(radarStatus,R.string.radar_ended);int message;
-                switch(value.reason){case PERMISSION:message=R.string.permission_denied;break;case BLUETOOTH_OFF:message=R.string.bluetooth_off;break;case BACKGROUND:message=R.string.radar_background;break;case READ_TIMEOUT:case CONNECT_TIMEOUT:message=R.string.radar_timeout;break;case DISCONNECTED:message=R.string.radar_disconnected;break;case SESSION_LIMIT:case POINT_LIMIT:message=R.string.radar_limit;break;case CANCELLED:message=R.string.radar_cancelled;break;default:message=R.string.radar_failed;}
-                set(radarHelp,message);
-        }
-        if(renderedRadarGeneration==value.generation&&renderedRadarPoints==value.points.size())return;
-        renderedRadarGeneration=value.generation;renderedRadarPoints=value.points.size();radarPoints.removeAllViews();
-        if(value.points.isEmpty())text(radarPoints,R.string.radar_no_points,17);
-        for(RadarSession.Point point:value.points){
-            TextView row=text(radarPoints,R.string.radar_no_points,17);
-            if(point.median==null){row.setText(getString(R.string.radar_point_empty,point.id));continue;}
-            int quality=point.quality==RadarSession.Quality.LOW_SAMPLE?R.string.radar_low:point.quality==RadarSession.Quality.VARIABLE?R.string.radar_variable:R.string.radar_stable;
+        RadarSession.Snapshot value=radarSnapshot;if(value==null)return;RadarFeedback f=RadarFeedback.from(value);radarPulse.submit(f);
+        boolean ended=value.stage==RadarSession.Stage.ENDED;radarMeasure.setEnabled(true);set(radarMeasure,ended?(selectedDevice==null?R.string.radar_choose:R.string.live_resume):R.string.live_pause);
+        radarEnd.setVisibility(View.VISIBLE);radarChoose.setVisibility(View.VISIBLE);
+        int headline;switch(f.state){case CONNECTING:headline=R.string.radar_connecting;break;case WAITING_RSSI:headline=R.string.live_waiting;break;case WARMUP:headline=R.string.live_warmup;break;case STALE:headline=R.string.live_stale;break;case PAUSED:headline=R.string.live_paused;break;default:headline=f.trend==RadarSession.Trend.WARMER?R.string.live_warmer:f.trend==RadarSession.Trend.COLDER?R.string.live_colder:f.trend==RadarSession.Trend.SIMILAR?R.string.live_similar:R.string.live_receiving;}
+        set(radarStatus,headline);radarStatus.setTextColor(f.state==RadarFeedback.State.WARMUP||f.state==RadarFeedback.State.STALE||f.state==RadarFeedback.State.WAITING_RSSI?colors.warning:colors.text);
+        set(radarMetric,f.strengthUsable?getString(R.string.live_metric,f.filteredDbm):f.state==RadarFeedback.State.WARMUP?getString(R.string.live_initial_count,f.recentCount):getString(ended?R.string.live_paused_metric:R.string.live_missing_metric));
+        radarDial.setContentDescription(getString(R.string.live_dial_access,getString(headline),getString(ended?R.string.live_resume:R.string.live_pause)));
+        set(radarCounter,getString(R.string.live_counter,f.windowId,f.count,f.attempts));radarSamples.setProgress(f.count);radarSamples.setContentDescription(getString(R.string.live_counter,f.windowId,f.count,f.attempts));radarSamples.setVisibility(!ended?View.VISIBLE:View.GONE);
+        if(ended)set(radarHelp,reasonText(value.reason));else if(f.state==RadarFeedback.State.STALE)set(radarHelp,getString(R.string.live_old_reading,Math.min(999,f.ageMs/1000)));else set(radarHelp,f.trend==RadarSession.Trend.FIRST||f.trend==RadarSession.Trend.INCONCLUSIVE?R.string.live_comparison_wait:R.string.live_signal_only);
+        set(radarBest,f.bestId==0?getString(R.string.live_best_pending):getString(R.string.live_best,f.bestId,f.bestDbm));
+        if(renderedRadarGeneration==value.generation&&renderedRadarPoints==value.completedCount)return;
+        renderedRadarGeneration=value.generation;renderedRadarPoints=value.completedCount;radarPoints.removeAllViews();
+        if(f.history.isEmpty())text(radarPoints,R.string.live_history_empty,18);
+        for(RadarSession.Point point:f.history){LinearLayout item=card(radarPoints);TextView label=text(item,R.string.live_window_title,22);label.setTypeface(null,android.graphics.Typeface.BOLD);label.setText(getString(R.string.live_window_title,point.id));
+            TextView count=text(item,R.string.live_window_count,18);count.setText(getString(R.string.live_window_count,point.samples.size(),point.attempts,point.failures));
+            if(point.median==null){TextView warning=text(item,R.string.live_window_missing,20);warning.setTextColor(colors.warning);if(point.reason!=RadarSession.Reason.NONE)text(item,reasonText(point.reason),16);continue;}
+            if(point.samples.size()<3){TextView warning=text(item,R.string.radar_low,20);warning.setTextColor(colors.warning);continue;}
+            TextView median=text(item,R.string.live_window_median,26);median.setText(getString(R.string.live_window_median,point.median));
+            ProgressBar bar=signalBar(item);bar.setProgress((int)Math.max(0,Math.min(100,(point.median+110)*100/80)));bar.setContentDescription(getString(R.string.live_window_median,point.median));
+            int quality=point.quality==RadarSession.Quality.VARIABLE?R.string.radar_variable:R.string.radar_stable;
             int trend=point.trend==RadarSession.Trend.WARMER?R.string.radar_warmer:point.trend==RadarSession.Trend.COLDER?R.string.radar_colder:point.trend==RadarSession.Trend.SIMILAR?R.string.radar_similar:point.trend==RadarSession.Trend.FIRST?R.string.radar_first:R.string.radar_inconclusive;
-            row.setText(getString(R.string.radar_point,point.id,point.median,point.samples.size(),point.deviation,getString(quality),getString(trend)));
-            ProgressBar bar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);bar.setMax(100);bar.setProgress((int)Math.max(0,Math.min(100,(point.median+110)*100/80)));bar.setContentDescription(getString(R.string.radar_bar,point.id,point.median));radarPoints.addView(bar,new LinearLayout.LayoutParams(-1,dp(18)));
+            text(item,quality,17);text(item,trend,17);if(point.reason!=RadarSession.Reason.NONE)text(item,reasonText(point.reason),16);
         }
     }
     private void showSnapshot(){
@@ -246,7 +269,7 @@ public final class MainActivity extends Activity {
         showText(R.string.license_action,text);
     }
     private void showText(int titleResource,String message){
-        ScrollView scroll=new ScrollView(this);TextView content=new TextView(this);content.setText(message);content.setTextSize(16);
+        ScrollView scroll=new ScrollView(this);TextView content=new TextView(this);content.setText(message);content.setTextColor(colors.text);content.setTextSize(16);
         content.setPadding(dp(20),dp(12),dp(20),dp(12));content.setTextIsSelectable(true);scroll.addView(content);
         new AlertDialog.Builder(this).setTitle(titleResource).setView(scroll).setPositiveButton(R.string.close,null).show();
     }
