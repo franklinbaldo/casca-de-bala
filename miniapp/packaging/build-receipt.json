@@ -1,0 +1,112 @@
+{
+  "receipt_version": 1,
+  "build_source_commit": "dd94514ac413a59942b151d36d87c86bd03be974",
+  "date_utc": "2026-10-25",
+  "installable": false,
+  "binary_persisted_in_git": false,
+  "binary_policy": "AGENTS.md: sem binários de trabalho; builds não entram",
+  "input_sha256": {
+    "app.js": "b774da3d2639c725d7320a3f3caa03dca703318aa1865239c33c39f30e25ea66",
+    "page/index.js": "864c7f3dd7cecc7178f576e022c91d86c93d876d71234e038dacb7cf12f9b9a3",
+    "packaging/build.py": "30b240d766a6c0ee48cc908c5b18a5aba11fc4b266cb7a71a4f4263fa6421e52",
+    "packaging/package.py": "2d4885bba6085f4839729628d13ce1db11224dc89f3249777d22ae26403da581",
+    "packaging/pyproject.toml": "b779ac7919230022bb9341099efad7ad97c8c12de8cb3383123c10c9cfeea28a",
+    "packaging/uv.lock": "7905167de1979b29ba33c023cb81a3bb9caadba60e940f78cbdaef4865e39e2e",
+    "packaging/runtime.test.mjs": "7a1848f4a842e33cb6a363ae09990e0c89295d0500566b87e3d6163fa4be6691"
+  },
+  "generated_manifest": {
+    "app": {
+      "appId": 305441741,
+      "appIdType": 0,
+      "appName": "Band7 Lab",
+      "appType": "app",
+      "description": "Lab only; target and ID unverified",
+      "icon": "icon.png",
+      "vender": "workspace",
+      "version": {
+        "code": 1,
+        "name": "0.1.0"
+      }
+    },
+    "configVersion": "v2",
+    "debug": false,
+    "module": {
+      "page": {
+        "pages": [
+          "page/index"
+        ]
+      }
+    },
+    "packageInfo": {
+      "expiredTime": 157680000,
+      "mode": "preview",
+      "timeStamp": 1767225600,
+      "zmake": "v1.9.2",
+      "zpm": "2.6.6"
+    },
+    "permissions": [],
+    "platforms": [
+      {
+        "deviceSource": 263,
+        "name": "l66w_2"
+      }
+    ],
+    "runtime": {
+      "apiVersion": {
+        "compatible": "1.0.0",
+        "minVersion": "1.0.0",
+        "target": "1.0.1"
+      }
+    }
+  },
+  "original_build_report": {
+    "appId_collision_checked": false,
+    "bytes": 4906,
+    "entries": [
+      "app.js",
+      "app.json",
+      "assets/icon.png",
+      "page/index.js"
+    ],
+    "icon_roundtrip": "pass",
+    "identified_user_device": false,
+    "installable": false,
+    "kind": "band7-device-payload-inspection-v1",
+    "pillow": "12.3.0",
+    "profile": "lab-only-international-263",
+    "python": "3.12.14",
+    "qrcode": "7.4.2",
+    "result": "structural_profile_pass",
+    "sha256": "096cfee07fd590f45c773457b13e1e278013ac6b9548d2cf93e5d541d9245f7e",
+    "source_sha256": {
+      "app.js": "b774da3d2639c725d7320a3f3caa03dca703318aa1865239c33c39f30e25ea66",
+      "page/index.js": "864c7f3dd7cecc7178f576e022c91d86c93d876d71234e038dacb7cf12f9b9a3"
+    },
+    "unverified": [
+      "target_compatibility",
+      "appId_collision",
+      "asset_encoding",
+      "runtime_semantics",
+      "authenticity",
+      "device_installation"
+    ],
+    "zmake_commit": "47acece62528a86a1445d92414cd9a087037eb1c"
+  },
+  "comparison": {
+    "executions": 2,
+    "result": "byte_identical",
+    "scope": "normalized candidates produced by prior authorized builds; no new build in persistence step"
+  },
+  "reproduction": "README.md#builder-aprovado-e-executado--25102026",
+  "external_source": {
+    "repository": "https://github.com/melianmiko/zmake",
+    "commit": "47acece62528a86a1445d92414cd9a087037eb1c",
+    "vendored": false
+  },
+  "limits": [
+    "binary copies and build trees remain executor-local /tmp; not durably uploaded",
+    "receipt preserves observed result, not a guarantee of future bit-identical builds on other runtimes",
+    "device identity, appId collision, physical installation and Android/BLE untested"
+  ],
+  "export_note": "Historical laboratory candidate receipt; no binary or physical compatibility claim distributed with this source"
+}

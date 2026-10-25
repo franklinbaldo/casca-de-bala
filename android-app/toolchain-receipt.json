@@ -1,0 +1,29 @@
+{
+  "scope": "source_build_requirements_not_a_binary_release",
+  "java": {
+    "major": 21,
+    "reference_version": "21.0.12.1"
+  },
+  "gradle": {
+    "version": "8.11.1",
+    "source": "https://downloads.gradle.org/distributions/gradle-8.11.1-bin.zip",
+    "sha256": "f397b287023acdba1e9f6fc5ea72d22dd63669d59ed4a289a29b1a76eee151c6"
+  },
+  "rust": {
+    "version": "1.99.1",
+    "target": "aarch64-linux-android"
+  },
+  "agp": {
+    "version": "8.9.2"
+  },
+  "sdk": {
+    "platform": "android-35",
+    "platform_revision": 2,
+    "build_tools": "35.0.0",
+    "ndk": "27.0.12077973",
+    "commandline_tools": "19.0",
+    "terms_url": "https://developer.android.com/studio/terms"
+  },
+  "signing": "No keystore or APK distributed; user supplies their own signing identity when building a binary",
+  "dependency_verification": "Gradle verification-metadata.xml retained; bootstrap hashes are not independently audited signatures"
+}

@@ -1,0 +1,130 @@
+<resources>
+    <string name="app_name">Minha pulseira — laboratório</string>
+    <string name="home_title">Minha pulseira</string>
+    <string name="home_subtitle">Veja a bateria e as informações disponíveis. Esta versão só faz leitura.</string>
+    <string name="find">Encontrar minha pulseira</string>
+    <string name="find_again">Buscar novamente</string>
+    <string name="read_again">Ler novamente</string>
+    <string name="choose_another">Escolher outra pulseira</string>
+    <string name="cancel">Cancelar</string>
+    <string name="allow">Permitir</string>
+    <string name="settings">Abrir configurações</string>
+    <string name="permission_title">Dispositivos próximos</string>
+    <string name="permission_why">Precisamos de Dispositivos próximos para encontrar e ler sua pulseira. A busca só acontece quando você pede e para em até 12 segundos. Nada é enviado à Internet.</string>
+    <string name="permission_denied">Sem essa permissão, a busca não começa. Você pode tentar permitir novamente.</string>
+    <string name="permission_settings">A permissão não foi liberada. Abra as configurações deste app e permita Dispositivos próximos. Não é necessário permitir localização.</string>
+    <string name="searching">Procurando sua pulseira…</string>
+    <string name="choose_title">Selecione sua pulseira</string>
+    <string name="choose_help">Os nomes são anunciados pelos dispositivos; não confirmam o modelo. Escolha sua pulseira. Os números distinguem esta lista. O sinal é apenas uma estimativa e não comprova identidade ou distância.</string>
+    <string name="row">%1$s · dispositivo %2$d</string>
+    <string name="row_signal">%1$s · dispositivo %2$d · sinal estimado %3$d dBm</string>
+    <string name="unnamed">Dispositivo sem nome</string>
+    <string name="empty">Nenhum dispositivo encontrado. Aproxime a pulseira e mantenha-a carregada.</string>
+    <string name="search_done">Busca encerrada. Se sua pulseira apareceu, selecione-a abaixo.</string>
+    <string name="search_limit">A lista atingiu o limite de 32 dispositivos. Se sua pulseira não apareceu, aproxime-a e busque novamente.</string>
+    <string name="search_failed">Não foi possível concluir a busca. Aguarde alguns segundos e tente novamente.</string>
+    <string name="bluetooth_off">Ligue o Bluetooth para buscar sua pulseira.</string>
+    <string name="bluetooth_unavailable">Este aparelho não disponibiliza Bluetooth LE para o aplicativo.</string>
+    <string name="bluetooth_settings">Abrir Bluetooth</string>
+    <string name="search_cancelled">Busca cancelada. Você pode começar novamente quando quiser.</string>
+    <string name="connecting">Conectando…</string>
+    <string name="reading">Lendo informações…</string>
+    <string name="complete">Leitura concluída</string>
+    <string name="partial">Leitura parcial</string>
+    <string name="no_information">Nenhuma informação recebida</string>
+    <string name="no_information_help">Nenhum valor foi recebido nesta tentativa. Você pode tentar novamente.</string>
+    <string name="timeout_empty_help">O tempo de espera terminou sem receber informações. Aproxime a pulseira e tente novamente.</string>
+    <string name="cancelled_empty_help">A leitura foi cancelada antes de receber informações.</string>
+    <string name="read_failed">Não foi possível ler a pulseira</string>
+    <string name="interrupted">Leitura interrompida</string>
+    <string name="read_help">Mantenha a pulseira por perto. Esta conexão será encerrada após a leitura.</string>
+    <string name="complete_help">Esta é uma leitura pontual, não uma conexão permanente.</string>
+    <string name="partial_help">Algumas informações não ficaram disponíveis. Os valores recebidos foram preservados.</string>
+    <string name="retry_help">Aproxime a pulseira e tente novamente. Outro app, como Zepp Life, pode estar usando a conexão. Não remova apps nem desfaça o pareamento.</string>
+    <string name="timeout_help">O tempo de espera terminou. Os valores recebidos continuam abaixo. Aproxime a pulseira e tente novamente.</string>
+    <string name="background_help">Ao sair do app, a busca e a conexão foram encerradas. Você pode procurar novamente.</string>
+    <string name="cancelled_help">A leitura foi cancelada. Os valores recebidos continuam abaixo.</string>
+    <string name="service_changed_help">As informações da conexão mudaram. Faça outra leitura para começar uma sessão nova.</string>
+    <string name="native_help">Não foi possível abrir o componente de leitura. Confira se instalou a versão ARM64 para Android 12 ou mais recente.</string>
+    <string name="battery">Bateria</string>
+    <string name="battery_percent">%1$d%%</string>
+    <string name="not_available">Não disponível nesta leitura</string>
+    <string name="waiting">Aguardando leitura</string>
+    <string name="information">Informações da pulseira</string>
+    <string name="hardware">Revisão de hardware</string>
+    <string name="software">Versão de software</string>
+    <string name="read_at">Lido às %1$s, no horário do celular</string>
+    <string name="technical">Detalhes técnicos</string>
+    <string name="technical_title">Detalhes desta leitura</string>
+    <string name="pnp_details">Fabricante: 0x%1$04X\nProduto: 0x%2$04X\nVersão do produto: 0x%3$04X\n\nEsses códigos não determinam a região ou o alvo de miniapp. Nenhum endereço Bluetooth é exibido.</string>
+    <string name="pnp_missing">Os códigos de produto não ficaram disponíveis nesta leitura.</string>
+    <string name="close">Fechar</string>
+    <string name="version">Laboratório 0.4 · radar por sinal e leitura básica</string>
+    <string name="bonded">Já vinculadas ao celular</string>
+    <string name="nearby">Buscar por perto</string>
+    <string name="bonded_home_help">Sua pulseira já foi vinculada ao Bluetooth do celular? Comece pela lista de vinculadas. Também é possível buscar anúncios por perto.</string>
+    <string name="bonded_permission_why">Precisamos de Dispositivos próximos para ler a lista de vínculos salva pelo Android e conectar à pulseira escolhida. Esta ação não faz busca de anúncios e não pede permissão de localização.</string>
+    <string name="bonded_loading">Lendo a lista do celular…</string>
+    <string name="bonded_help">Selecione sua pulseira. Um vínculo salvo não confirma que ela esteja por perto ou conectada. Dispositivos somente de Bluetooth clássico ficam fora desta lista.</string>
+    <string name="bonded_empty">Não há dispositivos para esta lista de vinculadas. Você pode tentar Buscar por perto, sem criar ou remover vínculos.</string>
+    <string name="bonded_refresh">Atualizar lista</string>
+    <string name="bonded_failed">Não foi possível carregar a lista do celular. Aguarde alguns segundos e tente atualizar.</string>
+    <string name="bluetooth_changing">Aguarde o Bluetooth terminar de ligar ou desligar e atualize a lista.</string>
+    <string name="origin_bonded">Vinculada ao celular · alcance não confirmado</string>
+    <string name="origin_found">Encontrada nesta busca</string>
+    <string name="origin_both">Vinculada ao celular · encontrada nesta busca</string>
+    <string name="row_origin">%1$s\n%2$s</string>
+    <string name="unknown_row">%1$s · tipo Bluetooth não informado</string>
+    <string name="unknown_title">Tipo Bluetooth não informado</string>
+    <string name="unknown_help">O Android não confirma se este dispositivo usa Bluetooth LE. Se você reconhece sua pulseira, pode tentar uma leitura. Não será iniciado pareamento.</string>
+    <string name="try_read">Tentar leitura</string>
+    <string name="snapshot_action">Ver snapshot local</string>
+    <string name="snapshot_title">Dados validados no Rust</string>
+    <string name="snapshot_explanation">Esta resposta usa a leitura já mostrada na tela. Compare bateria, revisões e horário. O botão não lê a pulseira novamente, não envia dados e não conecta ao MCP. A origem declarada é o aplicativo; valores ausentes e erros permanecem explícitos.</string>
+    <string name="snapshot_error">Não foi possível validar o snapshot no núcleo Rust. Os dados da tela foram preservados. Esta mensagem não indica falha da pulseira.</string>
+    <string name="license_action">Licença e código-fonte</string>
+    <string name="license_explanation">Band 7 terminal · laboratório 0.4
+
+Licença: GNU Affero General Public License, versão 3 ou posterior (AGPL-3.0-or-later).
+
+Referências e derivações Gadgetbridge: José Rebelo e demais contribuidores, com avisos preservados. As licenças permissivas das dependências continuam aplicáveis; seus avisos acompanham o APK.
+
+Código correspondente a esta versão: band7-basic-reader-0.4-lab-source.tar.gz, oferecido junto ao instalador pelo mesmo canal. Esse arquivo é fonte, não instalador. Se não o recebeu, solicite-o ao distribuidor.
+
+O texto completo da AGPL v3 segue abaixo; a opção por versões posteriores consta nos avisos e metadados do projeto.</string>
+    <string name="license_unavailable">O texto da licença não pôde ser aberto. Consulte LICENSE no código-fonte correspondente.</string>
+    <string name="radar_open">Radar da pulseira</string>
+    <string name="radar_title">Radar por força de sinal</string>
+    <string name="radar_description">Selecione a pulseira vinculada. Ande, pare e meça: comparamos o sinal entre suas paradas. Sem GPS, metros, direção ou posição estimada.</string>
+    <string name="radar_connecting">Conectando para medir sinal…</string>
+    <string name="radar_wait">Aguarde a conexão com a pulseira escolhida. Nenhum pareamento será iniciado.</string>
+    <string name="radar_ready">Pronto para marcar um ponto</string>
+    <string name="radar_help">Ande até um lugar, pare e toque Medir. Após o resultado, repita em outro lugar. Paredes, corpo e orientação podem mudar o sinal sem você se aproximar.</string>
+    <string name="radar_measure">Parei aqui: medir ponto</string>
+    <string name="radar_sampling">Medindo · amostras recebidas: %1$d / %2$d</string>
+    <string name="radar_still">Fique parado por alguns segundos. As amostras descrevem a oscilação do sinal, não são posições nem provas independentes.</string>
+    <string name="radar_end">Encerrar busca</string>
+    <string name="radar_choose">Escolher pulseira e começar outra busca</string>
+    <string name="radar_map_title">Pontos medidos · ordem das paradas</string>
+    <string name="radar_no_points">Marque uma parada para começar. Os pontos representam a ordem das medições.</string>
+    <string name="radar_point">Ponto %1$d · mediana %2$.1f dBm
+Amostras: %3$d · dispersão %4$.1f dB
+%5$s · %6$s</string>
+    <string name="radar_point_empty">Ponto %1$d · nenhum RSSI recebido. Isso não significa sinal zero ou pulseira fora de alcance.</string>
+    <string name="radar_bar">Ponto %1$d, intensidade de sinal %2$.1f dBm; barra relativa, não distância.</string>
+    <string name="radar_low">Poucas amostras</string>
+    <string name="radar_variable">Sinal oscilando</string>
+    <string name="radar_stable">Baixa dispersão nesta janela</string>
+    <string name="radar_warmer">Mais quente: sinal mais forte</string>
+    <string name="radar_colder">Mais frio: sinal mais fraco</string>
+    <string name="radar_similar">Sem diferença clara de sinal</string>
+    <string name="radar_first">Primeiro ponto com sinal</string>
+    <string name="radar_inconclusive">Comparação inconclusiva</string>
+    <string name="radar_ended">Busca encerrada</string>
+    <string name="radar_background">A busca foi encerrada ao sair ou girar a tela. Os pontos disponíveis foram preservados nesta tela; escolha a pulseira para uma nova busca.</string>
+    <string name="radar_timeout">A conexão ou uma resposta de sinal demorou demais. A sessão foi fechada para não confundir uma resposta atrasada com outro ponto.</string>
+    <string name="radar_disconnected">A conexão terminou. Os pontos recebidos foram preservados. Isso não identifica a causa nem a posição da pulseira.</string>
+    <string name="radar_limit">Limite desta busca atingido: até 2 minutos ou 8 pontos. Você pode começar outra busca.</string>
+    <string name="radar_cancelled">Você encerrou a busca. Nenhuma medição continua em segundo plano.</string>
+    <string name="radar_failed">Não foi possível continuar a medição. Os pontos disponíveis permanecem; nenhum sinal ausente virou distância ou posição.</string>
+</resources>

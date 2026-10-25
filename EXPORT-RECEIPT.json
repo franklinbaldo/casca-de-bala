@@ -1,0 +1,90 @@
+{
+  "date_utc": "2026-10-25",
+  "license": "AGPL-3.0-or-later",
+  "artifact": "source_only_companion_of_separate_APK",
+  "build_context": "standalone_directory_outside_original_monorepo",
+  "tools": {
+    "rust": "1.99.1",
+    "java": "21.0.12.1",
+    "node": "24.19.0",
+    "gradle": "8.11.1",
+    "agp": "8.9.2",
+    "sdk_platform": "35 revision 2",
+    "build_tools": "35.0.0",
+    "ndk": "27.0.12077973",
+    "python": "3.12"
+  },
+  "checks": {
+    "rust_tests": {
+      "status": "PASS",
+      "count": 58
+    },
+    "rustfmt": "PASS",
+    "clippy": "PASS -D warnings",
+    "host_JNI": "PASS 7 harnesses including synthetic radar and snapshot",
+    "host_worker": "PASS synthetic backend",
+    "host_C_ABI": "PASS real Rust SQLite synthetic fixture",
+    "node_page_vm": {
+      "status": "PASS",
+      "count": 7
+    },
+    "python_package_inspection": {
+      "status": "PASS",
+      "count": 5
+    },
+    "android_native": "PASS aarch64-linux-android",
+    "android_java": "PASS compileDebugJavaWithJavac",
+    "android_lint": {
+      "status": "PASS_WITH_WARNING",
+      "errors": 0,
+      "warnings": 1,
+      "issue": "DataExtractionRules"
+    },
+    "optional_miniapp_repeat": "PASS identical candidates",
+    "optional_miniapp_mock_runtime": {
+      "status": "PASS",
+      "count": 1
+    },
+    "markdown_links_fences": {
+      "status": "PASS",
+      "files": 25
+    }
+  },
+  "not_run": [
+    "RSSI and snapshot ART/physical QA",
+    "GPS/Wi-Fi/spatial estimator",
+    "MCP remote",
+    "health auth/fetch",
+    "firmware"
+  ],
+  "prior_manual_evidence": "User-reported screenshot of version0.3 displayed basic identification and battery; not automated and no image/identifier included",
+  "privacy": "Sources only; limited pattern scan and manual curation, not a complete security certification",
+  "optional_miniapp": {
+    "installable": false,
+    "bytes": 4906,
+    "sha256": "096cfee07fd590f45c773457b13e1e278013ac6b9548d2cf93e5d541d9245f7e",
+    "builder_commit": "47acece62528a86a1445d92414cd9a087037eb1c",
+    "binary_included": false
+  },
+  "verification_revision": {
+    "change": "Normal APK recipe strictly verifies pinned dependencies offline; checksum maintenance is separate and explicit",
+    "application_sources_changed": false,
+    "original_pins_and_notices_preserved": true,
+    "strict_verification_test": {
+      "status": "PASS",
+      "cases": [
+        "original pinned metadata accepted",
+        "mismatched AGP jar checksum rejected",
+        "missing AGP jar checksum rejected"
+      ],
+      "metadata_unchanged": true,
+      "offline": true,
+      "APK_or_keytool_executed": false
+    },
+    "shell_syntax": "PASS",
+    "previous_tests": "Retained for identical Rust/Java/native application sources; not rerun unnecessarily",
+    "evidence_document": "Initial ZMake consultation distinguished from later fixed-builder execution"
+  },
+  "release": "0.4-lab corresponding source",
+  "apk_receipt": "APK-RECEIPT.json"
+}

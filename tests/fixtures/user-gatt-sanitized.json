@@ -1,0 +1,25 @@
+{
+  "origin": "user-provided-nrf-connect",
+  "reported_date_utc": "2026-10-25",
+  "commercial_model": "Xiaomi Smart Band 7",
+  "companion": "Zepp Life",
+  "connect_status": 0,
+  "discovery_status": 0,
+  "link_encryption": "ENABLED AES 16 LE",
+  "reads": [
+    {"service": "180A", "characteristic": "2A27", "hex": "302e39312e3133302e35", "text": "0.91.130.5"},
+    {"service": "180A", "characteristic": "2A28", "hex": "322e322e302e31", "text": "2.2.0.1"},
+    {"service": "180A", "characteristic": "2A50", "hex": "01570167000201"},
+    {"service": "180F", "characteristic": "2A19", "hex": "5b"}
+  ],
+  "discovery_only": [{"service": "180D", "characteristic": "2A37", "property": "Notify", "measurement_read": false}],
+  "proprietary_discovery_only": {
+    "service": "FEE0",
+    "characteristic_vendor_base": "0000xxxx-0000-3512-2118-0009af100700",
+    "properties_reported": {"0016": "NWNR", "0017": "NWNR", "0001": "NW", "0002": "N", "0004": "NWNR", "0005": "N", "0006": "NWNR"}
+  },
+  "permission_denied": {"service": "1812", "characteristics": ["2A4A", "2A4B", "2A4D"], "android_permission": "BLUETOOTH_PRIVILEGED"},
+  "our_app_physical_reads": false,
+  "huami_authentication_verified": false,
+  "device_source": null
+}

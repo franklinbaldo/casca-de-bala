@@ -1,0 +1,24 @@
+#ifndef BAND7_H
+#define BAND7_H
+#include <stddef.h>
+#include <stdint.h>
+/* ABI v1. Caller owns both buffers; no pointer is retained or freed by Rust.
+   Return and result.status: 0 ok, 1 invalid input/limit, 2 stale handle,
+   3 database/schema error, 4 ingestion/conflict, 5 poisoned lock, 6 caught panic.
+   Output must be aligned, non-overlapping and writable; invalid nonnull pointers
+   are caller UB. No cancellation/retry implied by an error. */
+typedef struct {
+    int32_t status;
+    uint32_t has_cursor;
+    uint64_t handle;
+    int64_t cursor;
+    uint32_t inserted, records, missing, reserved;
+} B7Result;
+int32_t b7_call(const uint8_t *input, size_t length, B7Result *result);
+/* Stateless basic GATT JSON; input/output max 32768 bytes. No GATT IO.
+   0: JSON copied (inspect error field); 1: pointer/input length invalid;
+   8: capacity insufficient; 6: caught panic. Errors leave output untouched,
+   *written=0 (when written is nonnull). No NUL terminator. No retained memory. */
+int32_t b7_gatt_json(const uint8_t *input, size_t length, uint8_t *output,
+                    size_t capacity, size_t *written);
+#endif

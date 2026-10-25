@@ -1,0 +1,260 @@
+[
+  {
+    "name": "bitflags",
+    "version": "2.13.2",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/bitflags-2.13.2/LICENSE-APACHE",
+      "third_party/licenses/bitflags-2.13.2/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "cc",
+    "version": "1.10.0",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/cc-1.10.0/LICENSE-APACHE",
+      "third_party/licenses/cc-1.10.0/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "fallible-iterator",
+    "version": "0.3.0",
+    "declared_license": "MIT/Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/fallible-iterator-0.3.0/LICENSE-APACHE",
+      "third_party/licenses/fallible-iterator-0.3.0/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "fallible-streaming-iterator",
+    "version": "0.1.9",
+    "declared_license": "MIT/Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/fallible-streaming-iterator-0.1.9/LICENSE-APACHE",
+      "third_party/licenses/fallible-streaming-iterator-0.1.9/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "find-msvc-tools",
+    "version": "0.1.15",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/find-msvc-tools-0.1.15/LICENSE-APACHE",
+      "third_party/licenses/find-msvc-tools-0.1.15/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "foldhash",
+    "version": "0.2.0",
+    "declared_license": "Zlib",
+    "notice_files": [
+      "third_party/licenses/foldhash-0.2.0/LICENSE"
+    ]
+  },
+  {
+    "name": "hashbrown",
+    "version": "0.17.1",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/hashbrown-0.17.1/LICENSE-APACHE",
+      "third_party/licenses/hashbrown-0.17.1/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "hashlink",
+    "version": "0.12.2",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/hashlink-0.12.2/LICENSE-APACHE",
+      "third_party/licenses/hashlink-0.12.2/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "itoa",
+    "version": "1.0.18",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/itoa-1.0.18/LICENSE-APACHE",
+      "third_party/licenses/itoa-1.0.18/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "libsqlite3-sys",
+    "version": "0.39.0",
+    "declared_license": "MIT",
+    "notice_files": [
+      "third_party/licenses/libsqlite3-sys-0.39.0/LICENSE"
+    ]
+  },
+  {
+    "name": "memchr",
+    "version": "2.8.3",
+    "declared_license": "Unlicense OR MIT",
+    "notice_files": [
+      "third_party/licenses/memchr-2.8.3/COPYING",
+      "third_party/licenses/memchr-2.8.3/LICENSE-MIT",
+      "third_party/licenses/memchr-2.8.3/UNLICENSE"
+    ]
+  },
+  {
+    "name": "pkg-config",
+    "version": "0.3.34",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/pkg-config-0.3.34/LICENSE-APACHE",
+      "third_party/licenses/pkg-config-0.3.34/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "proc-macro2",
+    "version": "1.0.107",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/proc-macro2-1.0.107/LICENSE-APACHE",
+      "third_party/licenses/proc-macro2-1.0.107/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "quote",
+    "version": "1.0.47",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/quote-1.0.47/LICENSE-APACHE",
+      "third_party/licenses/quote-1.0.47/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "rsqlite-vfs",
+    "version": "0.2.0",
+    "declared_license": "MIT",
+    "notice_files": [
+      "third_party/licenses/rsqlite-vfs-0.2.0/LICENSE-MIT"
+    ],
+    "license_source": "https://github.com/Spxg/sqlite-wasm-rs/blob/3d8318430bacd7d6a1aafdf5b5e54fb0fee8d451/LICENSE"
+  },
+  {
+    "name": "rusqlite",
+    "version": "0.41.0",
+    "declared_license": "MIT",
+    "notice_files": [
+      "third_party/licenses/rusqlite-0.41.0/LICENSE"
+    ]
+  },
+  {
+    "name": "serde",
+    "version": "1.0.229",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/serde-1.0.229/LICENSE-APACHE",
+      "third_party/licenses/serde-1.0.229/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "serde_core",
+    "version": "1.0.229",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/serde_core-1.0.229/LICENSE-APACHE",
+      "third_party/licenses/serde_core-1.0.229/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "serde_derive",
+    "version": "1.0.229",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/serde_derive-1.0.229/LICENSE-APACHE",
+      "third_party/licenses/serde_derive-1.0.229/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "serde_json",
+    "version": "1.0.154",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/serde_json-1.0.154/LICENSE-APACHE",
+      "third_party/licenses/serde_json-1.0.154/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "shlex",
+    "version": "2.0.1",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/shlex-2.0.1/LICENSE-APACHE",
+      "third_party/licenses/shlex-2.0.1/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "smallvec",
+    "version": "1.16.4",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/smallvec-1.16.4/LICENSE-APACHE",
+      "third_party/licenses/smallvec-1.16.4/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "sqlite-wasm-rs",
+    "version": "0.6.2",
+    "declared_license": "MIT",
+    "notice_files": [
+      "third_party/licenses/sqlite-wasm-rs-0.6.2/LICENSE"
+    ]
+  },
+  {
+    "name": "syn",
+    "version": "3.0.9",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/syn-3.0.9/LICENSE-APACHE",
+      "third_party/licenses/syn-3.0.9/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "thiserror",
+    "version": "2.0.21",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/thiserror-2.0.21/LICENSE-APACHE",
+      "third_party/licenses/thiserror-2.0.21/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "thiserror-impl",
+    "version": "2.0.21",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/thiserror-impl-2.0.21/LICENSE-APACHE",
+      "third_party/licenses/thiserror-impl-2.0.21/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "unicode-ident",
+    "version": "1.0.27",
+    "declared_license": "(MIT OR Apache-2.0) AND Unicode-3.0",
+    "notice_files": [
+      "third_party/licenses/unicode-ident-1.0.27/LICENSE-APACHE",
+      "third_party/licenses/unicode-ident-1.0.27/LICENSE-MIT",
+      "third_party/licenses/unicode-ident-1.0.27/LICENSE-UNICODE"
+    ]
+  },
+  {
+    "name": "vcpkg",
+    "version": "0.2.15",
+    "declared_license": "MIT/Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/vcpkg-0.2.15/LICENSE-APACHE",
+      "third_party/licenses/vcpkg-0.2.15/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "zmij",
+    "version": "1.0.23",
+    "declared_license": "MIT",
+    "notice_files": [
+      "third_party/licenses/zmij-1.0.23/LICENSE-MIT"
+    ]
+  }
+]

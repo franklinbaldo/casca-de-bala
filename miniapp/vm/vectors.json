@@ -1,0 +1,122 @@
+[
+  {
+    "name": "addition",
+    "hex": "4237564d010004000107000000010500000002000000000000000000",
+    "value": 12,
+    "steps": 4,
+    "instructions": [
+      {
+        "op": "push",
+        "arg": 7
+      },
+      {
+        "op": "push",
+        "arg": 5
+      },
+      {
+        "op": "add",
+        "arg": 0
+      },
+      {
+        "op": "halt",
+        "arg": 0
+      }
+    ]
+  },
+  {
+    "name": "comparison",
+    "hex": "4237564d010004000107000000010500000007000000000000000000",
+    "value": 1,
+    "steps": 4,
+    "instructions": [
+      {
+        "op": "push",
+        "arg": 7
+      },
+      {
+        "op": "push",
+        "arg": 5
+      },
+      {
+        "op": "gt",
+        "arg": 0
+      },
+      {
+        "op": "halt",
+        "arg": 0
+      }
+    ]
+  },
+  {
+    "name": "wrapping",
+    "hex": "4237564d0100040001ffffff7f010100000002000000000000000000",
+    "value": -2147483648,
+    "steps": 4,
+    "instructions": [
+      {
+        "op": "push",
+        "arg": 2147483647
+      },
+      {
+        "op": "push",
+        "arg": 1
+      },
+      {
+        "op": "add",
+        "arg": 0
+      },
+      {
+        "op": "halt",
+        "arg": 0
+      }
+    ]
+  },
+  {
+    "name": "dup_multiply",
+    "hex": "4237564d01000400010c000000050000000004000000000000000000",
+    "value": 144,
+    "steps": 4,
+    "instructions": [
+      {
+        "op": "push",
+        "arg": 12
+      },
+      {
+        "op": "dup",
+        "arg": 0
+      },
+      {
+        "op": "mul",
+        "arg": 0
+      },
+      {
+        "op": "halt",
+        "arg": 0
+      }
+    ]
+  },
+  {
+    "name": "wide_multiply",
+    "hex": "4237564d010004000101000100010100010004000000000000000000",
+    "value": 131073,
+    "steps": 4,
+    "instructions": [
+      {
+        "op": "push",
+        "arg": 65537
+      },
+      {
+        "op": "push",
+        "arg": 65537
+      },
+      {
+        "op": "mul",
+        "arg": 0
+      },
+      {
+        "op": "halt",
+        "arg": 0
+      }
+    ]
+  }
+]

@@ -1,0 +1,1 @@
+{"version":1,"id":73,"command":{"op":"snapshot","snapshot":{"reader":"synthetic","stage":"partial","cause":"timeout","read_at_unix_ms":123456789,"fields":{"battery":{"state":"read","value":0},"hardware":{"state":"read","value":"lab-α"},"software":{"state":"not_read","value":null},"pnp":{"state":"denied","value":null}}}}}
