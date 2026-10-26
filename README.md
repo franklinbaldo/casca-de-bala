@@ -13,6 +13,22 @@ console local. Licença do projeto: **AGPL-3.0-or-later**, com avisos de terceir
 preservados em [PROVENANCE.md](PROVENANCE.md) e [third_party](third_party/).
 Este pacote contém a fonte correspondente ao APK0.5; não inclui APK, SDK, chaves ou dados pessoais.
 
+## Instalar
+
+Cada push na `main` publica um APK ARM64 assinado como prerelease
+`ci-v<versionCode>-<commit>` nas [Releases](https://github.com/franklinbaldo/casca-de-bala/releases).
+Android 12+. Duas formas de receber atualizações automáticas:
+
+- **Obtainium:** adicione `https://github.com/franklinbaldo/casca-de-bala` e
+  ative "Include prereleases".
+- **F-Droid:** adicione o repositório do projeto, publicado em
+  https://franklinbaldo.github.io/casca-de-bala/ (link com a impressão digital
+  do repositório). Ele traz as últimas 5 releases, conferidas contra o
+  certificado fixado do APK.
+
+Quem tinha uma versão de laboratório com outra chave pode precisar remover
+somente o Casca anterior uma vez; preserve Zepp Life e o pareamento.
+
 ## O que funciona e qual é a evidência
 
 - Android foreground: selecionar dispositivo já vinculado ou buscar anúncios BLE,
@@ -48,19 +64,20 @@ Objetivo: MCP → console no Android/núcleo Rust → BLE → Band, com eventos 
 
 ## Compilar e testar
 
-Veja [BUILDING.md](BUILDING.md) para versões exatas, caches, Android e licença SDK.
-Execute na raiz extraída, sem depender do monorepo:
+Com [just](https://just.systems), Rust (o `rust-toolchain.toml` fixa a versão),
+Java 21, Node e um compilador C:
 
 ```sh
-cargo test --offline
-cargo fmt --all -- --check
-cargo clippy --offline --all-targets -- -D warnings
-sh android-bridge/run_host.sh
-sh android-bridge/run_worker_host.sh
-node --test miniapp/tests/page.test.mjs miniapp/tests/vm.test.mjs
-cargo run --offline -- --gatt-json < tests/fixtures/basic-snapshot-synthetic.json
-node scripts/check-source.mjs
+just test      # Rust, ponte JNI, miniapp e contratos de CI; sem Android SDK
+just lint      # rustfmt, clippy e guarda de arquivos versionados
+just apk       # APK release unsigned (ANDROID_HOME e ANDROID_NDK_HOME)
+just install   # APK debug no celular conectado via adb
+just ci        # exatamente o que o CI roda
+cargo run --offline -p casca-cli -- --gatt-json < fixtures/basic-snapshot-synthetic.json
 ```
+
+O Gradle vem pelo wrapper (`android-app/gradlew`, distribuição fixada por SHA-256).
+Veja [BUILDING.md](BUILDING.md) para versões exatas, caches, Android e licença SDK.
 
 Offline requer dependências já baixadas. Preparação de caches é explícita;
 nenhum script aceita contratos ou instala SDK automaticamente. O exemplo de
@@ -68,8 +85,19 @@ snapshot é sintético e não se conecta ao celular ou ao relógio.
 
 ## Organização
 
-`src/` e `tests/`: um crate Rust, biblioteca cdylib e CLI. `android-app/`: aplicativo
-Android e build Gradle. `android-bridge/` e `ffi/`: Java/JNI/C ABI e harnesses.
+Workspace Cargo em `crates/`, dependências apontando só para baixo:
+
+| Crate | Papel | No APK |
+| --- | --- | --- |
+| `casca-core` | contratos tipados, decoders GATT/Huami/Activity8/HR/SpO2; sem I/O | sim |
+| `casca-store` | SQLite (rusqlite bundled) e SyncSession sobre o core | sim |
+| `casca-ffi` | C ABI (`ffi/band7.h`), gera `libband7_terminal.so` | sim |
+| `casca-cli` | console offline `band7-terminal` | não |
+| `casca-microvm` | B7VM v1 experimental | não |
+
+`fixtures/`: entradas sintéticas/sanitizadas compartilhadas. `android-app/`: aplicativo
+Android e build Gradle. `android-bridge/`: módulo Gradle `:bridge` (Java puro),
+shim JNI e harnesses de host (`test.sh`). `ffi/`: C ABI.
 `miniapp/` e `bench/`: experimentos existentes. `docs/`: contratos, evidências,
 limites e plano de recuperação. [Validação desta fonte](docs/validation.md).
 Não há diretórios vazios para funcionalidades futuras.

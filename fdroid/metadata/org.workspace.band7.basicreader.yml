@@ -1,0 +1,18 @@
+Categories:
+  - Connectivity
+License: AGPL-3.0-or-later
+SourceCode: https://github.com/franklinbaldo/casca-de-bala
+IssueTracker: https://github.com/franklinbaldo/casca-de-bala/issues
+Changelog: https://github.com/franklinbaldo/casca-de-bala/releases
+
+Name: Casca de Bala
+Summary: Leitura básica e radar BLE para a Xiaomi Smart Band 7
+Description: |-
+  Aplicativo pessoal e experimental para a Xiaomi Smart Band 7 comum, com núcleo Rust.
+
+  * Seleciona um dispositivo já vinculado ou busca anúncios BLE.
+  * Conecta só quando você pede e lê bateria, revisões de hardware/software e PnP.
+  * Radar visual contínuo de RSSI, sem estimar distância nem posição.
+
+  Não pareia automaticamente, não escreve na pulseira e não envia dados para a internet.
+  Build e assinatura não comprovam funções físicas da Band em todos os aparelhos.

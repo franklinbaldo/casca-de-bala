@@ -2,7 +2,7 @@
 
 Evidência fornecida pelo usuário em 25/10/2026 UTC (data local 24/10), por leitura
 com **nRF Connect**, não com nosso aplicativo. Somente valores técnicos
-sanitizados em tests/fixtures/user-gatt-sanitized.json; sem log original, nome
+sanitizados em fixtures/user-gatt-sanitized.json; sem log original, nome
 com sufixo, endereço Bluetooth, serial ou valor de System ID. Isto não autoriza
 nova conexão, leitura, notification, pareamento ou escrita por nosso código.
 
@@ -28,7 +28,7 @@ laboratório e seu appId continuam sem validação para esta unidade; installabl
 
 ## Código offline implementado
 
-src/gatt_basics.rs reutiliza o núcleo Rust/Availability; não há outro backend
+crates/casca-core/src/gatt_basics.rs reutiliza o núcleo Rust/Availability; não há outro backend
 nem acesso direto a Android. `decode` entende revisões UTF-8, PnP little-endian de
 7 bytes e percentual de bateria de 1 byte. Validação conservadora do host: revisão
 1–64 bytes sem controles/espaço vazio; vendorSource 1/2; quatro dígitos BCD válidos;

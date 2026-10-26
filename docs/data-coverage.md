@@ -25,7 +25,7 @@ prova que a Band7 produza todos os tipos. Estado físico de todas as categorias:
 
 ## Escopo concreto implementado
 
-`src/ingestion.rs` decodifica exclusivamente o payload histórico **Activity8**
+`crates/casca-core/src/ingestion.rs` decodifica exclusivamente o payload histórico **Activity8**
 com origem tipada (referência local do dispositivo, firmware declarado, indicador
 sintético). Todos os oito campos são preservados; prefixo/code significa código
 de protocolo, não sinal fisiológico bruto. O tamanho 8 e a cadência de 60 segundos
@@ -64,7 +64,7 @@ criada nesta etapa; o conjunto de dados da pulseira ainda não está coletado.
 
 ## Decoders adicionais — repouso, máximo e SpO2 normal v2
 
-A rodada seguinte adicionou `src/health_samples.rs`, somente para **payloads
+A rodada seguinte adicionou `crates/casca-core/src/health_samples.rs`, somente para **payloads
 históricos já decifrados e separados por categoria de fetch**. A procedência,
 o firmware e o sinalizador de fixture sintética permanecem em cada registro.
 Nenhum decoder é anunciado como sensor conectado ou sincronização completa.

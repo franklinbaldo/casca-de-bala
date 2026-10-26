@@ -7,7 +7,7 @@ modificar seu esquema nem converter amostras esparsas em minutos.
 
 ## Banco independente e esquema
 
-`src/event_db.rs` usa rusqlite já fixado no Cargo.lock e um **arquivo
+`crates/casca-store/src/event_db.rs` usa rusqlite já fixado no Cargo.lock e um **arquivo
 separado** do `ActivityDb`. O banco tem `application_id` B7EV e
 `user_version` 1. Recusa arquivos SQLite desconhecidos, versões futuras,
 caminho vazio, `:memory:` e URI. Não faz migrações destrutivas.

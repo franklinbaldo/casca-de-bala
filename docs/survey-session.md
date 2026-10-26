@@ -157,7 +157,7 @@ indiscriminadamente; pode inclusive perder beacons filtrados. A0.4 não é alter
 ## Testes e próximos gates
 
 ```sh
-sh android-bridge/run_survey_host.sh
+sh android-bridge/test.sh
 ```
 
 TDD RED: teste não compilou antes de SurveySession. GREEN: compilação host com

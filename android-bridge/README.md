@@ -14,13 +14,14 @@ não admitem retry cego após efeito possível. Testes usam somente dados sinté
 Na raiz independente do projeto:
 
 ```sh
-sh android-bridge/run_host.sh
-sh android-bridge/run_worker_host.sh
+sh android-bridge/test.sh
 ```
 
-O primeiro compila classes reais e shim C, liga a cdylib Rust e executa JVM
--Xcheck:jni com SQLite real, lifecycle, limites, erros e snapshots. O segundo
-verifica o worker com backend sintético, sem afirmar integração de rádio.
+Compila `src/` e todas as classes de `tests/`, liga o shim C à cdylib Rust e
+executa cada harness com JVM -Xcheck:jni (SQLite real, lifecycle, limites,
+erros, snapshots, worker, radar e survey sintéticos), sem afirmar integração
+de rádio. Um arquivo novo em `tests/` entra automaticamente. No APK, `src/` é o
+módulo Gradle `:bridge` (`java-library`), consumido por `:app`.
 O header subset host é apenas Linux x86_64 e declara base na especificação JNI;
 Android usa jni.h oficial NDK. [Build e versões](../BUILDING.md).
 [Contrato básico](../docs/gatt-bridge.md) e [snapshot](../docs/basic-snapshot.md).

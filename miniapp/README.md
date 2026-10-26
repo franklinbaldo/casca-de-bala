@@ -41,8 +41,8 @@ local da VM comprovada. Ver [contrato e limites](../docs/microvm.md).
 
 [Preparação reproduzível e inspeção offline](packaging/README.md): bundle canônico
 de fontes com hashes e gates pendentes, mais inspetor de payload ZIP/BIN com
-limites. Não gera pacote instalável. Builder de terceiros não foi executado;
+limites. Não gera pacote instalável. Builder de terceiros não está na árvore;
 manifesto, plataforma, assets e adaptação de runtime ainda exigem aprovação e
 validação. A extensão BIN sozinha não comprova compatibilidade física.
 
-Atualização de 25/10: [builder ZMake executado e candidato de laboratório reproduzível](packaging/README.md) — pacote estrutural inspecionado, instalação e perfil da unidade ainda não validados.
+Atualização de 26/10: o builder ZMake de laboratório executado em 25/10 saiu da árvore; ver [packaging/README.md](packaging/README.md) para recuperar a receita pelo histórico Git.

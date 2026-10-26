@@ -7,17 +7,17 @@ workspace original, seu histórico, contas, fotos ou dados de dispositivo.
 
 | Componente | Versão |
 | --- | --- |
-| Rust/rustc + std Android | 1.99.1; target aarch64-linux-android |
+| Rust/rustc + std Android | 1.99.1; target aarch64-linux-android (rust-toolchain.toml) |
 | Cargo, rustfmt, clippy | mesma distribuição Rust |
 | Java | 21; referência 21.0.12.1, com jdk.compiler e jdk.jlink |
-| Gradle | 8.11.1 |
+| Gradle | 8.11.1, via `android-app/gradlew` (SHA-256 da distribuição fixado) |
 | Android Gradle Plugin | 8.9.2 |
 | SDK Platform | android-35, revisão 2 |
 | SDK Build Tools | 35.0.0 |
 | Android NDK | 27.0.12077973 |
 | Command-line Tools SDK | 19.0 |
 | C host | compilador C11; harness JNI subset validado em Linux x86_64 |
-| Python opcional miniapp | 3.12.x, gerenciado por uv |
+| Python | 3.12+ stdlib (inspetor miniapp e contratos de CI) |
 
 Node executa testes node:test e auditoria de fonte, sem dependências npm.
 Versão usada nesta exportação: Node24.19.0; scripts usam import.meta.dirname
@@ -31,14 +31,13 @@ Configure PATH para Rust, Java e cc já instalados. Com cache vazio, prepare
 explicitamente `cargo fetch --locked` em ambiente de rede autorizado. Depois:
 
 ```sh
-cargo test --offline
-cargo fmt --all -- --check
-cargo clippy --offline --all-targets -- -D warnings
-sh android-bridge/run_host.sh
-sh android-bridge/run_worker_host.sh
-node --test miniapp/tests/page.test.mjs miniapp/tests/vm.test.mjs
+just test
+just lint
 node bench/size.mjs
 ```
+
+`android-bridge/test.sh` compila e executa toda classe em `android-bridge/tests/`:
+basta criar o arquivo para o harness entrar no CI.
 
 Harnesses usam JVM host com -Xcheck:jni e SQLite real com dados sintéticos.
 Não são testes ART/radio/Band. Testes de dados não precisam de conta ou chave Huami.
@@ -54,10 +53,9 @@ Não execute sdkmanager --licenses silenciosamente. Configure os caminhos:
 export JAVA_HOME=/caminho/jdk21
 export ANDROID_HOME=/caminho/android-sdk
 export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.0.12077973"
-export GRADLE_BIN=/caminho/gradle-8.11.1/bin/gradle
 sh android-app/build-native.sh
 cd android-app
-"$GRADLE_BIN" --offline --no-daemon --dependency-verification strict :app:compileDebugJavaWithJavac :app:lintDebug
+./gradlew --offline --no-daemon --dependency-verification strict :app:compileDebugJavaWithJavac :app:lintDebug
 ```
 
 `ANDROID_USER_HOME` e `GRADLE_USER_HOME` podem apontar para diretórios locais
@@ -83,12 +81,10 @@ credencial Bluetooth/Huami. Não instalar, parear ou escrever na Band pelo build
 
 ## Miniapp opcional
 
-Veja miniapp/packaging/README.md: ZMake GPL-3.0-or-later externo, commit completo
-fixado e dependências Python em uv.lock. Sem fetch automático ou submódulo.
-O builder é opcional e não participa da compilação Android/Rust. Fonte própria
-do miniapp está incluída; ferramenta externa e seus recursos não são rotulados
-AGPL do projeto. Dados reais, pacote instalável e compatibilidade física não são
-pré-requisitos falsamente satisfeitos pelos testes com mocks.
+Veja miniapp/packaging/README.md: inspetor offline em Python stdlib, sem
+dependências externas. O builder ZMake de laboratório saiu da árvore e continua
+disponível no histórico Git. Fonte própria do miniapp está incluída. Pacote
+instalável e compatibilidade física não são satisfeitos pelos testes com mocks.
 
 ## Verificação de dependências e manutenção consciente
 
@@ -104,7 +100,7 @@ para dependências de compilação/lint, sem APK ou keytool, em android-app/:
 
 ```sh
 cp gradle/verification-metadata.xml /caminho/metadata-anterior.xml
-"$GRADLE_BIN" --no-daemon --write-verification-metadata sha256 :app:compileDebugJavaWithJavac :app:lintDebug
+./gradlew --no-daemon --write-verification-metadata sha256 :app:compileDebugJavaWithJavac :app:lintDebug
 diff -u /caminho/metadata-anterior.xml gradle/verification-metadata.xml
 ```
 
@@ -118,7 +114,7 @@ sem remover a verificação estrita. Esta exportação não executou a atualiza�
 Regressão real, com Gradle/cache/SDK já provisionados, a partir da raiz:
 
 ```sh
-GRADLE_BIN=/caminho/gradle-8.11.1/bin/gradle node scripts/test-gradle-verification.mjs
+node scripts/test-gradle-verification.mjs
 ```
 
 O teste copia a configuração Android para diretório temporário e executa Gradle

@@ -3,10 +3,10 @@
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$ROOT"
-: "${GRADLE_BIN:?Set Gradle 8.11.1 executable}"
+GRADLE_BIN=${GRADLE_BIN:-"$ROOT/android-app/gradlew"}
 : "${ANDROID_HOME:?Set Android SDK}"
 : "${ANDROID_NDK_HOME:?Set NDK 27.0.12077973}"
-test "$(rustc --version | cut -d' ' -f2)" = 1.99.1
+test "$(rustc --version | cut -d' ' -f2)" = "$(sed -n 's/^channel = "\(.*\)"$/\1/p' rust-toolchain.toml)"
 "$GRADLE_BIN" --version | sed -n '/^Gradle /p' | grep -qx 'Gradle 8.11.1'
 test -s android-app/gradle/verification-metadata.xml
 node scripts/check-source.mjs
@@ -21,8 +21,8 @@ fi
 cargo test --locked --offline
 cargo fmt --all -- --check
 cargo clippy --locked --offline --all-targets -- -D warnings
-sh android-bridge/run_host.sh
-sh android-bridge/run_worker_host.sh
+sh android-bridge/test.sh
+python3 -m unittest discover -s miniapp/packaging
 node --test miniapp/tests/page.test.mjs miniapp/tests/vm.test.mjs
 sh android-app/build-native.sh
 if test "${CI_PREPARE_NETWORK:-0}" = 1; then

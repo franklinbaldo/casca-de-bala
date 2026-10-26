@@ -3,19 +3,52 @@
 version = 4
 
 [[package]]
-name = "band7-terminal"
+name = "bitflags"
+version = "2.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ded4057c258ba199e2d26386d3af3780957ecaee6c4ef4041c6b4b8b97c0b06"
+
+[[package]]
+name = "casca-cli"
 version = "0.1.0"
 dependencies = [
- "rusqlite",
+ "casca-core",
+ "serde_json",
+]
+
+[[package]]
+name = "casca-core"
+version = "0.1.0"
+dependencies = [
  "serde",
  "serde_json",
 ]
 
 [[package]]
-name = "bitflags"
-version = "2.13.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ded4057c258ba199e2d26386d3af3780957ecaee6c4ef4041c6b4b8b97c0b06"
+name = "casca-ffi"
+version = "0.1.0"
+dependencies = [
+ "casca-core",
+ "casca-store",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "casca-microvm"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "casca-store"
+version = "0.1.0"
+dependencies = [
+ "casca-core",
+ "rusqlite",
+]
 
 [[package]]
 name = "cc"

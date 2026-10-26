@@ -1,6 +1,6 @@
 # Sessão cancelável e retomável — caminho host executado
 
-src/sync_session.rs integra Receiver Huami2021, fila limitada, Activity8/ActivityDb,
+crates/casca-store/src/sync_session.rs integra Receiver Huami2021, fila limitada, Activity8/ActivityDb,
 token cooperativo e snapshot de progresso. Esta sessão é offline e somente
 Activity8. Não é o worker Java/JNI síncrono nem coleta física.
 
@@ -94,7 +94,7 @@ cargo test --offline
 cargo fmt --all -- --check
 cargo clippy --offline --all-targets -- -D warnings
 # Na raiz do repo:
-sh android-bridge/run_host.sh
+sh android-bridge/test.sh
 ```
 
 Seis testes novos (um unitário + cinco de integração): framing não classifica
