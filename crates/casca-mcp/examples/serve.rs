@@ -1,12 +1,18 @@
 //! Host development server: the phone's MCP without the phone.
 //! Prints each pairing request; type `y <id>` or `n <id>` to decide.
-//! A synthetic band snapshot is published so band_snapshot has data.
+//! Device jobs (band_devices, band_read) get synthetic answers, standing in
+//! for the Android service, and a synthetic snapshot is published up front.
 use casca_mcp::control;
 use serde_json::{json, Value};
 use std::{io::BufRead, thread, time::Duration};
 
 fn ctl(request: Value) -> Value {
     serde_json::from_slice(&control(request.to_string().as_bytes())).expect("control replies JSON")
+}
+
+fn fixture_reading() -> Value {
+    json!({"version": 1, "id": 1, "result": {"delivery": "cached_snapshot", "synthetic": true,
+        "fields": {"battery": {"state": "received", "value": 74}}}})
 }
 
 fn main() {
@@ -19,9 +25,7 @@ fn main() {
     let Some(port) = started["port"].as_u64() else {
         panic!("start failed: {started}")
     };
-    let fixture = json!({"version": 1, "id": 1, "result": {"delivery": "cached_snapshot", "synthetic": true,
-        "fields": {"battery": {"state": "received", "value": 74}}}});
-    ctl(json!({"op": "publish", "snapshot": fixture}));
+    ctl(json!({"op": "publish", "snapshot": fixture_reading()}));
     println!(
         "MCP em http://127.0.0.1:{port}/mcp (tokens em {})",
         dir.display()
@@ -43,6 +47,19 @@ fn main() {
                         p["client"], p["peer"], p["code"]
                     );
                 }
+            }
+            for job in ctl(json!({"op": "jobs"}))["jobs"]
+                .as_array()
+                .cloned()
+                .unwrap_or_default()
+            {
+                let device = json!({"id": "dev000000001", "name": "Band sintética", "type": "le"});
+                let result = match job["kind"].as_str() {
+                    Some("band.devices") => json!({"devices": [device]}),
+                    Some("band.read") => json!({"device": device, "reading": fixture_reading()}),
+                    _ => json!({"error": "tarefa desconhecida"}),
+                };
+                ctl(json!({"op": "complete", "id": job["id"], "result": result}));
             }
             thread::sleep(Duration::from_millis(200));
         }

@@ -6,7 +6,8 @@ serve MCP (Streamable HTTP, respostas JSON); não há servidor intermediário.
 ## Ligar e parear
 
 1. No app, toque em **Ligar servidor MCP**. Ele pede Dispositivos próximos e
-   notificações, e mostra o endereço da tailnet (`http://100.x.y.z:8765`).
+   notificações, e mostra o endereço na tailnet: o nome MagicDNS
+   (`http://celular.tailnet.ts.net:8765`) ou, sem MagicDNS, o IP `100.x.y.z`.
 2. Na máquina da IA, dentro da tailnet:
 
    ```sh
@@ -32,10 +33,21 @@ reinícios.
 | Ferramenta | O que faz |
 | --- | --- |
 | `casca_capabilities` | Lista os dispositivos e o que cada um oferece agora. |
-| `band_snapshot` | Última leitura da Band 7 feita no app: bateria, revisões, PnP e horário. |
+| `band_devices` | Pulseiras vinculadas ao celular (só LE/dual), com id opaco: os 12 primeiros hex do SHA-256 do endereço. |
+| `band_read` | Conecta e lê bateria, revisões e PnP agora, com o app fechado. `device` opcional: sem ele, usa a última lida ou a única vinculada. |
+| `band_snapshot` | Última leitura feita (pelo app ou por `band_read`), sem conectar. |
 
-`band_snapshot` é cache: o app não lê a pulseira em segundo plano. Para
-atualizar, abra o Casca e leia. Leitura sob demanda pela IA é o próximo passo.
+Tudo é somente leitura: nenhuma ferramenta pareia, escreve na pulseira ou
+expõe endereço Bluetooth.
+
+## Fila de tarefas
+
+O servidor roda em Rust, mas só o app fala Bluetooth. Uma ferramenta que
+precisa do aparelho enfileira uma tarefa (`band.devices`, `band.read`); o
+`McpService` busca a fila a cada 500 ms (`jobs`), executa e responde
+(`complete`). A chamada MCP espera até 10 s (lista) ou 40 s (leitura) e
+devolve um erro legível se o celular não responder. Cada dispositivo novo, como
+o carro, entra como mais um tipo de tarefa.
 
 ## Segurança
 
@@ -57,9 +69,10 @@ Funnel, o servidor precisa falar OAuth (descoberta, registro dinâmico,
 ## Desenvolvimento sem celular
 
 ```sh
-just mcp-dev        # servidor no host, porta 8765, snapshot sintético
+just mcp-dev        # servidor no host, porta 8765, respostas sintéticas
 ```
 
 Os pedidos de pareamento aparecem no terminal; responda `y <id>` ou `n <id>`.
+As tarefas de dispositivo recebem respostas sintéticas no lugar do app.
 O código é o mesmo do APK: crate `casca-mcp` (std + serde_json, sem runtime
 assíncrono), exposto ao app pela função `b7_mcp_json` da C ABI.

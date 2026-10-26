@@ -11,12 +11,13 @@ use std::{
         Arc, Condvar, Mutex, MutexGuard, OnceLock,
     },
     thread,
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 pub(crate) const MAX_CLIENTS: usize = 32;
 pub(crate) const MAX_PENDING: usize = 4;
 const MAX_CONNECTIONS: usize = 16;
+const MAX_JOBS: usize = 8;
 const TOKEN_FILE: &str = "tokens.json";
 
 #[derive(Clone)]
@@ -33,6 +34,15 @@ pub(crate) struct Pending {
     pub peer: String,
 }
 
+/// Work only the app can do (Bluetooth, later the car): a tool call enqueues
+/// it, the Android service takes it with `jobs` and answers with `complete`.
+pub(crate) struct Job {
+    pub id: u64,
+    pub kind: &'static str,
+    pub args: Value,
+    pub taken: bool,
+}
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Decision {
     Approve,
@@ -46,6 +56,8 @@ pub(crate) struct Hub {
     pub decided: HashMap<u64, Decision>,
     pub next_id: u64,
     pub snapshot: Option<(Value, u64)>,
+    pub jobs: Vec<Job>,
+    pub results: HashMap<u64, Value>,
     running: Option<(u16, Arc<AtomicBool>)>,
 }
 
@@ -60,6 +72,8 @@ pub(crate) fn hub() -> &'static (Mutex<Hub>, Condvar) {
             decided: HashMap::new(),
             next_id: 1,
             snapshot: None,
+            jobs: Vec::new(),
+            results: HashMap::new(),
             running: None,
         };
         (Mutex::new(hub), Condvar::new())
@@ -244,6 +258,37 @@ fn execute(request: &Map<String, Value>) -> Result<Value, &'static str> {
             lock().snapshot = Some((result.clone(), now_ms()));
             Ok(json!({"ok": true}))
         }
+        Some("jobs") => {
+            // Hands each job out once; the service runs it and calls `complete`.
+            let mut hub = lock();
+            let jobs: Vec<Value> = hub
+                .jobs
+                .iter_mut()
+                .filter(|j| !j.taken)
+                .map(|j| {
+                    j.taken = true;
+                    json!({"id": j.id, "kind": j.kind, "args": j.args})
+                })
+                .collect();
+            Ok(json!({"jobs": jobs}))
+        }
+        Some("complete") => {
+            let id = request
+                .get("id")
+                .and_then(Value::as_u64)
+                .ok_or("invalid_request")?;
+            let result = request
+                .get("result")
+                .filter(|r| r.is_object())
+                .ok_or("invalid_request")?;
+            let mut hub = lock();
+            if !hub.jobs.iter().any(|j| j.id == id) {
+                return Err("unknown_job");
+            }
+            hub.results.insert(id, result.clone());
+            notify();
+            Ok(json!({"ok": true}))
+        }
         Some("forget") => {
             let name = request
                 .get("client")
@@ -321,4 +366,41 @@ fn status() -> Value {
         "pending": hub.pending.iter().map(|p| json!({"id": p.id, "client": p.client, "code": p.code, "peer": p.peer})).collect::<Vec<_>>(),
         "snapshot_at_unix_ms": hub.snapshot.as_ref().map(|(_, at)| *at),
     })
+}
+
+/// Enqueues a job for the app and waits for its result, up to `wait`.
+pub(crate) fn run_job(
+    kind: &'static str,
+    args: Value,
+    wait: Duration,
+) -> Result<Value, &'static str> {
+    let (lock, signal) = hub();
+    let mut hub = lock.lock().unwrap_or_else(|p| p.into_inner());
+    if hub.jobs.len() >= MAX_JOBS {
+        return Err("busy");
+    }
+    let id = hub.next_id;
+    hub.next_id += 1;
+    hub.jobs.push(Job {
+        id,
+        kind,
+        args,
+        taken: false,
+    });
+    let deadline = Instant::now() + wait;
+    let result = loop {
+        if let Some(result) = hub.results.remove(&id) {
+            break Ok(result);
+        }
+        let now = Instant::now();
+        if now >= deadline {
+            break Err("timeout");
+        }
+        hub = signal
+            .wait_timeout(hub, deadline - now)
+            .unwrap_or_else(|p| p.into_inner())
+            .0;
+    };
+    hub.jobs.retain(|j| j.id != id);
+    result
 }
