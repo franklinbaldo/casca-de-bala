@@ -2,3 +2,6 @@ pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal()
 dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
 rootProject.name = 'Band7BasicReader'
 include ':app'
+// Pure-Java controllers shared with the host JNI harnesses (android-bridge/test.sh).
+include ':bridge'
+project(':bridge').projectDir = file('../android-bridge')

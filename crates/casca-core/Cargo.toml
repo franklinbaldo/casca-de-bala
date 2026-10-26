@@ -1,0 +1,11 @@
+[package]
+name = "casca-core"
+description = "Typed contracts, GATT/Huami decoders and ingestion; pure, no I/O"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true

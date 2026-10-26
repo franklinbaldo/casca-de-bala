@@ -6,7 +6,7 @@ const script=fs.readFileSync(path.join(root,'build-apk.sh'),'utf8');
 assert(!script.includes('--write-verification-metadata'),'Normal build must not write accepted checksums');
 assert.equal((script.match(/--dependency-verification strict/g)||[]).length,3,'Preflight and both builds require strict verification');
 assert(script.indexOf('test -s')<script.indexOf('keytool'),'Metadata must exist before any signing action');
-const gradle=process.env.GRADLE_BIN;assert(gradle,'Set GRADLE_BIN to already installed Gradle8.11.1');
+const gradle=process.env.GRADLE_BIN||path.join(root,'gradlew');
 const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'b7-gradle-verification-'));
 const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
 const metadataPath=path.join(root,'gradle/verification-metadata.xml');

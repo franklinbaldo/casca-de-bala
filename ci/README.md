@@ -28,7 +28,8 @@ antigos podem terminar depois; os rascunhos nunca são marcados como latest.
 
 ## Ferramentas e dependências
 
-Rust 1.99.1 + componentes/target fixados; Gradle 8.11.1; AGP 8.9.2; SDK 35,
+Rust 1.99.1 + componentes/target fixados em rust-toolchain.toml; Gradle 8.11.1 pelo
+wrapper, com SHA-256 da distribuição e validação do JAR pelo setup-gradle; AGP 8.9.2; SDK 35,
 build-tools 35.0.0 e NDK 27.0.12077973. JDK 21 Temurin e imagem Ubuntu recebem
 atualizações: este não é um ambiente hermético nem promessa de bytes idênticos
 entre imagens futuras. A repetibilidade é verificada dentro de cada run.
@@ -54,7 +55,6 @@ Reprodução com ferramentas/caches já existentes, raiz de checkout completo:
 
 ```sh
 python3 -m unittest discover -s ci -p 'test_*.py' -v
-export GRADLE_BIN=/caminho/gradle-8.11.1/bin/gradle
 export ANDROID_HOME=/caminho/sdk
 export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.0.12077973"
 # Em sandbox com HOME somente leitura, usar também ANDROID_USER_HOME gravável.
@@ -97,3 +97,35 @@ https://docs.github.com/en/actions/reference/security/secure-use .
 Testes host/build não demonstram ART, BLE ou funcionamento físico. Registros de
 validação da PR devem separar PASS, FAIL e NOT_RUN sem reaproveitar contagens
 de outra revisão.
+
+## Repositório F-Droid próprio
+
+Depois do job `release`, `fdroid` reconstrói o repositório do zero a partir
+das 5 releases `ci-v*` publicadas mais recentes: baixa cada APK, exige o
+certificado fixado em release-config.json (o mesmo `check_certificate` do
+publicador) e roda `fdroid update`, que assina **somente o índice** com a chave
+do repositório. O job `pages` publica o resultado no GitHub Pages:
+https://franklinbaldo.github.io/casca-de-bala/fdroid/repo . Não há estado
+entre execuções; perder o site não perde nada que as releases não refaçam.
+
+fdroidserver 2.4.5 e suas dependências (Pillow, androguard, entre outras) são
+ferramenta de CI, instaladas com `--require-hashes` de
+[fdroid-requirements.txt](fdroid-requirements.txt) (uv pip compile, Python 3.12).
+Não entram no APK. Metadados e ícone do app: [fdroid/metadata](../fdroid/metadata).
+
+Ativação única, em máquina confiável:
+
+1. `sh ci/fdroid-repo-key.sh /diretorio/privado`: gera a chave RSA 4096 do
+   índice (PKCS12) e a senha. Não é a chave do APK. Perdê-la obriga a
+   readicionar o repositório no celular, não a reinstalar o app. Guardar backup
+   junto à custódia da chave do APK.
+2. No ambiente `android-release`: secrets `CASCA_FDROID_KEYSTORE_B64` e
+   `CASCA_FDROID_KEYSTORE_PASSWORD`.
+3. Variável de repositório `CASCA_FDROID_READY=true` (nível de repositório,
+   como `CASCA_ACTIONS_SIGNING_READY`, porque o `if:` do job a lê antes de
+   entrar no ambiente).
+4. Settings → Pages → Source: **GitHub Actions**.
+
+O próximo push na `main` publica o repositório; o resumo do job mostra o link
+com a impressão digital (`?fingerprint=`), que o F-Droid usa para fixar a chave
+do repositório na primeira adição.

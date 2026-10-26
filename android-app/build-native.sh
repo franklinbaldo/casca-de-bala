@@ -19,7 +19,7 @@ export AR_aarch64_linux_android="$TOOLS/llvm-ar"
 export CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS='-C link-arg=-Wl,-z,max-page-size=16384'
 # Explicit output location avoids accidentally copying a host .so or another target.
 export CARGO_TARGET_DIR="$CRATE/target/android"
-cargo build --locked --offline --release --target aarch64-linux-android --manifest-path "$CRATE/Cargo.toml"
+cargo build --locked --offline --release --target aarch64-linux-android --manifest-path "$CRATE/Cargo.toml" -p casca-ffi
 DEST="$ROOT/app/src/main/jniLibs/arm64-v8a"
 mkdir -p "$DEST"
 cp "$CARGO_TARGET_DIR/aarch64-linux-android/release/libband7_terminal.so" "$DEST/"

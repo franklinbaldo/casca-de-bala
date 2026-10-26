@@ -57,12 +57,11 @@ Fixture estritamente sintética, inclusive seu horário:
 
 ```sh
 # Execute na raiz do projeto
-cargo run --offline -- --gatt-json < tests/fixtures/basic-snapshot-synthetic.json
+cargo run --offline -p casca-cli -- --gatt-json < fixtures/basic-snapshot-synthetic.json
 cargo test --offline
 cargo fmt --all -- --check
 cargo clippy --offline --all-targets -- -D warnings
-sh android-bridge/run_host.sh
-sh android-bridge/run_worker_host.sh
+sh android-bridge/test.sh
 ```
 
 `--gatt-json` aceita os mesmos envelopes plan/interpret/snapshot da fronteira

@@ -1,16 +1,15 @@
-// Validate the distributed source manifest; no network, build or device access.
-import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';
+// Guard tracked files against build artifacts and private identifiers; no network.
+import cp from 'node:child_process';import fs from 'node:fs';import path from 'node:path';
 const root=path.resolve(import.meta.dirname,'..');
-const manifest=JSON.parse(fs.readFileSync(path.join(root,'SOURCE-MANIFEST.json')));
+const files=cp.execFileSync('git',['ls-files','-z'],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean);
+const allowedBinary=new Set(['android-app/gradle/wrapper/gradle-wrapper.jar']);
 let count=0;
-for(const file of manifest.files){
- if(!file.path||path.isAbsolute(file.path)||file.path.split('/').includes('..'))throw Error('Unsafe path');
- const resolved=path.join(root,file.path);const stat=fs.lstatSync(resolved);
- if(!stat.isFile()||stat.isSymbolicLink())throw Error('Not regular source: '+file.path);
- const b=fs.readFileSync(resolved);if(b.length!==file.bytes||crypto.createHash('sha256').update(b).digest('hex')!==file.sha256)throw Error('Hash mismatch: '+file.path);
- const text=b.toString('utf8');
- if(/libfile_|Sentinel_|file_00000000|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\b(?:[a-f0-9]{2}:){5}[a-f0-9]{2}\b/i.test(text)&&file.path!== 'scripts/check-source.mjs')throw Error('Review content: '+file.path);
- if(/\.(?:apk|bin|zip|sqlite|db|jks|keystore|so|class|pyc)$/i.test(file.path))throw Error('Artifact in source: '+file.path);
+for(const file of files){
+ const resolved=path.join(root,file);const stat=fs.lstatSync(resolved);
+ if(!stat.isFile()||stat.isSymbolicLink())throw Error('Not regular source: '+file);
+ const text=fs.readFileSync(resolved).toString('utf8');
+ if(/libfile_|Sentinel_|file_00000000|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\b(?:[a-f0-9]{2}:){5}[a-f0-9]{2}\b/i.test(text)&&file!=='scripts/check-source.mjs')throw Error('Review content: '+file);
+ if(/\.(?:apk|bin|zip|sqlite|db|jks|keystore|p12|so|class|pyc|jar)$/i.test(file)&&!allowedBinary.has(file))throw Error('Artifact in source: '+file);
  count++;
 }
-console.log('PASS '+count+' source files match manifest; no private identifiers/artifacts detected by limited checks');
+console.log('PASS '+count+' tracked files; no private identifiers/artifacts detected by limited checks');

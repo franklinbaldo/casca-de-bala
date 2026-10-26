@@ -1,4 +1,5 @@
 plugins { id 'com.android.application' }
+def legalAssets = layout.buildDirectory.dir('generated/legal-assets').get().asFile
 android {
     namespace 'org.workspace.band7.app'
     compileSdk 35
@@ -17,9 +18,8 @@ android {
         versionName ciName
         ndk { abiFilters 'arm64-v8a' }
     }
-    // Reuse JNI/core contracts; no AndroidX, networking or copied decoder.
-    sourceSets.main.java.srcDirs += ['../../android-bridge/src']
-    sourceSets.main.assets.srcDirs += ['../../docs/licenses', '../../third_party']
+    // Legal texts ship from their single source in the repository root.
+    sourceSets.main.assets.srcDirs += ['../../docs/licenses', '../../third_party', legalAssets]
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     // Standard debug signing, but callers can confine the temporary key to a
     // private build directory and delete it afterward. No production signing.
@@ -36,4 +36,11 @@ tasks.register('checkNativeInputs') {
         }
     }
 }
-tasks.named('preBuild').configure { dependsOn 'checkNativeInputs' }
+tasks.register('copyLegalAssets', Copy) {
+    from('../../NOTICE') { rename { 'NOTICE.txt' } }
+    from('../../PROVENANCE.md') { rename { 'PROVENANCE.txt' } }
+    into legalAssets
+}
+// Reuse JNI/core contracts; no AndroidX, networking or copied decoder.
+dependencies { implementation project(':bridge') }
+tasks.named('preBuild').configure { dependsOn 'checkNativeInputs', 'copyLegalAssets' }
