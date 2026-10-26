@@ -14,5 +14,6 @@ crate-type = ["rlib", "cdylib"]
 [dependencies]
 casca-core.workspace = true
 casca-store.workspace = true
+casca-mcp.workspace = true
 serde.workspace = true
 serde_json.workspace = true

@@ -1,0 +1,10 @@
+[package]
+name = "casca-mcp"
+description = "MCP server on the phone: streamable HTTP for loopback/tailnet peers, tokens approved on the phone"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+serde_json.workspace = true

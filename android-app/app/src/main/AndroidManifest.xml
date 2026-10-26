@@ -1,6 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
+    <!-- MCP hub: sockets for the local/tailnet server, its foreground service and approval notifications. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
     <application android:label="@string/app_name" android:icon="@drawable/ic_band" android:allowBackup="false"
         android:usesCleartextTraffic="false" android:theme="@style/AppTheme">
@@ -10,5 +15,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service android:name=".McpService" android:exported="false" android:foregroundServiceType="connectedDevice" />
+        <receiver android:name=".McpDecisionReceiver" android:exported="false" />
     </application>
 </manifest>

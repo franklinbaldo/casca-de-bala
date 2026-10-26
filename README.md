@@ -59,8 +59,13 @@ RSSI; a coleta e a UX0.5 ainda exigem teste físico.
 Mapa GPS/deslocamento, autenticação Huami, coleta completa
 de saúde, comunicação independente com miniapp, gestão real de aplicativos e
 firmware próprio permanecem planejados ou em investigação. Não há Bash na Band,
-root, daemon, endpoint aberto ou upload automático de histórico de saúde.
-Objetivo: MCP → console no Android/núcleo Rust → BLE → Band, com eventos de volta.
+root ou upload automático de histórico de saúde.
+
+O Casca é o hub entre os seus dispositivos e as suas IAs: o próprio celular
+serve [MCP](docs/mcp.md). O servidor só existe quando você o liga no app,
+aceita apenas loopback e a tailnet, e cada IA precisa ser aprovada no celular
+com um código. Hoje ele entrega a última leitura da pulseira; o carro (Android
+Auto) e outros dispositivos entram como novos adaptadores do mesmo contrato.
 
 ## Compilar e testar
 
@@ -93,6 +98,7 @@ Workspace Cargo em `crates/`, dependências apontando só para baixo:
 | `casca-store` | SQLite (rusqlite bundled) e SyncSession sobre o core | sim |
 | `casca-ffi` | C ABI (`ffi/band7.h`), gera `libband7_terminal.so` | sim |
 | `casca-cli` | console offline `band7-terminal` | não |
+| `casca-mcp` | servidor MCP do celular (HTTP, pareamento, tokens) | sim |
 | `casca-microvm` | B7VM v1 experimental | não |
 
 `fixtures/`: entradas sintéticas/sanitizadas compartilhadas. `android-app/`: aplicativo

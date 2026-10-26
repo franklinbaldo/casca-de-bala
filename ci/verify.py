@@ -27,7 +27,11 @@ def verify(apk, signed=False):
     assert "native-code: 'arm64-v8a'" in badging
     permissions = set(re.findall(r"uses-permission: name='([^']+)'", badging))
     assert permissions == {'android.permission.BLUETOOTH_CONNECT',
-                           'android.permission.BLUETOOTH_SCAN'}
+                           'android.permission.BLUETOOTH_SCAN',
+                           'android.permission.INTERNET',
+                           'android.permission.POST_NOTIFICATIONS',
+                           'android.permission.FOREGROUND_SERVICE',
+                           'android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE'}
     xml = run(tools / 'aapt', 'dump', 'xmltree', apk, 'AndroidManifest.xml')
     assert not re.search(r'android:(debuggable|testOnly).*0xffffffff', xml)
     with zipfile.ZipFile(apk) as z:

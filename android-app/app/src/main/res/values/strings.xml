@@ -161,4 +161,20 @@ RSSI</string>
     <string name="live_window_count">Leituras: %1$d · tentativas: %2$d · falhas: %3$d</string>
     <string name="live_window_missing">Nenhum RSSI válido nesta janela. Isso não significa sinal zero ou pulseira fora de alcance.</string>
     <string name="live_window_median">Mediana %1$.1f dBm</string>
+    <string name="mcp_title">Casca MCP</string>
+    <string name="mcp_starting">Iniciando o servidor MCP…</string>
+    <string name="mcp_running">Ativo na porta %1$d: suas IAs podem acessar seus dispositivos.</string>
+    <string name="mcp_stop">Desligar</string>
+    <string name="mcp_channel_running">Servidor MCP ativo</string>
+    <string name="mcp_channel_approval">Pedidos de acesso MCP</string>
+    <string name="mcp_approve_title">Liberar acesso ao Casca?</string>
+    <string name="mcp_approve_text">%1$s quer acessar seus dispositivos. Confira o código %2$d. Origem: %3$s.</string>
+    <string name="mcp_allow">Permitir</string>
+    <string name="mcp_deny">Negar</string>
+    <string name="mcp_turn_on">Ligar servidor MCP</string>
+    <string name="mcp_turn_off">Desligar servidor MCP</string>
+    <string name="mcp_off_help">Servidor MCP desligado. Ligado, suas IAs na tailnet (ou via Funnel no Termux) leem a última leitura da pulseira, depois que você aprovar cada uma aqui no celular.</string>
+    <string name="mcp_on_help">Servidor MCP ativo em %1$s. Clientes aprovados: %2$d.\n\nPara parear uma IA:\ncurl -N -X POST %3$s/pair -d \'{\"client\":\"nome\"}\'\nAprove a notificação com o mesmo código e use o CASCA_TOKEN como Bearer em %3$s/mcp.</string>
+    <string name="mcp_no_tailnet">este celular (porta %1$d; ligue o Tailscale para aparecer o endereço)</string>
+    <string name="mcp_permission">Para manter o servidor ativo e pedir sua aprovação, o Casca precisa de Dispositivos próximos e de notificações.</string>
 </resources>

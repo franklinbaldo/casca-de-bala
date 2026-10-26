@@ -29,8 +29,16 @@ name = "casca-ffi"
 version = "0.1.0"
 dependencies = [
  "casca-core",
+ "casca-mcp",
  "casca-store",
  "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "casca-mcp"
+version = "0.1.0"
+dependencies = [
  "serde_json",
 ]
 

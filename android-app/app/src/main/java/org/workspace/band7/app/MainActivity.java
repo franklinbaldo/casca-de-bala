@@ -33,6 +33,7 @@ public final class MainActivity extends Activity {
     private Button primary,secondary,cancel,details,diagnostic;private ProgressBar progress;private LinearLayout rows,batteryCard,infoCard;
     private RadarGatt radarReader;private RadarSession.Snapshot radarSnapshot;private boolean selectingRadar;
     private Button radarOpen,radarMeasure,radarEnd,radarChoose;private LinearLayout radarPanel,radarPoints;
+    private Button mcpToggle;private TextView mcpInfo;private Snapshot mcpPublished;private long mcpPublishId;
     private TextView radarStatus,radarHelp;private int renderedRadarPoints=-1;private long renderedRadarGeneration=-1;
     private final Map<Integer,Button> rowButtons=new HashMap<>();private final Map<Integer,DiscoverySession.Row> rowData=new HashMap<>();private Runnable primaryAction,secondaryAction;
     /** In-process terminal entry point for a finished cached read. No new GATT IO.
@@ -82,6 +83,7 @@ public final class MainActivity extends Activity {
         text(infoCard,R.string.software,16);software=text(infoCard,R.string.not_available,20);
         time=text(root,R.string.waiting,15);details=button(root,R.string.technical);details.setOnClickListener(v->showDetails());
         diagnostic=button(root,R.string.snapshot_action);diagnostic.setOnClickListener(v->showSnapshot());
+        space(root,16);mcpInfo=text(root,R.string.mcp_off_help,16);mcpInfo.setTextIsSelectable(true);mcpToggle=button(root,R.string.mcp_turn_on);mcpToggle.setOnClickListener(v->toggleMcp());
         space(root,16);text(root,R.string.version,14);
         Button license=button(root,R.string.license_action);license.setOnClickListener(v->showLicense());setContentView(scroll);
         discovery=new BleDiscovery(this,new DiscoverySession.Observer(){
@@ -147,7 +149,7 @@ public final class MainActivity extends Activity {
         else discovery.select(token,id,false);
     }
     @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] results){
-        super.onRequestPermissionsResult(code,permissions,results);if(code!=41)return;
+        super.onRequestPermissionsResult(code,permissions,results);if(code==42){if(checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)==PackageManager.PERMISSION_GRANTED&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED)toggleMcp();else set(mcpInfo,R.string.mcp_permission);return;}if(code!=41)return;
         if(findIntent.permissionResult(granted()))findNow();
         else if(!granted()){screen=Screen.PERMISSION;render();}
     }
@@ -155,7 +157,7 @@ public final class MainActivity extends Activity {
     private void startRead(){
         if(!resumed)return;screen=Screen.DEVICE;interrupted=false;long attempt=++readAttempt;
         if(reader!=null)reader.close();snapshot=null;
-        reader=new BasicGattReader(this,value->{if(attempt!=readAttempt)return;snapshot=value;if(resumed)render();});reader.connect(selectedDevice);
+        reader=new BasicGattReader(this,value->{if(attempt!=readAttempt)return;snapshot=value;publishMcp(value);if(resumed)render();});reader.connect(selectedDevice);
     }
     private void startRadar(){
         if(!resumed)return;screen=Screen.RADAR;interrupted=false;long attempt=++readAttempt;
@@ -164,7 +166,7 @@ public final class MainActivity extends Activity {
     }
     private void cancelCurrent(){findIntent.cancel();if(screen==Screen.SEARCH){discovery.close();return;}if(reader!=null)reader.close(Cause.CANCELLED);}
     private void openSettings(boolean bluetooth){findIntent.external(ForegroundAction.Wait.SETTINGS);Intent intent=bluetooth?new Intent(Settings.ACTION_BLUETOOTH_SETTINGS):new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+getPackageName()));startActivity(intent);}
-    @Override protected void onResume(){super.onResume();resumed=true;
+    @Override protected void onResume(){super.onResume();resumed=true;renderMcp();
         if(findIntent.resume(granted())){findNow();return;}render();
     }
     @Override protected void onStop(){resumed=false;interrupted=true;findIntent.stop();if(discovery!=null)discovery.close();if(reader!=null)reader.close(Cause.BACKGROUND);if(radarReader!=null)radarReader.stop(RadarSession.Reason.BACKGROUND);
@@ -275,4 +277,32 @@ public final class MainActivity extends Activity {
     }
     private void showDetails(){String content=snapshot==null||snapshot.pnp==null?getString(R.string.pnp_missing):getString(R.string.pnp_details,snapshot.pnp.vendor,snapshot.pnp.product,snapshot.pnp.version);
         new AlertDialog.Builder(this).setTitle(R.string.technical_title).setMessage(content).setPositiveButton(R.string.close,null).show();}
+    /** Hands each finished reading to the MCP server; band_snapshot serves the latest. */
+    private void publishMcp(Snapshot value){
+        if(value==null||!value.isFinal()||value==mcpPublished)return;mcpPublished=value;
+        mcpPublishId=mcpPublishId==Long.MAX_VALUE?1:mcpPublishId+1;
+        try{McpHub.publish(BasicSnapshot.process(value,BasicReadSession.Origin.OUR_APP,mcpPublishId));}catch(RuntimeException|LinkageError ignored){}
+    }
+    private void toggleMcp(){
+        if(McpService.running){stopService(new Intent(this,McpService.class));page.postDelayed(this::renderMcp,300);return;}
+        List<String> missing=new ArrayList<>();
+        for(String p:new String[]{Manifest.permission.BLUETOOTH_CONNECT,Manifest.permission.POST_NOTIFICATIONS})if(checkSelfPermission(p)!=PackageManager.PERMISSION_GRANTED)missing.add(p);
+        if(!missing.isEmpty()){requestPermissions(missing.toArray(new String[0]),42);return;}
+        startForegroundService(new Intent(this,McpService.class));page.postDelayed(this::renderMcp,500);
+    }
+    private void renderMcp(){
+        if(mcpToggle==null)return;boolean on=McpService.running;set(mcpToggle,on?R.string.mcp_turn_off:R.string.mcp_turn_on);
+        if(!on){set(mcpInfo,R.string.mcp_off_help);return;}
+        int port=McpService.port;String host=tailnetAddress();String base=host==null?null:"http://"+host+":"+port;int clients=0;
+        try{clients=new JSONObject(McpHub.status()).getJSONArray("clients").length();}catch(JSONException|RuntimeException|LinkageError ignored){}
+        set(mcpInfo,getString(R.string.mcp_on_help,base==null?getString(R.string.mcp_no_tailnet,port):base,clients,base==null?"http://<celular>:"+port:base));
+    }
+    /** The phone's Tailscale IPv4 (100.64.0.0/10), when the VPN is up. */
+    private static String tailnetAddress(){
+        try{for(java.net.NetworkInterface nic:Collections.list(java.net.NetworkInterface.getNetworkInterfaces()))
+            for(java.net.InetAddress address:Collections.list(nic.getInetAddresses())){
+                byte[] b=address.getAddress();if(b.length==4&&(b[0]&0xff)==100&&(b[1]&0xc0)==0x40)return address.getHostAddress();}
+        }catch(java.net.SocketException|RuntimeException ignored){}
+        return null;
+    }
 }

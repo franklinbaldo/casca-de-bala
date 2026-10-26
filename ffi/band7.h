@@ -21,4 +21,9 @@ int32_t b7_call(const uint8_t *input, size_t length, B7Result *result);
    *written=0 (when written is nonnull). No NUL terminator. No retained memory. */
 int32_t b7_gatt_json(const uint8_t *input, size_t length, uint8_t *output,
                     size_t capacity, size_t *written);
+/* Phone MCP server control: JSON in, JSON out ({"op":"start"|"stop"|"status"|
+   "decide"|"publish"|"forget"}). Input max 70000 bytes. Same return codes as
+   b7_gatt_json. The server itself runs on Rust threads until "stop". */
+int32_t b7_mcp_json(const uint8_t *input, size_t length, uint8_t *output,
+                    size_t capacity, size_t *written);
 #endif
