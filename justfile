@@ -34,6 +34,10 @@ apk: native
 install: native
     {{gradle}} --dependency-verification strict :app:installDebug
 
+# Phone MCP server on this machine (synthetic band snapshot): `y <id>` approves
+mcp-dev port="8765":
+    cargo run --offline -q -p casca-mcp --example serve -- {{port}}
+
 # Exactly what CI runs: tests, repeated unsigned APK, source tarball, SHA256SUMS
 ci:
     sh ci/build.sh

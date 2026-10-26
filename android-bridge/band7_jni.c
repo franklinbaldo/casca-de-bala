@@ -8,11 +8,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-JNIEXPORT jbyteArray JNICALL Java_org_workspace_band7_NativeBridge_gatt(JNIEnv *env,jclass klass,jbyteArray input){
-    (void)klass;
+typedef int32_t (*json_call)(const uint8_t*,size_t,uint8_t*,size_t,size_t*);
+
+/* JSON in, JSON out through a stateless copy; shared by gatt and mcp. */
+static jbyteArray json_bridge(JNIEnv *env,jbyteArray input,jsize limit,json_call call){
     if((*env)->ExceptionCheck(env)||!input)return NULL;
     jsize length=(*env)->GetArrayLength(env,input);
-    if((*env)->ExceptionCheck(env)||length<=0||length>32768)return NULL;
+    if((*env)->ExceptionCheck(env)||length<=0||length>limit)return NULL;
     /* Stateless operation; allocation failure cannot leave a partial mutation. */
     jbyte *copy=malloc((size_t)length);
     uint8_t *result=malloc(32768);
@@ -20,7 +22,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_workspace_band7_NativeBridge_gatt(JNIEnv *
     (*env)->GetByteArrayRegion(env,input,0,length,copy);
     if((*env)->ExceptionCheck(env)){free(copy);free(result);return NULL;}
     size_t written=0;
-    int32_t status=b7_gatt_json((const uint8_t*)copy,(size_t)length,result,32768,&written);
+    int32_t status=call((const uint8_t*)copy,(size_t)length,result,32768,&written);
     volatile jbyte *wipe=copy;for(jsize i=0;i<length;i++)wipe[i]=0;
     free(copy);
     jbyteArray output=NULL;
@@ -34,6 +36,16 @@ JNIEXPORT jbyteArray JNICALL Java_org_workspace_band7_NativeBridge_gatt(JNIEnv *
     free(result);
     if((*env)->ExceptionCheck(env))return NULL;
     return output;
+}
+
+JNIEXPORT jbyteArray JNICALL Java_org_workspace_band7_NativeBridge_gatt(JNIEnv *env,jclass klass,jbyteArray input){
+    (void)klass;
+    return json_bridge(env,input,32768,b7_gatt_json);
+}
+
+JNIEXPORT jbyteArray JNICALL Java_org_workspace_band7_NativeBridge_mcp(JNIEnv *env,jclass klass,jbyteArray input){
+    (void)klass;
+    return json_bridge(env,input,70000,b7_mcp_json);
 }
 
 JNIEXPORT jlongArray JNICALL Java_org_workspace_band7_NativeBridge_invoke(JNIEnv *env,jclass klass,jbyteArray input){

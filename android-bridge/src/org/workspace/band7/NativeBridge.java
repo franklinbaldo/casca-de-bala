@@ -6,4 +6,5 @@ final class NativeBridge {
     // Package-private: UI/MCP should use the lifecycle-owning session API.
     static native long[] invoke(byte[] request);
     static native byte[] gatt(byte[] request);
+    static native byte[] mcp(byte[] request);
 }

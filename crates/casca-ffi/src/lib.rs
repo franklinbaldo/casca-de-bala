@@ -180,3 +180,38 @@ pub unsafe extern "C" fn b7_call(input: *const u8, length: usize, output: *mut B
     }
     value.status
 }
+
+const MAX_MCP_CONTROL: usize = 70000;
+
+/// # Safety
+/// Same contract as `b7_gatt_json`: nonnull, nonoverlapping buffers valid for
+/// their sizes; `written` aligned and writable. No pointer is retained.
+/// Return 0: JSON copied (inspect its `error` field), 1: invalid pointer/length,
+/// 8: output capacity insufficient, 6: caught panic.
+#[no_mangle]
+pub unsafe extern "C" fn b7_mcp_json(
+    input: *const u8,
+    length: usize,
+    output: *mut u8,
+    capacity: usize,
+    written: *mut usize,
+) -> i32 {
+    if written.is_null() {
+        return 1;
+    }
+    unsafe { written.write(0) };
+    if input.is_null() || output.is_null() || length == 0 || length > MAX_MCP_CONTROL {
+        return 1;
+    }
+    let result =
+        catch_unwind(|| casca_mcp::control(unsafe { std::slice::from_raw_parts(input, length) }));
+    let Ok(bytes) = result else { return 6 };
+    if capacity < bytes.len() {
+        return 8;
+    }
+    unsafe {
+        std::ptr::copy_nonoverlapping(bytes.as_ptr(), output, bytes.len());
+        written.write(bytes.len());
+    }
+    0
+}
