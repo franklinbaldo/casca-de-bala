@@ -1,5 +1,0 @@
-android/app/src/main/jniLibs/
-android/app/build/
-android/.gradle/
-android/build/
-rust/target/

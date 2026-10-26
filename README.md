@@ -98,7 +98,8 @@ Workspace Cargo em `crates/`, dependências apontando só para baixo:
 | `casca-store` | SQLite (rusqlite bundled) e SyncSession sobre o core | sim |
 | `casca-ffi` | C ABI (`ffi/band7.h`), gera `libband7_terminal.so` | sim |
 | `casca-cli` | console offline `band7-terminal` | não |
-| `casca-mcp` | servidor MCP do celular (HTTP, pareamento, tokens) | sim |
+| `casca-mcp` | servidor MCP do celular (HTTP, pareamento, tokens, ferramentas de laboratório) | sim |
+| `casca-ble` | laboratório BLE em Rust (btleplug + JNI), só no Android | sim |
 | `casca-microvm` | B7VM v1 experimental | não |
 
 `fixtures/`: entradas sintéticas/sanitizadas compartilhadas. `android-app/`: aplicativo

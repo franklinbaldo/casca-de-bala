@@ -6,8 +6,9 @@
 //! std + serde_json: no async runtime and no HTTP framework in the APK.
 mod http;
 mod hub;
+mod lab;
 mod peer;
 mod rpc;
 
-pub use hub::control;
+pub use hub::{control, log, write_allowed};
 pub use peer::allowed;

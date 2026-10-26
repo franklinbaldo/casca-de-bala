@@ -169,6 +169,8 @@ RSSI</string>
     <string name="mcp_channel_approval">Pedidos de acesso MCP</string>
     <string name="mcp_approve_title">Liberar acesso ao Casca?</string>
     <string name="mcp_approve_text">%1$s quer acessar seus dispositivos. Confira o código %2$d. Origem: %3$s.</string>
+    <string name="mcp_write_title">Liberar ESCRITA na pulseira?</string>
+    <string name="mcp_write_text">%1$s quer enviar comandos (escrever) para seus dispositivos Bluetooth por %2$s. Só permita se foi você quem pediu.</string>
     <string name="mcp_allow">Permitir</string>
     <string name="mcp_deny">Negar</string>
     <string name="mcp_turn_on">Ligar servidor MCP</string>

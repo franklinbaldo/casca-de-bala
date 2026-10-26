@@ -40,6 +40,28 @@ reinícios.
 Tudo é somente leitura: nenhuma ferramenta pareia, escreve na pulseira ou
 expõe endereço Bluetooth.
 
+## Laboratório (experimental)
+
+Ferramentas para a IA explorar e testar Bluetooth pelo celular. O trabalho de
+rádio roda em Rust (`crates/casca-ble`, btleplug + JNI); o Java só chama
+`BleNative.start` quando o serviço liga.
+
+| Ferramenta | O que faz |
+| --- | --- |
+| `lab_info` | Aparelho, Android, Bluetooth ligado, permissões e versão do app. |
+| `lab_log` | Últimas linhas do log do app (pareamentos, tarefas, tempos). |
+| `ble_scan` | Anúncios por 1–15 s: nome, RSSI, serviços, dados de fabricante e de serviço. Precisa de BLUETOOTH_SCAN. |
+| `ble_explore` | Conecta e lista serviços, características (propriedades), descritores e o valor das legíveis. |
+| `ble_read` | Lê uma característica (UUID curto como `2a19` ou completo). |
+| `ble_notify` | Assina uma característica e devolve as notificações de 1–60 s. |
+| `ble_write` | Escreve bytes em hex. Só dentro de uma janela de escrita aprovada. |
+| `lab_unlock_write` | Pede ao dono, por notificação, para liberar a escrita por 1–60 min. |
+
+Ids de dispositivo são opacos (12 primeiros hex do SHA-256 do endereço), os
+mesmos de `band_devices`. Cada chamada conecta e desconecta; as tarefas rodam
+em fila, uma por vez. A escrita pode mudar o estado do dispositivo: por isso
+exige a aprovação no celular, que vale pelo tempo pedido.
+
 ## Fila de tarefas
 
 O servidor roda em Rust, mas só o app fala Bluetooth. Uma ferramenta que

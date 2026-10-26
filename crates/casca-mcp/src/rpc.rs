@@ -16,7 +16,7 @@ fn ok(id: Value, result: Value) -> Value {
 
 /// One JSON-RPC message in, at most one reply out. Notifications and client
 /// responses (no `id` or no `method`) get no reply: HTTP 202.
-pub(crate) fn dispatch(message: &Value) -> Option<Value> {
+pub(crate) fn dispatch(message: &Value, client: &str) -> Option<Value> {
     let Some(object) = message.as_object() else {
         return Some(error(
             Value::Null,
@@ -49,8 +49,12 @@ pub(crate) fn dispatch(message: &Value) -> Option<Value> {
             )
         }
         "ping" => ok(id, json!({})),
-        "tools/list" => ok(id, json!({"tools": tools()})),
-        "tools/call" => call(id, &params),
+        "tools/list" => {
+            let mut list = tools().as_array().cloned().unwrap_or_default();
+            list.extend(crate::lab::tools());
+            ok(id, json!({"tools": list}))
+        }
+        "tools/call" => call(id, &params, client),
         _ => error(id, -32601, "method not found"),
     })
 }
@@ -113,7 +117,7 @@ fn pretty(value: &Value) -> String {
 }
 
 /// Runs a job on the phone and turns its outcome into tool output.
-fn on_phone(id: Value, kind: &'static str, args: Value, wait: Duration) -> Value {
+pub(crate) fn on_phone(id: Value, kind: &'static str, args: Value, wait: Duration) -> Value {
     match hub::run_job(kind, args, wait) {
         Ok(result) => match result.get("error").and_then(Value::as_str) {
             Some(message) => failure(id, message),
@@ -124,8 +128,14 @@ fn on_phone(id: Value, kind: &'static str, args: Value, wait: Duration) -> Value
     }
 }
 
-fn call(id: Value, params: &Value) -> Value {
+fn call(id: Value, params: &Value, client: &str) -> Value {
     let arguments = &params["arguments"];
+    if let Some(reply) = params["name"]
+        .as_str()
+        .and_then(|name| crate::lab::call(id.clone(), name, arguments, client))
+    {
+        return reply;
+    }
     let no_arguments = arguments.is_null() || arguments.as_object().is_some_and(|a| a.is_empty());
     match params["name"].as_str() {
         Some("band_read") => {

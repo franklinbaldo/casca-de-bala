@@ -15,6 +15,7 @@ rusqlite = { version = "=0.41.0", features = ["bundled"] }
 casca-core = { path = "crates/casca-core" }
 casca-store = { path = "crates/casca-store" }
 casca-mcp = { path = "crates/casca-mcp" }
+casca-ble = { path = "crates/casca-ble" }
 
 [profile.release]
 # Cross-crate inlining for the APK cdylib; keeps the split crates from growing it.

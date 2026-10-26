@@ -197,7 +197,15 @@ fn pairing_tools_and_restart() {
             "casca_capabilities",
             "band_devices",
             "band_read",
-            "band_snapshot"
+            "band_snapshot",
+            "lab_info",
+            "lab_log",
+            "ble_scan",
+            "ble_explore",
+            "ble_read",
+            "ble_notify",
+            "ble_write",
+            "lab_unlock_write"
         ]
     );
 
@@ -284,6 +292,69 @@ fn pairing_tools_and_restart() {
         -32602
     );
     service.join().unwrap();
+
+    // Lab: the log records pairing; writes stay blocked until the owner
+    // approves a window on the phone; then they reach the queue.
+    let log = call_with("lab_log", json!({"lines": 300}));
+    assert!(log["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("pareamento aprovado: jatoba"));
+    let write = json!({"device": "a1b2c3", "characteristic": "2a06", "value_hex": "0A0b"});
+    let blocked = call_with("ble_write", write.clone());
+    assert_eq!(blocked["result"]["isError"], true);
+    assert!(blocked["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("bloqueada"));
+    assert_eq!(
+        call_with(
+            "ble_write",
+            json!({"device": "a1b2c3", "characteristic": "2a06", "value_hex": "abc"})
+        )["error"]["code"],
+        -32602
+    );
+    assert_eq!(
+        call_with("ble_scan", json!({"seconds": 99}))["error"]["code"],
+        -32602
+    );
+    let phone = thread::spawn(|| {
+        for _ in 0..500 {
+            let status = ctl(json!({"op": "status"}));
+            if let Some(p) = status["pending"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|p| p["purpose"] == "write_unlock")
+            {
+                assert_eq!(p["client"], "jatoba");
+                ctl(json!({"op": "decide", "id": p["id"], "approve": true}));
+                return;
+            }
+            thread::sleep(Duration::from_millis(10));
+        }
+        panic!("write unlock never reached the phone");
+    });
+    let unlocked = call_with("lab_unlock_write", json!({"minutes": 5}));
+    phone.join().unwrap();
+    assert_eq!(unlocked["result"]["isError"], false);
+    assert_eq!(ctl(json!({"op": "status"}))["write_allowed"], true);
+    let ble = thread::spawn(|| loop {
+        let jobs = ctl(json!({"op": "jobs", "prefixes": ["ble."]}));
+        if let Some(job) = jobs["jobs"].as_array().unwrap().first() {
+            assert_eq!(job["kind"], "ble.write");
+            assert_eq!(job["args"]["value_hex"], "0a0b");
+            ctl(json!({"op": "complete", "id": job["id"], "result": {"written": 2}}));
+            return;
+        }
+        thread::sleep(Duration::from_millis(5));
+    });
+    let written = call_with("ble_write", write);
+    ble.join().unwrap();
+    assert!(written["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("\"written\": 2"));
     assert_eq!(
         ctl(json!({"op": "complete", "id": 999_999, "result": {}}))["error"],
         "unknown_job"

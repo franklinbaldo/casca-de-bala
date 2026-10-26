@@ -14,7 +14,13 @@ public final class McpHub {
     public static String status(){return call("{\"op\":\"status\"}");}
     public static String decide(long id,boolean approve){return call("{\"op\":\"decide\",\"id\":"+id+",\"approve\":"+approve+"}");}
     /** Jobs waiting for the app (each handed out once): {"jobs":[{"id","kind","args"}]}. */
-    public static String jobs(){return call("{\"op\":\"jobs\"}");}
+    public static String jobs(String... prefixes){
+        StringBuilder b=new StringBuilder("{\"op\":\"jobs\",\"prefixes\":[");
+        for(int i=0;i<prefixes.length;i++){if(i>0)b.append(',');b.append(quote(prefixes[i]));}
+        return call(b.append("]}").toString());
+    }
+    /** Appends a line to the lab log the AIs read with lab_log. */
+    public static String log(String line){return call("{\"op\":\"log\",\"line\":"+quote(line)+"}");}
     /** Answers a job; resultJson must be a JSON object, {"error":"…"} for a readable failure. */
     public static String complete(long id,String resultJson){return call("{\"op\":\"complete\",\"id\":"+id+",\"result\":"+Objects.requireNonNull(resultJson)+"}");}
     public static String forget(String client){return call("{\"op\":\"forget\",\"client\":"+quote(client)+"}");}

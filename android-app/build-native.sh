@@ -20,6 +20,16 @@ export CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS='-C link-arg=-Wl,-z,max-page
 # Explicit output location avoids accidentally copying a host .so or another target.
 export CARGO_TARGET_DIR="$CRATE/target/android"
 cargo build --locked --offline --release --target aarch64-linux-android --manifest-path "$CRATE/Cargo.toml" -p casca-ffi
+# btleplug's Java half (droidplug + vendored jni-utils) comes from the locked crate itself.
+BTLEPLUG_JAVA=$(cargo metadata --locked --offline --format-version 1 --manifest-path "$CRATE/Cargo.toml" | python3 -c '
+import json, os, sys
+meta = json.load(sys.stdin)
+package = next(p for p in meta["packages"] if p["name"] == "btleplug")
+print(os.path.join(os.path.dirname(package["manifest_path"]), "src/droidplug/java/src/main/java"))')
+test -d "$BTLEPLUG_JAVA" || { echo "btleplug Java sources missing: $BTLEPLUG_JAVA" >&2; exit 2; }
+rm -rf "$ROOT/app/generated/btleplug-java"
+mkdir -p "$ROOT/app/generated/btleplug-java"
+cp -R "$BTLEPLUG_JAVA/." "$ROOT/app/generated/btleplug-java/"
 DEST="$ROOT/app/src/main/jniLibs/arm64-v8a"
 mkdir -p "$DEST"
 cp "$CARGO_TARGET_DIR/aarch64-linux-android/release/libband7_terminal.so" "$DEST/"

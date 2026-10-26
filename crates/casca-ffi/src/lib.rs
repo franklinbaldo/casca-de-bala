@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Synchronous host-tested ABI. No JNI/Android runtime or Bluetooth IO.
+// Linked in so its JNI entry point (BleNative.start) is exported from this cdylib.
+pub use casca_ble;
 use casca_core::ingestion::Source;
 use casca_store::activity_db::{ActivityDb, StoreError};
 use serde::Deserialize;

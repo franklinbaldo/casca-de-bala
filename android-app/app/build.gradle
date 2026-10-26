@@ -20,6 +20,9 @@ android {
     }
     // Legal texts ship from their single source in the repository root.
     sourceSets.main.assets.srcDirs += ['../../docs/licenses', '../../third_party', legalAssets]
+    // btleplug's Java half, copied from the locked crate by build-native.sh; JNI-only, never minified.
+    sourceSets.main.java.srcDirs += ['generated/btleplug-java']
+    lint { lintConfig = file('lint.xml') }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     // Standard debug signing, but callers can confine the temporary key to a
     // private build directory and delete it afterward. No production signing.
@@ -34,6 +37,8 @@ tasks.register('checkNativeInputs') {
             if (!file("src/main/jniLibs/arm64-v8a/$name").isFile())
                 throw new GradleException("Missing $name; run sh build-native.sh with approved NDK/target first")
         }
+        if (!file('generated/btleplug-java/com/nonpolynomial/btleplug/android/impl/Adapter.java').isFile())
+            throw new GradleException('Missing btleplug Java sources; run sh build-native.sh first')
     }
 }
 tasks.register('copyLegalAssets', Copy) {

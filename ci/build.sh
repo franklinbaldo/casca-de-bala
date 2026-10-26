@@ -18,6 +18,7 @@ NAME=$(python3 -c 'import json;print(json.load(open("artifacts/ci/version.json")
 if test "${CI_PREPARE_NETWORK:-0}" = 1; then
     cargo fetch --locked
 fi
+python3 scripts/rust-licenses.py --check
 cargo test --locked --offline
 cargo fmt --all -- --check
 cargo clippy --locked --offline --all-targets -- -D warnings
