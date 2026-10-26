@@ -43,7 +43,7 @@ somente o Casca anterior uma vez; preserve Zepp Life e o pareamento.
   no host. Na versão 0.4 o usuário relatou bateria 74% igual na tela e no diálogo
   validado pelo Rust, sem erro. Somente bateria foi comparada explicitamente.
   Esse relato não confirma cada revisão/horário, rádio RSSI ou transporte remoto.
-  Não existe transporte remoto Android→MCP implementado.
+  O servidor MCP no celular já expõe esse snapshot armazenado por HTTP na tailnet,\n  mas não inicia uma nova leitura BLE sob demanda.
 - Históricos Activity8/HR6/SpO2, SQLite, fragmentação Huami, filas e retomada:
   componentes executáveis offline com testes sintéticos, sem coleta física.
 - Miniapp JS/API1, empacotamento e B7VM: experimentais, sem instalação física.
