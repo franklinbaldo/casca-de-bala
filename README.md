@@ -13,6 +13,22 @@ console local. Licença do projeto: **AGPL-3.0-or-later**, com avisos de terceir
 preservados em [PROVENANCE.md](PROVENANCE.md) e [third_party](third_party/).
 Este pacote contém a fonte correspondente ao APK0.5; não inclui APK, SDK, chaves ou dados pessoais.
 
+## Instalar
+
+Cada push na `main` publica um APK ARM64 assinado como prerelease
+`ci-v<versionCode>-<commit>` nas [Releases](https://github.com/franklinbaldo/casca-de-bala/releases).
+Android 12+. Duas formas de receber atualizações automáticas:
+
+- **Obtainium:** adicione `https://github.com/franklinbaldo/casca-de-bala` e
+  ative "Include prereleases".
+- **F-Droid:** adicione o repositório do projeto, publicado em
+  https://franklinbaldo.github.io/casca-de-bala/ (link com a impressão digital
+  do repositório). Ele traz as últimas 5 releases, conferidas contra o
+  certificado fixado do APK.
+
+Quem tinha uma versão de laboratório com outra chave pode precisar remover
+somente o Casca anterior uma vez; preserve Zepp Life e o pareamento.
+
 ## O que funciona e qual é a evidência
 
 - Android foreground: selecionar dispositivo já vinculado ou buscar anúncios BLE,
