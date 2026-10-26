@@ -180,7 +180,7 @@ public final class McpService extends Service {
         return new Notification.Builder(this,CHANNEL_APPROVAL).setSmallIcon(R.drawable.ic_stat_casca)
             .setContentTitle(title).setContentText(text)
             .setStyle(new Notification.BigTextStyle().bigText(text))
-            .setCategory(Notification.CATEGORY_STATUS).setAutoCancel(true).setTimeoutAfter(120_000)
+            .setCategory(Notification.CATEGORY_STATUS).setAutoCancel(true).setTimeoutAfter(write?600_000:120_000)
             .addAction(new Notification.Action.Builder(null,getString(R.string.mcp_allow),decision(id,true)).build())
             .addAction(new Notification.Action.Builder(null,getString(R.string.mcp_deny),decision(id,false)).build()).build();
     }

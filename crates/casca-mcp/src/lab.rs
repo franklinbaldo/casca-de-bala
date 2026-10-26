@@ -5,7 +5,9 @@ use crate::hub;
 use serde_json::{json, Map, Value};
 use std::time::{Duration, Instant};
 
-const UNLOCK_WAIT: Duration = Duration::from_secs(120);
+/// How long a write-unlock request stays answerable on the phone. The tool
+/// call returns at once (clients often cut calls at 60 s); a thread waits.
+const UNLOCK_WAIT: Duration = Duration::from_secs(600);
 
 fn schema(properties: Value, required: &[&str]) -> Value {
     json!({"type": "object", "properties": properties, "required": required, "additionalProperties": false})
@@ -48,7 +50,7 @@ pub(crate) fn tools() -> Vec<Value> {
                 "response": {"type": "boolean", "description": "write with response (padrão true)"}}), &["device", "characteristic", "value_hex"]),
             "annotations": {"readOnlyHint": false, "destructiveHint": true, "openWorldHint": false}}),
         json!({"name": "lab_unlock_write", "title": "Pedir liberação de escrita",
-            "description": "Pede ao dono, por notificação no celular, para liberar ble_write por alguns minutos. Espera a resposta por até 2 min.",
+            "description": "Pede ao dono, por notificação no celular, para liberar ble_write por alguns minutos. Responde na hora; o pedido vale 10 min e a liberação aparece em lab_info (write_allowed).",
             "inputSchema": schema(json!({"minutes": {"type": "integer", "minimum": 1, "maximum": 60}}), &[]),
             "annotations": {"readOnlyHint": false, "openWorldHint": false}}),
     ]
@@ -208,24 +210,23 @@ pub(crate) fn call(id: Value, name: &str, arguments: &Value, client: &str) -> Op
                 hub::log(&format!(
                     "{client} pediu liberação de escrita por {minutes} min"
                 ));
-                match hub::wait_decision(request, UNLOCK_WAIT) {
+                let who = client.to_owned();
+                std::thread::spawn(move || match hub::wait_decision(request, UNLOCK_WAIT) {
                     Some(hub::Decision::Approve) => {
                         hub::lock().write_until =
                             Some(Instant::now() + Duration::from_secs(minutes * 60));
-                        hub::log(&format!("escrita liberada por {minutes} min para {client}"));
-                        ok_text(
-                            id.clone(),
-                            format!("Escrita liberada por {minutes} min."),
-                            false,
-                        )
+                        hub::log(&format!("escrita liberada por {minutes} min para {who}"));
                     }
-                    Some(hub::Decision::Deny) => ok_text(
-                        id.clone(),
-                        "O dono negou a escrita no celular.".into(),
-                        true,
+                    Some(hub::Decision::Deny) => hub::log(&format!("escrita negada para {who}")),
+                    None => hub::log(&format!("pedido de escrita de {who} expirou sem resposta")),
+                });
+                ok_text(
+                    id.clone(),
+                    format!(
+                        "Pedido enviado ao celular (vale 10 min). Quando o dono aprovar, a escrita fica liberada por {minutes} min: confira write_allowed em lab_info ou o lab_log."
                     ),
-                    None => ok_text(id.clone(), "Sem resposta no celular em 2 min.".into(), true),
-                }
+                    false,
+                )
             }
             _ => return Ok(Value::Null),
         })
