@@ -60,6 +60,8 @@ public final class McpService extends Service {
             if(reply.has("error")&&!"already_running".equals(reply.getString("error")))throw new JSONException(reply.getString("error"));
             port=reply.optInt("port",McpHub.DEFAULT_PORT);
         }catch(JSONException|RuntimeException|LinkageError failure){stopSelf();return START_NOT_STICKY;}
+        String ble;try{ble=BleNative.start(getApplicationContext());}catch(RuntimeException|LinkageError failed){ble="ERRO: "+failed;}
+        try{McpHub.log("app: servidor ligado na porta "+port+"; laboratório BLE: "+ble);}catch(RuntimeException|LinkageError ignored){}
         running=true;notifications.notify(RUNNING_ID,ongoing(getString(R.string.mcp_running,port)));handler.post(poll);
         return START_NOT_STICKY;
     }
@@ -79,7 +81,7 @@ public final class McpService extends Service {
             JSONArray pending=new JSONObject(McpHub.status()).getJSONArray("pending");Set<Long> now=new HashSet<>();
             for(int i=0;i<pending.length();i++){
                 JSONObject p=pending.getJSONObject(i);long id=p.getLong("id");now.add(id);
-                if(shown.add(id))notifications.notify(APPROVAL_BASE+(int)id,approval(id,p.getString("client"),p.getInt("code"),p.getString("peer")));
+                if(shown.add(id))notifications.notify(APPROVAL_BASE+(int)id,approval(id,p.optString("purpose","pairing"),p.getString("client"),p.getInt("code"),p.getString("peer")));
             }
             for(long id:new HashSet<>(shown))if(!now.contains(id)){shown.remove(id);notifications.cancel(APPROVAL_BASE+(int)id);}
         }catch(JSONException|RuntimeException|LinkageError ignored){}
@@ -88,7 +90,8 @@ public final class McpService extends Service {
     }
 
     private void runJobs()throws JSONException{
-        JSONArray jobs=new JSONObject(McpHub.jobs()).getJSONArray("jobs");
+        // ble.* and lab.* belong to the Rust worker (BleNative); only band.* is ours.
+        JSONArray jobs=new JSONObject(McpHub.jobs("band.")).getJSONArray("jobs");
         for(int i=0;i<jobs.length();i++){
             JSONObject job=jobs.getJSONObject(i);long id=job.getLong("id");JSONObject args=job.optJSONObject("args");
             switch(job.getString("kind")){
@@ -169,10 +172,14 @@ public final class McpService extends Service {
             .addAction(new Notification.Action.Builder(null,getString(R.string.mcp_stop),stop).build()).build();
     }
 
-    private Notification approval(long id,String client,int code,String peer){
+    private Notification approval(long id,String purpose,String client,int code,String peer){
+        boolean write="write_unlock".equals(purpose);
+        // For write_unlock, "peer" carries the requested window ("30 min").
+        String title=getString(write?R.string.mcp_write_title:R.string.mcp_approve_title);
+        String text=write?getString(R.string.mcp_write_text,client,peer):getString(R.string.mcp_approve_text,client,code,peer);
         return new Notification.Builder(this,CHANNEL_APPROVAL).setSmallIcon(R.drawable.ic_stat_casca)
-            .setContentTitle(getString(R.string.mcp_approve_title)).setContentText(getString(R.string.mcp_approve_text,client,code,peer))
-            .setStyle(new Notification.BigTextStyle().bigText(getString(R.string.mcp_approve_text,client,code,peer)))
+            .setContentTitle(title).setContentText(text)
+            .setStyle(new Notification.BigTextStyle().bigText(text))
             .setCategory(Notification.CATEGORY_STATUS).setAutoCancel(true).setTimeoutAfter(120_000)
             .addAction(new Notification.Action.Builder(null,getString(R.string.mcp_allow),decision(id,true)).build())
             .addAction(new Notification.Action.Builder(null,getString(R.string.mcp_deny),decision(id,false)).build()).build();

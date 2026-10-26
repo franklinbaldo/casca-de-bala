@@ -1,7 +1,7 @@
 use crate::{http, peer::allowed};
 use serde_json::{json, Map, Value};
 use std::{
-    collections::HashMap,
+    collections::{HashMap, VecDeque},
     fs,
     io::Read,
     net::{Ipv4Addr, Ipv6Addr, TcpListener, TcpStream},
@@ -18,6 +18,7 @@ pub(crate) const MAX_CLIENTS: usize = 32;
 pub(crate) const MAX_PENDING: usize = 4;
 const MAX_CONNECTIONS: usize = 16;
 const MAX_JOBS: usize = 8;
+const MAX_LOG: usize = 300;
 const TOKEN_FILE: &str = "tokens.json";
 
 #[derive(Clone)]
@@ -32,6 +33,8 @@ pub(crate) struct Pending {
     pub client: String,
     pub code: u8,
     pub peer: String,
+    /// "pairing" or "write_unlock": what the phone notification asks for.
+    pub purpose: &'static str,
 }
 
 /// Work only the app can do (Bluetooth, later the car): a tool call enqueues
@@ -58,6 +61,9 @@ pub(crate) struct Hub {
     pub snapshot: Option<(Value, u64)>,
     pub jobs: Vec<Job>,
     pub results: HashMap<u64, Value>,
+    /// Writes to devices are allowed until this instant (owner approved on the phone).
+    pub write_until: Option<Instant>,
+    pub log: VecDeque<String>,
     running: Option<(u16, Arc<AtomicBool>)>,
 }
 
@@ -74,6 +80,8 @@ pub(crate) fn hub() -> &'static (Mutex<Hub>, Condvar) {
             snapshot: None,
             jobs: Vec::new(),
             results: HashMap::new(),
+            write_until: None,
+            log: VecDeque::new(),
             running: None,
         };
         (Mutex::new(hub), Condvar::new())
@@ -117,13 +125,19 @@ pub(crate) fn new_token() -> std::io::Result<String> {
 
 impl Hub {
     /// Constant-time per candidate, so response time does not leak a prefix.
-    pub(crate) fn authorized(&self, presented: &str) -> bool {
-        self.clients.iter().fold(false, |found, client| {
+    /// The approved client holding this token. Every candidate is compared in
+    /// constant time, so response time does not leak a prefix.
+    pub(crate) fn client_for(&self, presented: &str) -> Option<String> {
+        self.clients.iter().fold(None, |found, client| {
             let a = client.token.as_bytes();
             let b = presented.as_bytes();
             let same =
                 a.len() == b.len() && a.iter().zip(b).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0;
-            found | same
+            if same {
+                Some(client.name.clone())
+            } else {
+                found
+            }
         })
     }
 
@@ -259,12 +273,23 @@ fn execute(request: &Map<String, Value>) -> Result<Value, &'static str> {
             Ok(json!({"ok": true}))
         }
         Some("jobs") => {
-            // Hands each job out once; the service runs it and calls `complete`.
+            // Hands each job out once; each executor (the Android service for
+            // band.*, the Rust BLE worker for ble.* and lab.*) asks for its prefixes.
+            let prefixes: Vec<&str> = match request.get("prefixes") {
+                None => Vec::new(),
+                Some(list) => list
+                    .as_array()
+                    .ok_or("invalid_request")?
+                    .iter()
+                    .map(|p| p.as_str().ok_or("invalid_request"))
+                    .collect::<Result<_, _>>()?,
+            };
             let mut hub = lock();
             let jobs: Vec<Value> = hub
                 .jobs
                 .iter_mut()
                 .filter(|j| !j.taken)
+                .filter(|j| prefixes.is_empty() || prefixes.iter().any(|p| j.kind.starts_with(p)))
                 .map(|j| {
                     j.taken = true;
                     json!({"id": j.id, "kind": j.kind, "args": j.args})
@@ -287,6 +312,14 @@ fn execute(request: &Map<String, Value>) -> Result<Value, &'static str> {
             }
             hub.results.insert(id, result.clone());
             notify();
+            Ok(json!({"ok": true}))
+        }
+        Some("log") => {
+            let line = request
+                .get("line")
+                .and_then(Value::as_str)
+                .ok_or("invalid_request")?;
+            log(line);
             Ok(json!({"ok": true}))
         }
         Some("forget") => {
@@ -363,7 +396,9 @@ fn status() -> Value {
         "running": hub.running.is_some(),
         "port": hub.running.as_ref().map(|(port, _)| *port),
         "clients": hub.clients.iter().map(|c| json!({"name": c.name, "created_unix_ms": c.created_ms})).collect::<Vec<_>>(),
-        "pending": hub.pending.iter().map(|p| json!({"id": p.id, "client": p.client, "code": p.code, "peer": p.peer})).collect::<Vec<_>>(),
+        "pending": hub.pending.iter().map(|p| json!({"id": p.id, "client": p.client, "code": p.code, "peer": p.peer, "purpose": p.purpose})).collect::<Vec<_>>(),
+        // Same lock already held: write_allowed() here would deadlock.
+        "write_allowed": hub.write_until.is_some_and(|until| Instant::now() < until),
         "snapshot_at_unix_ms": hub.snapshot.as_ref().map(|(_, at)| *at),
     })
 }
@@ -403,4 +438,66 @@ pub(crate) fn run_job(
     };
     hub.jobs.retain(|j| j.id != id);
     result
+}
+
+/// Appends a line to the in-memory lab log (the `lab_log` tool reads it).
+pub fn log(line: &str) {
+    let mut hub = lock();
+    if hub.log.len() >= MAX_LOG {
+        hub.log.pop_front();
+    }
+    let line: String = line.chars().take(500).collect();
+    hub.log.push_back(format!("{} {line}", now_ms()));
+}
+
+/// Whether the owner currently allows writes to devices.
+pub fn write_allowed() -> bool {
+    lock()
+        .write_until
+        .is_some_and(|until| Instant::now() < until)
+}
+
+/// Queues an approval for the phone; the Android service shows it as a notification.
+pub(crate) fn request_approval(
+    client: &str,
+    code: u8,
+    peer: &str,
+    purpose: &'static str,
+) -> Result<u64, &'static str> {
+    let mut hub = lock();
+    if hub.pending.len() >= MAX_PENDING {
+        return Err("too_many_pending");
+    }
+    let id = hub.next_id;
+    hub.next_id += 1;
+    hub.pending.push(Pending {
+        id,
+        client: client.to_owned(),
+        code,
+        peer: peer.to_owned(),
+        purpose,
+    });
+    Ok(id)
+}
+
+/// Waits for the owner's answer on the phone; removes the request either way.
+pub(crate) fn wait_decision(id: u64, wait: Duration) -> Option<Decision> {
+    let deadline = Instant::now() + wait;
+    let (lock, signal) = hub();
+    let mut hub = lock.lock().unwrap_or_else(|p| p.into_inner());
+    let decision = loop {
+        if let Some(decision) = hub.decided.remove(&id) {
+            break Some(decision);
+        }
+        let now = Instant::now();
+        if now >= deadline {
+            break None;
+        }
+        hub = signal
+            .wait_timeout(hub, deadline - now)
+            .unwrap_or_else(|p| p.into_inner())
+            .0;
+    };
+    hub.pending.retain(|p| p.id != id);
+    decision
 }

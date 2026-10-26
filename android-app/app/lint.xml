@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Third-party JNI glue copied from the btleplug crate: not ours to lint. -->
+    <issue id="all">
+        <ignore path="generated/btleplug-java/**" />
+    </issue>
+</lint>

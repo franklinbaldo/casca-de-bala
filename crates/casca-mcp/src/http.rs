@@ -3,7 +3,7 @@ use serde_json::{json, Value};
 use std::{
     io::{BufRead, BufReader, Read, Write},
     net::{IpAddr, TcpStream},
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 const MAX_HEAD: usize = 16 * 1024;
@@ -157,14 +157,14 @@ fn mcp(stream: &TcpStream, request: &Request) {
         .and_then(|v| v.split_once(' '))
         .filter(|(scheme, _)| scheme.eq_ignore_ascii_case("bearer"))
         .map(|(_, token)| token.trim());
-    if !token.is_some_and(|t| hub::lock().authorized(t)) {
+    let Some(client) = token.and_then(|t| hub::lock().client_for(t)) else {
         return respond_json(
             stream,
             401,
             "WWW-Authenticate: Bearer realm=\"casca\"\r\n",
             &json!({"error": "unauthorized", "hint": "POST /pair e aprove no celular"}),
         );
-    }
+    };
     let Ok(message) = serde_json::from_slice::<Value>(&request.body) else {
         return respond_json(
             stream,
@@ -173,7 +173,7 @@ fn mcp(stream: &TcpStream, request: &Request) {
             &rpc::error(Value::Null, -32700, "parse error"),
         );
     };
-    match rpc::dispatch(&message) {
+    match rpc::dispatch(&message, &client) {
         Some(reply) => respond_json(stream, 200, "", &reply),
         None => respond(stream, 202, "application/json", "", b""),
     }
@@ -201,23 +201,12 @@ fn pair(stream: &TcpStream, request: &Request, peer: IpAddr) {
         return respond_json(stream, 503, "", &json!({"error": "random"}));
     }
     let code = 10 + byte[0] % 90;
-    let id = {
-        let mut hub = hub::lock();
-        if hub.pending.len() >= hub::MAX_PENDING {
-            return respond_json(stream, 429, "", &json!({"error": "too_many_pending"}));
-        }
-        if hub.clients.len() >= hub::MAX_CLIENTS {
-            return respond_json(stream, 409, "", &json!({"error": "client_limit"}));
-        }
-        let id = hub.next_id;
-        hub.next_id += 1;
-        hub.pending.push(hub::Pending {
-            id,
-            client: name.clone(),
-            code,
-            peer: peer.to_string(),
-        });
-        id
+    if hub::lock().clients.len() >= hub::MAX_CLIENTS {
+        return respond_json(stream, 409, "", &json!({"error": "client_limit"}));
+    }
+    let id = match hub::request_approval(&name, code, &peer.to_string(), "pairing") {
+        Ok(id) => id,
+        Err(error) => return respond_json(stream, 429, "", &json!({"error": error})),
     };
     let mut out = stream;
     let opening = format!(
@@ -225,32 +214,18 @@ fn pair(stream: &TcpStream, request: &Request, peer: IpAddr) {
         PAIR_WAIT.as_secs()
     );
     let _ = out.write_all(opening.as_bytes()).and_then(|_| out.flush());
-    let deadline = Instant::now() + PAIR_WAIT;
-    let (lock, signal) = hub::hub();
-    let mut hub = lock.lock().unwrap_or_else(|p| p.into_inner());
-    let decision = loop {
-        if let Some(decision) = hub.decided.remove(&id) {
-            break Some(decision);
-        }
-        let now = Instant::now();
-        if now >= deadline {
-            break None;
-        }
-        hub = signal
-            .wait_timeout(hub, deadline - now)
-            .unwrap_or_else(|p| p.into_inner())
-            .0;
-    };
-    hub.pending.retain(|p| p.id != id);
-    let line = match decision {
+    let line = match hub::wait_decision(id, PAIR_WAIT) {
         Some(hub::Decision::Approve) => match hub::new_token() {
             Ok(token) => {
+                let mut hub = hub::lock();
                 hub.clients.push(hub::Client {
                     token: token.clone(),
-                    name,
+                    name: name.clone(),
                     created_ms: hub::now_ms(),
                 });
                 if hub.save().is_ok() {
+                    drop(hub);
+                    hub::log(&format!("pareamento aprovado: {name}"));
                     format!("Aprovado.\nCASCA_TOKEN={token}\n")
                 } else {
                     hub.clients.pop();
@@ -262,6 +237,5 @@ fn pair(stream: &TcpStream, request: &Request, peer: IpAddr) {
         Some(hub::Decision::Deny) => "Negado no celular.\n".to_owned(),
         None => "Tempo esgotado sem resposta no celular.\n".to_owned(),
     };
-    drop(hub);
     let _ = out.write_all(line.as_bytes()).and_then(|_| out.flush());
 }

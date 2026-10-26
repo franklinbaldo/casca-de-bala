@@ -31,11 +31,18 @@ Android compila contra jni.h do NDK, não contra cópia redistribuída desse hea
 
 ## Dependências e ferramentas
 
-third_party/rust-licenses.json lista os 29 pacotes externos fixados no Cargo.lock,
-licenças declaradas e cópias dos avisos disponíveis. Elas incluem MIT/Apache-2.0,
-Zlib, Unlicense e Unicode-3.0. SQLite embarcado por libsqlite3-sys conserva seu
-aviso de domínio público em third_party/SQLITE-NOTICE.txt. Esse inventário não
-é um SBOM de APK, nem certifica todas as bibliotecas de ferramentas externas.
+third_party/rust-licenses.json lista os crates externos compilados para o APK
+(aarch64-linux-android, dependências normais e de build de casca-ffi), com as
+licenças declaradas e cópias dos avisos. É gerado por scripts/rust-licenses.py, e
+o CI falha se ficar desatualizado. Três crates (jni, jni-macros, jni-sys-macros)
+não incluem licença no pacote publicado; os textos revisados ficam em
+third_party/license-overrides/. SQLite embarcado por libsqlite3-sys conserva seu
+aviso de domínio público em third_party/SQLITE-NOTICE.txt.
+
+O APK também inclui a parte Java da btleplug 0.13.5 (droidplug e o jni-utils
+vendorizado no repositório dela), copiada do crate travado no Cargo.lock durante
+o build e distribuída sob o LICENSE.md da btleplug (BSD-3-Clause, com partes
+MIT/Apache-2.0), presente em third_party/licenses/btleplug-0.13.5/.
 
 O builder ZMake (GPL-3.0-or-later, MelianMiko) e suas dependências Python
 opcionais foram removidos desta árvore; nenhum código, recurso ou template
