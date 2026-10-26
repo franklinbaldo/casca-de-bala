@@ -94,5 +94,45 @@ class DraftTest(unittest.TestCase):
             self.assertEqual(calls, [])
 
 
+class AndroidSetupTest(unittest.TestCase):
+    def run_case(self, licence=True, manager=True, fail=False):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / 'SDK with spaces'
+            binary = root / 'cmdline-tools/latest/bin/sdkmanager'
+            binary.parent.mkdir(parents=True)
+            if manager:
+                binary.write_text('#!' + sys.executable + '\n'
+                    'import os,sys,json\n'
+                    'assert sys.stdin.read()==""\n'
+                    'open(os.environ["CALLS"],"w").write(json.dumps(sys.argv[1:]))\n'
+                    'sys.exit(9 if os.environ["FAIL"]=="1" else 0)\n')
+                binary.chmod(0o700)
+            if licence:
+                (root / 'licenses').mkdir()
+                (root / 'licenses/android-sdk-license').write_text('synthetic fixture')
+            calls = Path(d) / 'calls'
+            env = dict(os.environ, ANDROID_HOME=str(root), CALLS=str(calls),
+                       FAIL='1' if fail else '0')
+            r = subprocess.run(['/bin/sh', str(ROOT / 'ci/setup-android.sh')],
+                               env=env, capture_output=True, text=True)
+            return r, json.loads(calls.read_text()) if calls.exists() else None
+
+    def test_absolute_manager_with_spaces_and_closed_stdin(self):
+        r, calls = self.run_case()
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(calls[1:], ['--install', 'platforms;android-35',
+                                    'build-tools;35.0.0', 'ndk;27.0.12077973'])
+
+    def test_missing_prerequisite_never_accepts_licence(self):
+        for licence, manager in [(False, True), (True, False)]:
+            r, calls = self.run_case(licence=licence, manager=manager)
+            self.assertEqual(r.returncode, 2)
+            self.assertIsNone(calls)
+
+    def test_manager_failure_propagates(self):
+        r, _ = self.run_case(fail=True)
+        self.assertEqual(r.returncode, 9)
+
+
 if __name__ == '__main__':
     unittest.main()

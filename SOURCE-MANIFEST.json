@@ -15,8 +15,8 @@
   "files": [
     {
       "path": ".github/workflows/android.yml",
-      "bytes": 2865,
-      "sha256": "e6c21f3578f919d1671346208ae877bb5e98bebd045bf2b184989d76558b4474"
+      "bytes": 2647,
+      "sha256": "3429a0306b1e63eaf3bdd66558e6c2cc0e014fab6b0fc46e4712930b29b997de"
     },
     {
       "path": ".gitignore",
@@ -350,8 +350,8 @@
     },
     {
       "path": "ci/README.md",
-      "bytes": 3847,
-      "sha256": "4c93f506da198835aed4a5dfdb2cfda36bfd3dc75b4221d23f170309befababd"
+      "bytes": 4092,
+      "sha256": "532887ae7e446783cc44a3b75594ba8dc2d4d78f4abfe7e7bdc2c4cd43c1e462"
     },
     {
       "path": "ci/build.sh",
@@ -364,9 +364,14 @@
       "sha256": "14945e0169da83c14e7070511f994bb702ad887352654fc4a393145a5aa44262"
     },
     {
+      "path": "ci/setup-android.sh",
+      "bytes": 563,
+      "sha256": "e1f343987cc4083395f9db31f8e6718789d63c4f9c0fd556e144980120ee659a"
+    },
+    {
       "path": "ci/test_ci.py",
-      "bytes": 4167,
-      "sha256": "1e2a1c3ff554a98bfefac56a62018ee869600d011474ac5ee5fa7c2bac84a894"
+      "bytes": 6131,
+      "sha256": "992dba9ed0aa0e74980b81698c02c9c3292536585667a71357b797449e7daf8d"
     },
     {
       "path": "ci/verify.py",

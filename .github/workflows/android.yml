@@ -36,9 +36,7 @@ jobs:
           set -euo pipefail
           rustup toolchain install 1.99.1 --profile minimal --component rustfmt --component clippy --target aarch64-linux-android
           rustup default 1.99.1
-          # Use the hosted image's existing SDK licence; never auto-accept terms.
-          test -s "$ANDROID_HOME/licenses/android-sdk-license"
-          sdkmanager --install 'platforms;android-35' 'build-tools;35.0.0' 'ndk;27.0.12077973' </dev/null
+          sh ci/setup-android.sh
       - name: CI contracts
         run: python3 -m unittest discover -s ci -p 'test_*.py' -v
       - name: Tests, native rebuild and repeatable unsigned ARM64 APK

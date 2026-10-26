@@ -36,6 +36,9 @@ jamais escreve verification-metadata.xml. Compilação repetida é offline. Novo
 artefatos/checksums ausentes falham e exigem revisão separada. O sdkmanager usa
 licença já presente na imagem; stdin fechado, sem `yes` nem `--licenses`.
 Não há concessão automática de acesso de hardware ou aprovação de novos termos.
+O sdkmanager é chamado por caminho absoluto dentro do SDK: a imagem do runner
+pode fornecer a ferramenta sem incluí-la no PATH. Testes sintéticos cobrem esse
+caso, caminhos com espaços, stdin fechado e pré-requisitos/instalação falhando.
 
 Reprodução com ferramentas/caches já existentes, raiz de checkout completo:
 
