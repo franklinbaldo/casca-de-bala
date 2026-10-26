@@ -165,8 +165,8 @@
     },
     {
       "path": "android-app/gradle/verification-metadata.xml",
-      "bytes": 110920,
-      "sha256": "fb2c2287192d4659dac3731fab2e9894d25497b94872a8c7a2e442a2a07a3cf8"
+      "bytes": 111451,
+      "sha256": "b804dff4c079ffee13dc045a7f62836c5996c40d7ebfc0f11c63afc7fa5a6d34"
     },
     {
       "path": "android-app/preflight.sh",
@@ -350,13 +350,18 @@
     },
     {
       "path": "ci/README.md",
-      "bytes": 4092,
-      "sha256": "532887ae7e446783cc44a3b75594ba8dc2d4d78f4abfe7e7bdc2c4cd43c1e462"
+      "bytes": 4577,
+      "sha256": "dbf5eeeeaa31c5b2d64e147c3e97070d2e435be2e6219d665a0e216d3697bc46"
     },
     {
       "path": "ci/build.sh",
       "bytes": 2815,
       "sha256": "cf5eb08619f04c99ae412e96b7c4b6abdd24ad23cb1e7a1436d75910d99203d0"
+    },
+    {
+      "path": "ci/dependency-review.json",
+      "bytes": 1885,
+      "sha256": "8b6510271c3a63b2ad4ce60b4549306975972a8ce30836a22fcaf7df2bd7860c"
     },
     {
       "path": "ci/prepare-draft.py",

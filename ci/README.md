@@ -40,6 +40,13 @@ O sdkmanager é chamado por caminho absoluto dentro do SDK: a imagem do runner
 pode fornecer a ferramenta sem incluí-la no PATH. Testes sintéticos cobrem esse
 caso, caminhos com espaços, stdin fechado e pré-requisitos/instalação falhando.
 
+O runner sem cache encontrou dois metadados `junit-bom` já usados pelo plugin,
+ausentes da lista inicial. A manutenção explícita registra apenas esses dois
+hashes em [dependency-review.json](dependency-review.json): assinaturas PGP
+verificadas com a chave pública indicada por junit.org e constraints comparadas
+integralmente aos POMs cujos hashes já estavam fixados. Nenhuma versão ou binário
+foi atualizado; não se usou `--write-verification-metadata` nem modo permissivo.
+
 Reprodução com ferramentas/caches já existentes, raiz de checkout completo:
 
 ```sh
