@@ -8,5 +8,5 @@ Reference revision: a0948ee1cbc2a870f91d313f8e37df5f524465f7.
 
 External dependency licenses remain their own. See third_party/rust-licenses.json,
 third_party/licenses/, third_party/SQLITE-NOTICE.txt and PROVENANCE.md.
-ZMake is external GPL-3.0-or-later software by MelianMiko; no external source tree
-or toolchain distribution is bundled. This source snapshot contains no APK.
+No external source tree or toolchain distribution is bundled. This source
+snapshot contains no APK.

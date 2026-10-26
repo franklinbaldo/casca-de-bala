@@ -30,8 +30,8 @@
     },
     {
       "path": "BUILDING.md",
-      "bytes": 6573,
-      "sha256": "c4db5608df776fd138adc46e5ad4fbf2b25b336bb796bac8f074a6e60a9d7794"
+      "bytes": 6418,
+      "sha256": "dabe2aa565256f01513f6d10cb4b5f98f14a198d0fd7095d133028c2d3287af5"
     },
     {
       "path": "Cargo.lock",
@@ -55,13 +55,13 @@
     },
     {
       "path": "NOTICE",
-      "bytes": 735,
-      "sha256": "cc10f48859730f9020186a368b5ed825190e4e9436795f9a22fb6224a99dc5fb"
+      "bytes": 676,
+      "sha256": "f0de43d9816ea27d2250e5a1035cdd8e10ef2ac53c8f5fc9a23ff7ce6770aeee"
     },
     {
       "path": "PROVENANCE.md",
-      "bytes": 5096,
-      "sha256": "9cf4ad08bfcd80b7ebf621b2a037174003aabd4c6c5859c017a74be168850757"
+      "bytes": 4463,
+      "sha256": "bf34ceed0c4b4534f32361d10cab025572c537d5e2ad5b7f6458bfaf64ed0b95"
     },
     {
       "path": "README.md",
@@ -90,13 +90,13 @@
     },
     {
       "path": "android-app/app/src/main/assets/NOTICE.txt",
-      "bytes": 735,
-      "sha256": "cc10f48859730f9020186a368b5ed825190e4e9436795f9a22fb6224a99dc5fb"
+      "bytes": 676,
+      "sha256": "f0de43d9816ea27d2250e5a1035cdd8e10ef2ac53c8f5fc9a23ff7ce6770aeee"
     },
     {
       "path": "android-app/app/src/main/assets/PROVENANCE.txt",
-      "bytes": 5096,
-      "sha256": "9cf4ad08bfcd80b7ebf621b2a037174003aabd4c6c5859c017a74be168850757"
+      "bytes": 4463,
+      "sha256": "bf34ceed0c4b4534f32361d10cab025572c537d5e2ad5b7f6458bfaf64ed0b95"
     },
     {
       "path": "android-app/app/src/main/java/org/workspace/band7/app/BasicGattReader.java",
@@ -355,8 +355,8 @@
     },
     {
       "path": "ci/build.sh",
-      "bytes": 2815,
-      "sha256": "cf5eb08619f04c99ae412e96b7c4b6abdd24ad23cb1e7a1436d75910d99203d0"
+      "bytes": 2902,
+      "sha256": "330cbf27abe8c645a8655eae6074e3c6fac0eb3cae9b2b4fc7d1f2e564e4b0a5"
     },
     {
       "path": "ci/dependency-review.json",
@@ -510,8 +510,8 @@
     },
     {
       "path": "docs/validation.md",
-      "bytes": 7587,
-      "sha256": "8df3ea49bb71bd7b944d380419b8027ed4c0804ec7fc83260852e278570cc934"
+      "bytes": 7656,
+      "sha256": "63988fc91706d6ab81e5332724c9a930fc25c146cbb3afead65e2d6d6c5cd126"
     },
     {
       "path": "ffi/README.md",
@@ -530,8 +530,8 @@
     },
     {
       "path": "miniapp/README.md",
-      "bytes": 2545,
-      "sha256": "c989ad8f42d322d95746bac6e16ec50fc794e9758b4511b30fdf720ab779bbf6"
+      "bytes": 2529,
+      "sha256": "22257f4c983a1fb52e5568d6c98ef3d532ee38fbd69a2b0140168821e80aa397"
     },
     {
       "path": "miniapp/app.js",
@@ -545,18 +545,8 @@
     },
     {
       "path": "miniapp/packaging/README.md",
-      "bytes": 2560,
-      "sha256": "88a6e07bc3dfb9ee59a4621c8faf77412a99c69dd15901000ac50a4b40f4f5f3"
-    },
-    {
-      "path": "miniapp/packaging/build-receipt.json",
-      "bytes": 3726,
-      "sha256": "f270a5582997e74931bbb77c9ba3d307c8a4fbbf9f99b95c4d5646a80c9fb7a7"
-    },
-    {
-      "path": "miniapp/packaging/build.py",
-      "bytes": 5506,
-      "sha256": "30b240d766a6c0ee48cc908c5b18a5aba11fc4b266cb7a71a4f4263fa6421e52"
+      "bytes": 982,
+      "sha256": "2a80d9f7cae84c90754e035ecffc98778fb5b7fb048fb8a51c6ae646c173f187"
     },
     {
       "path": "miniapp/packaging/package.py",
@@ -564,24 +554,9 @@
       "sha256": "2d4885bba6085f4839729628d13ce1db11224dc89f3249777d22ae26403da581"
     },
     {
-      "path": "miniapp/packaging/pyproject.toml",
-      "bytes": 139,
-      "sha256": "b779ac7919230022bb9341099efad7ad97c8c12de8cb3383123c10c9cfeea28a"
-    },
-    {
-      "path": "miniapp/packaging/runtime.test.mjs",
-      "bytes": 1358,
-      "sha256": "7a1848f4a842e33cb6a363ae09990e0c89295d0500566b87e3d6163fa4be6691"
-    },
-    {
       "path": "miniapp/packaging/test_package.py",
       "bytes": 3455,
       "sha256": "b657edafc05e158f75f0193efd7c644e2de7b852b9953839535585d0753ca092"
-    },
-    {
-      "path": "miniapp/packaging/uv.lock",
-      "bytes": 6541,
-      "sha256": "7905167de1979b29ba33c023cb81a3bb9caadba60e940f78cbdaef4865e39e2e"
     },
     {
       "path": "miniapp/page/index.js",
@@ -1022,11 +997,6 @@
       "path": "third_party/licenses/vcpkg-0.2.15/LICENSE-MIT",
       "bytes": 1082,
       "sha256": "016d20f335060a70e79d9fcf8dfaa6201114d65d592211f4bdfb8ae9ca2bc1dc"
-    },
-    {
-      "path": "third_party/licenses/zmake-47acece/GPL-3.0.txt",
-      "bytes": 35149,
-      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
     },
     {
       "path": "third_party/licenses/zmij-1.0.23/LICENSE-MIT",

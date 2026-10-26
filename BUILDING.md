@@ -83,12 +83,10 @@ credencial Bluetooth/Huami. Não instalar, parear ou escrever na Band pelo build
 
 ## Miniapp opcional
 
-Veja miniapp/packaging/README.md: ZMake GPL-3.0-or-later externo, commit completo
-fixado e dependências Python em uv.lock. Sem fetch automático ou submódulo.
-O builder é opcional e não participa da compilação Android/Rust. Fonte própria
-do miniapp está incluída; ferramenta externa e seus recursos não são rotulados
-AGPL do projeto. Dados reais, pacote instalável e compatibilidade física não são
-pré-requisitos falsamente satisfeitos pelos testes com mocks.
+Veja miniapp/packaging/README.md: inspetor offline em Python stdlib, sem
+dependências externas. O builder ZMake de laboratório saiu da árvore e continua
+disponível no histórico Git. Fonte própria do miniapp está incluída. Pacote
+instalável e compatibilidade física não são satisfeitos pelos testes com mocks.
 
 ## Verificação de dependências e manutenção consciente
 

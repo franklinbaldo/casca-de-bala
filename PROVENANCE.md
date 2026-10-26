@@ -37,19 +37,10 @@ Zlib, Unlicense e Unicode-3.0. SQLite embarcado por libsqlite3-sys conserva seu
 aviso de domínio público em third_party/SQLITE-NOTICE.txt. Esse inventário não
 é um SBOM de APK, nem certifica todas as bibliotecas de ferramentas externas.
 
-ZMake é GPL-3.0-or-later, copyright2022 MelianMiko; referência externa fixada:
-https://github.com/melianmiko/zmake/tree/47acece62528a86a1445d92414cd9a087037eb1c
-
-Seu texto GPL é conservado em third_party/licenses/zmake-47acece/GPL-3.0.txt.
-Não está vendorizado nem é módulo obrigatório Android. Usar ferramenta GPL não
-é, por si só, afirmação de licença de toda saída; recursos/templates injetados
-precisam manter sua proveniência. build.py usa perfil explícito de laboratório,
-sem declarar pacote instalável; recibo histórico não é evidência de instalação.
-
-Dependências Python opcionais do builder: Pillow12.3.0 (MIT-CMU e avisos
-embarcados), qrcode7.4.2 (BSD), pypng0.20220715.0 (MIT), typing_extensions4.16.0
-(PSF-2.0); colorama0.4.6 está no lockfile para plataformas pertinentes. São
-ferramentas externas, não vendorizadas. uv.lock conserva versões/hashes.
+O builder ZMake (GPL-3.0-or-later, MelianMiko) e suas dependências Python
+opcionais foram removidos desta árvore; nenhum código, recurso ou template
+ZMake é distribuído. O inspetor miniapp/packaging/package.py usa somente a
+biblioteca padrão do Python.
 Gradle/AGP/SDK/NDK/JDK/Rust também não são redistribuídos aqui; seus termos e
 avisos são independentes. Consultar termos oficiais antes de provisioná-los.
 

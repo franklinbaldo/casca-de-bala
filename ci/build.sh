@@ -23,6 +23,8 @@ cargo fmt --all -- --check
 cargo clippy --locked --offline --all-targets -- -D warnings
 sh android-bridge/run_host.sh
 sh android-bridge/run_worker_host.sh
+sh android-bridge/run_survey_host.sh
+python3 -m unittest discover -s miniapp/packaging
 node --test miniapp/tests/page.test.mjs miniapp/tests/vm.test.mjs
 sh android-app/build-native.sh
 if test "${CI_PREPARE_NETWORK:-0}" = 1; then

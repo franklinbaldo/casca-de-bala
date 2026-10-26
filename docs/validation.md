@@ -56,8 +56,8 @@ Band7 mantido; não há repositório ou release binária criado por este pacote.
 | Verificação Gradle estrita/offline: original, divergente e ausente | PASS, 3 casos; XML inalterado, sem APK/keytool |
 | Sintaxe shell build-apk.sh (sh -n) | PASS |
 | Gradle lintDebug | PASS com aviso: 0 erros, 1 DataExtractionRules |
-| ZMake fixado: duas gerações normalizadas | PASS, candidatos idênticos, installable:false |
-| Mock runtime do candidato ZMake | PASS, 1 teste; não é API1 física |
+| ZMake fixado: duas gerações normalizadas (histórico; builder removido em 26/10) | PASS, candidatos idênticos, installable:false |
+| Mock runtime do candidato ZMake (histórico; removido junto) | PASS, 1 teste; não é API1 física |
 
 Aviso lint: allowBackup=false sem dataExtractionRules no manifesto. Nenhuma
 regra de backup ou acesso persistente foi ampliada nesta exportação. O build
