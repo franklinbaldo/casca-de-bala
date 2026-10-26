@@ -10,14 +10,14 @@ Não há afirmação de clean-room ou de autoria própria sobre derivações ext
 Referência Gadgetbridge:
 https://github.com/Freeyourgadget/Gadgetbridge/tree/a0948ee1cbc2a870f91d313f8e37df5f524465f7
 
-- src/huami_chunk.rs: Huami2021ChunkedEncoder/Decoder; copyright2022–2024
+- crates/casca-core/src/huami_chunk.rs: Huami2021ChunkedEncoder/Decoder; copyright2022–2024
   José Rebelo. Implementação Rust e validações locais preservam AGPL.
-- src/ingestion.rs: FetchActivityOperation e seus contribuidores; interpretação
+- crates/casca-core/src/ingestion.rs: FetchActivityOperation e seus contribuidores; interpretação
   Activity8, ingestão e limites locais. AGPL-3.0-or-later.
-- src/health_samples.rs: FetchHeartRateRestingOperation,
+- crates/casca-core/src/health_samples.rs: FetchHeartRateRestingOperation,
   FetchHeartRateMaxOperation e FetchSpo2NormalOperation; contribuidores do
   Gadgetbridge. AGPL-3.0-or-later, sem alegação de leitura física universal.
-- src/activity_db.rs, event_db.rs, ffi.rs, sync_session.rs e
+- crates/casca-store/src/activity_db.rs, event_db.rs, sync_session.rs, crates/casca-ffi/src/lib.rs e
   android-bridge/band7_jni.c: persistência e integração do conjunto, já marcados
   AGPL-3.0-or-later. Todos os oito avisos foram conservados.
 

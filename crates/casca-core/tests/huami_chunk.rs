@@ -1,4 +1,4 @@
-use band7_terminal::huami_chunk::*;
+use casca_core::huami_chunk::*;
 // Synthetic header vectors derived from the pinned Java framing, not BLE captures.
 const FIRST: &[u8] = &[3, 1, 0, 7, 0, 4, 0, 0, 0, 0xa0, 0, 10, 20];
 const LAST: &[u8] = &[3, 6, 0, 7, 1, 30, 40];

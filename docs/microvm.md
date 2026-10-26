@@ -46,7 +46,7 @@ para testes diferenciais JS/Rust.
 
 ## Código e execução offline
 
-- Rust: [codec, validador e executor de referência](../src/microvm.rs).
+- Rust: [codec, validador e executor de referência](../crates/casca-microvm/src/lib.rs).
 - JavaScript: [interpretador standalone](../miniapp/vm/runner.js), sem eval/Function.
 - Testes: [suíte JS](../miniapp/tests/vm.test.mjs) e módulo de testes Rust.
 - Medição: [benchmark somente de bytes](../bench/size.mjs), para JSON versus B7VM

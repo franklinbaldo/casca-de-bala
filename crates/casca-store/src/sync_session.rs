@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Host sync coordinator. Activity8 admission is an explicit trusted fetch boundary,
 //! not a mapping from a Huami endpoint to historical records.
-use crate::{
-    activity_db::{ActivityDb, Committed, StoreError},
+use crate::activity_db::{ActivityDb, Committed, StoreError};
+use casca_core::{
     huami_chunk::{Received, Receiver, RxError},
     ingestion::{Source, MAX_RECORDS},
 };

@@ -1,5 +1,5 @@
-use band7_terminal::health_samples::*;
-use band7_terminal::ingestion::{Availability, Source, MAX_RECORDS};
+use casca_core::health_samples::*;
+use casca_core::ingestion::{Availability, Source, MAX_RECORDS};
 
 fn synthetic_source() -> Source {
     Source {

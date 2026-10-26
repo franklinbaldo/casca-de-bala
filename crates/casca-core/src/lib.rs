@@ -1,6 +1,5 @@
 //! Offline host contracts. No BLE, shell or MCP transport.
 pub mod basic_snapshot;
-pub mod microvm;
 use serde::{Deserialize, Serialize};
 pub const OPERATIONS: &[&str] = &[
     "miniapps.list",
@@ -524,14 +523,6 @@ pub mod huami_chunk;
 
 pub mod health_samples;
 pub mod ingestion;
-
-pub mod activity_db;
-
-pub mod event_db;
-
-pub mod ffi;
-
-pub mod sync_session;
 
 pub mod gatt_basics;
 

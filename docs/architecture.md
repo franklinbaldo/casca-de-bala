@@ -69,3 +69,17 @@ Incremento implementado: [Receiver Huami2021 offline](huami-transport.md),
 independente do formato de mensagens da aplicação, B7VM e filas planejadas.
 Ele aceita notificações fornecidas pelo chamador e não realiza conexão, ACK ou
 cifra. Atores e adaptador Android continuam gates posteriores.
+
+## Decisão: ponte JNI em C, por enquanto
+
+Estado em 26/10: `android-bridge/band7_jni.c` (68 linhas) traduz JNI para a
+C ABI de `casca-ffi`; o APK leva `libband7_jni.so` e `libband7_terminal.so`.
+Avaliado o crate `jni` (JNI direto em Rust, uma única `.so`, sem toolchain C):
+
+- Ganho hoje: pequeno. O shim é estável, sem dependências, e o harness de host
+  (`android-bridge/test.sh`, JVM `-Xcheck:jni`) já cobre os dois lados.
+- Custo hoje: novas dependências Rust com avisos de licença, reescrita do shim
+  e do header subset de host, para a mesma superfície de chamadas Java → Rust.
+- Reavaliar quando Rust precisar chamar Java (callbacks de BLE, atores do
+  núcleo publicando eventos para a UI). Aí o `jni` evita gerenciar `JNIEnv`,
+  referências globais e attach de threads à mão em C.

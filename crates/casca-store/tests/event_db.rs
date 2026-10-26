@@ -1,8 +1,8 @@
-use band7_terminal::{
-    event_db::{EventDb, EventKind, EventStoreError},
+use casca_core::{
     health_samples::{DecodeError, HeartRateKind},
     ingestion::{IngestError, Source},
 };
+use casca_store::event_db::{EventDb, EventKind, EventStoreError};
 use std::{
     fs,
     path::PathBuf,

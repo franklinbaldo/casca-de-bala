@@ -1,4 +1,4 @@
-use band7_terminal::{
+use casca_core::{
     dispatch, error_response, handle_json, parse, Error, Outcome, Request, Response,
     MAX_INPUT_BYTES, MAX_JSON_BYTES,
 };
@@ -13,7 +13,7 @@ fn main() {
         _ => finish(error_response(None, Error::InvalidMode)),
     };
     let max = if gatt {
-        band7_terminal::gatt_bridge::MAX_INPUT
+        casca_core::gatt_bridge::MAX_INPUT
     } else if json {
         MAX_JSON_BYTES
     } else {
@@ -28,7 +28,7 @@ fn main() {
         finish(error_response(None, Error::InputIo));
     }
     if gatt {
-        let output = band7_terminal::gatt_bridge::process(&bytes);
+        let output = casca_core::gatt_bridge::process(&bytes);
         let failed = serde_json::from_slice::<serde_json::Value>(&output)
             .expect("GATT JSON")
             .get("error")

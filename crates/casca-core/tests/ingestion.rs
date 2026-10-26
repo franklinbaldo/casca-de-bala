@@ -1,4 +1,4 @@
-use band7_terminal::ingestion::*;
+use casca_core::ingestion::*;
 fn source() -> Source {
     Source {
         device_ref: "synthetic-band".into(),

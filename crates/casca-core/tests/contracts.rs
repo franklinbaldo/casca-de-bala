@@ -1,4 +1,4 @@
-use band7_terminal::*;
+use casca_core::*;
 use serde_json::{json, Value};
 
 fn request(command: Value) -> Value {

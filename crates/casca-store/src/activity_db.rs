@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Local SQLite persistence for the Activity8 decoder. No health export or BLE IO.
-use crate::ingestion::{decode_activity8, Availability, IngestError, Record, Source, Window};
+use casca_core::ingestion::{decode_activity8, Availability, IngestError, Record, Source, Window};
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use std::{path::Path, time::Duration};
 

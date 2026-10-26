@@ -1,0 +1,11 @@
+[package]
+name = "casca-store"
+description = "SQLite activity/event storage and the Huami sync session on top of it"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+casca-core.workspace = true
+rusqlite.workspace = true

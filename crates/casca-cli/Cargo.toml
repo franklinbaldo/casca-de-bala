@@ -1,0 +1,15 @@
+[package]
+name = "casca-cli"
+description = "Offline console: capabilities, validate-card and GATT snapshot replay"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "band7-terminal"
+path = "src/main.rs"
+
+[dependencies]
+casca-core.workspace = true
+serde_json.workspace = true
