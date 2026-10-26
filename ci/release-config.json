@@ -1,0 +1,7 @@
+{
+  "repository": "franklinbaldo/casca-de-bala",
+  "environment": "android-release",
+  "productVersion": "0.5-lab",
+  "alias": "casca-de-bala-release",
+  "certificateSha256": "8382fb93b43685866d68acbbc2465bb10013f3072343379f227ca495a745db5e"
+}

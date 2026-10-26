@@ -7,5 +7,9 @@ test -x "$MANAGER" || { echo 'SDK image missing cmdline-tools/latest/bin/sdkmana
 test -s "$ANDROID_HOME/licenses/android-sdk-license" || {
     echo 'SDK image licence missing; no terms accepted' >&2; exit 2;
 }
-exec "$MANAGER" --sdk_root="$ANDROID_HOME" --install \
-    'platforms;android-35' 'build-tools;35.0.0' 'ndk;27.0.12077973' </dev/null
+case "${1:-build}" in
+    build) set -- 'platforms;android-35' 'build-tools;35.0.0' 'ndk;27.0.12077973' ;;
+    signing) set -- 'build-tools;35.0.0' ;;
+    *) echo 'Unknown SDK preparation mode' >&2; exit 2 ;;
+esac
+exec "$MANAGER" --sdk_root="$ANDROID_HOME" --install "$@" </dev/null

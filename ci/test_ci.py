@@ -95,7 +95,7 @@ class DraftTest(unittest.TestCase):
 
 
 class AndroidSetupTest(unittest.TestCase):
-    def run_case(self, licence=True, manager=True, fail=False):
+    def run_case(self, licence=True, manager=True, fail=False, mode=None):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d) / 'SDK with spaces'
             binary = root / 'cmdline-tools/latest/bin/sdkmanager'
@@ -113,7 +113,7 @@ class AndroidSetupTest(unittest.TestCase):
             calls = Path(d) / 'calls'
             env = dict(os.environ, ANDROID_HOME=str(root), CALLS=str(calls),
                        FAIL='1' if fail else '0')
-            r = subprocess.run(['/bin/sh', str(ROOT / 'ci/setup-android.sh')],
+            r = subprocess.run(['/bin/sh', str(ROOT / 'ci/setup-android.sh')] + ([mode] if mode else []),
                                env=env, capture_output=True, text=True)
             return r, json.loads(calls.read_text()) if calls.exists() else None
 
@@ -132,6 +132,11 @@ class AndroidSetupTest(unittest.TestCase):
     def test_manager_failure_propagates(self):
         r, _ = self.run_case(fail=True)
         self.assertEqual(r.returncode, 9)
+
+    def test_signing_mode_does_not_install_ndk(self):
+        r, calls = self.run_case(mode='signing')
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(calls[1:], ['--install', 'build-tools;35.0.0'])
 
 
 if __name__ == '__main__':

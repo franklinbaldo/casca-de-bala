@@ -15,8 +15,8 @@
   "files": [
     {
       "path": ".github/workflows/android.yml",
-      "bytes": 2647,
-      "sha256": "3429a0306b1e63eaf3bdd66558e6c2cc0e014fab6b0fc46e4712930b29b997de"
+      "bytes": 5295,
+      "sha256": "d2afcab862a51b1799751df700ddf21888231b381e5eeb2111e3528e0cd97ce8"
     },
     {
       "path": ".gitignore",
@@ -350,8 +350,8 @@
     },
     {
       "path": "ci/README.md",
-      "bytes": 4577,
-      "sha256": "dbf5eeeeaa31c5b2d64e147c3e97070d2e435be2e6219d665a0e216d3697bc46"
+      "bytes": 5877,
+      "sha256": "6847327a859fdcdbdf0e1ab37883a3255bb4715b79c4bf3ba7b836edd7142d7a"
     },
     {
       "path": "ci/build.sh",
@@ -369,19 +369,44 @@
       "sha256": "14945e0169da83c14e7070511f994bb702ad887352654fc4a393145a5aa44262"
     },
     {
+      "path": "ci/publish_release.py",
+      "bytes": 3235,
+      "sha256": "5392590d4817734bc671b94393d36cdd199e6c16052a18ae43597d336e15a736"
+    },
+    {
+      "path": "ci/release-config.json",
+      "bytes": 244,
+      "sha256": "d08c4648973fccb9b94317b4de0972a388c16edac41c261701500567550116b0"
+    },
+    {
+      "path": "ci/release_contract.py",
+      "bytes": 2962,
+      "sha256": "11c5a842f28937129eb05bc704dbb94c7b0592b34f44aa69ff762263df49d6a4"
+    },
+    {
       "path": "ci/setup-android.sh",
-      "bytes": 563,
-      "sha256": "e1f343987cc4083395f9db31f8e6718789d63c4f9c0fd556e144980120ee659a"
+      "bytes": 712,
+      "sha256": "8cff67132204077cf2d1ac479548516fe92ebe9d7b2037c4dd8c1af33b52180a"
+    },
+    {
+      "path": "ci/sign_apk.py",
+      "bytes": 4218,
+      "sha256": "556969dd3282d72bfeb8d424c2c145aa9557eddc4e76ac7a9215368f6bcd1aa5"
     },
     {
       "path": "ci/test_ci.py",
-      "bytes": 6131,
-      "sha256": "992dba9ed0aa0e74980b81698c02c9c3292536585667a71357b797449e7daf8d"
+      "bytes": 6398,
+      "sha256": "6c282ceccc0faeb2df9083b31a0cb464b0f47e3c695f5367a78cd1325f1e1fd6"
+    },
+    {
+      "path": "ci/test_release.py",
+      "bytes": 7750,
+      "sha256": "c61c45ae92f7e40d4fe64d340c3c3cb4f87d76ebf876310a0dd9e944658ad208"
     },
     {
       "path": "ci/verify.py",
-      "bytes": 1950,
-      "sha256": "c393a479e6a3014ca36a63899e4f8a5b5d6e444b75737599fe42673dd508965c"
+      "bytes": 2359,
+      "sha256": "774f69dc5a171b173df3e762471db1486b389cb91b52208c604d91660601e5fd"
     },
     {
       "path": "ci/version.py",
