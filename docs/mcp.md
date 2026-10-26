@@ -62,6 +62,17 @@ mesmos de `band_devices`. Cada chamada conecta e desconecta; as tarefas rodam
 em fila, uma por vez. A escrita pode mudar o estado do dispositivo: por isso
 exige a aprovação no celular, que vale pelo tempo pedido.
 
+## Chave da pulseira (autenticação Huami)
+
+Recursos além do GATT padrão (vibração e texto controlados, tela, imagem,
+miniapps) exigem a chave de 16 bytes que os servidores da Huami associam ao
+pareamento da Band com a conta. No app, **Obter chave da pulseira (conta
+Xiaomi)** abre a página oficial de login da Xiaomi; o Casca captura só o código
+de autorização do redirect, o Rust troca o código na Huami, lê a chave da Band
+e a guarda no armazenamento privado do app. A senha fica na página da Xiaomi; a
+chave nunca sai pelo MCP (`lab_info` mostra apenas `huami_keys`, os ids que têm
+chave). Não resete a Band: o reset invalida a chave no servidor.
+
 ## Fila de tarefas
 
 O servidor roda em Rust, mas só o app fala Bluetooth. Uma ferramenta que

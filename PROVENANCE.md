@@ -44,6 +44,13 @@ vendorizado no repositório dela), copiada do crate travado no Cargo.lock durant
 o build e distribuída sob o LICENSE.md da btleplug (BSD-3-Clause, com partes
 MIT/Apache-2.0), presente em third_party/licenses/btleplug-0.13.5/.
 
+O fluxo de chave da pulseira (crates/casca-ble/src/account.rs: OAuth da Xiaomi
+para contas do Zepp Life, troca do código na Huami e leitura de auth_key) é uma
+reimplementação em Rust da sequência do huami-token anterior a novembro de 2025
+(https://codeberg.org/argrento/huami-token, MIT, Copyright (c) 2020-2025 Kirill
+Snezhko). Nenhum código Python foi copiado; o aviso MIT do projeto original está
+em third_party/notices/huami-token-MIT.txt.
+
 O builder ZMake (GPL-3.0-or-later, MelianMiko) e suas dependências Python
 opcionais foram removidos desta árvore; nenhum código, recurso ou template
 ZMake é distribuído. O inspetor miniapp/packaging/package.py usa somente a
