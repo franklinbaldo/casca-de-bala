@@ -1,4 +1,4 @@
-use band7_terminal::ffi::{b7_call, B7Result};
+use band7_terminal::{b7_call, B7Result};
 use serde_json::{json, Value};
 use std::{
     fs,

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Local-only, unencrypted SQLite reference persistence for event-like HR/SpO2
 //! records. No Android integration, BLE, network, logging, or MCP export.
-use crate::health_samples::{decode_heart_rate6, decode_spo2_v2, DecodeError, HeartRateKind};
-use crate::ingestion::{Availability, IngestError, Source, Window, MAX_RECORDS};
+use casca_core::health_samples::{decode_heart_rate6, decode_spo2_v2, DecodeError, HeartRateKind};
+use casca_core::ingestion::{Availability, IngestError, Source, Window, MAX_RECORDS};
 use rusqlite::{params, Connection, TransactionBehavior};
 use std::{path::Path, time::Duration};
 

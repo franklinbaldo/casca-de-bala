@@ -1,4 +1,5 @@
-use band7_terminal::{activity_db::StoreError, ingestion::Source, sync_session::*};
+use casca_core::ingestion::Source;
+use casca_store::{activity_db::StoreError, sync_session::*};
 use std::{
     fs,
     path::PathBuf,

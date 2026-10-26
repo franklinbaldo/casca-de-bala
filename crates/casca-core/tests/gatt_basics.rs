@@ -1,4 +1,4 @@
-use band7_terminal::{gatt_basics::*, ingestion::Availability};
+use casca_core::{gatt_basics::*, ingestion::Availability};
 fn d(s: u16, c: u16, readable: bool) -> Discovered {
     Discovered {
         service: Uuid::Bluetooth16(s),
@@ -16,7 +16,7 @@ fn hex(value: &str) -> Vec<u8> {
 #[test]
 fn sanitized_user_reads_are_not_our_app_reads() {
     let fixture: serde_json::Value =
-        serde_json::from_str(include_str!("fixtures/user-gatt-sanitized.json")).unwrap();
+        serde_json::from_str(include_str!("../../../fixtures/user-gatt-sanitized.json")).unwrap();
     let kinds = [
         Kind::HardwareRevision,
         Kind::SoftwareRevision,

@@ -57,7 +57,7 @@ just lint      # rustfmt, clippy e guarda de arquivos versionados
 just apk       # APK release unsigned (ANDROID_HOME e ANDROID_NDK_HOME)
 just install   # APK debug no celular conectado via adb
 just ci        # exatamente o que o CI roda
-cargo run --offline -- --gatt-json < tests/fixtures/basic-snapshot-synthetic.json
+cargo run --offline -p casca-cli -- --gatt-json < fixtures/basic-snapshot-synthetic.json
 ```
 
 O Gradle vem pelo wrapper (`android-app/gradlew`, distribuição fixada por SHA-256).
@@ -69,7 +69,17 @@ snapshot é sintético e não se conecta ao celular ou ao relógio.
 
 ## Organização
 
-`src/` e `tests/`: um crate Rust, biblioteca cdylib e CLI. `android-app/`: aplicativo
+Workspace Cargo em `crates/`, dependências apontando só para baixo:
+
+| Crate | Papel | No APK |
+| --- | --- | --- |
+| `casca-core` | contratos tipados, decoders GATT/Huami/Activity8/HR/SpO2; sem I/O | sim |
+| `casca-store` | SQLite (rusqlite bundled) e SyncSession sobre o core | sim |
+| `casca-ffi` | C ABI (`ffi/band7.h`), gera `libband7_terminal.so` | sim |
+| `casca-cli` | console offline `band7-terminal` | não |
+| `casca-microvm` | B7VM v1 experimental | não |
+
+`fixtures/`: entradas sintéticas/sanitizadas compartilhadas. `android-app/`: aplicativo
 Android e build Gradle. `android-bridge/`: módulo Gradle `:bridge` (Java puro),
 shim JNI e harnesses de host (`test.sh`). `ffi/`: C ABI.
 `miniapp/` e `bench/`: experimentos existentes. `docs/`: contratos, evidências,

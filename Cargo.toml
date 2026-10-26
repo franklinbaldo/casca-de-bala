@@ -1,15 +1,21 @@
-[package]
-name = "band7-terminal"
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2021"
 publish = false
 license = "AGPL-3.0-or-later"
-description = "Android basic BLE reader and experimental offline terminal core for Xiaomi Smart Band 7"
 
-[dependencies]
+[workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["raw_value"] }
 rusqlite = { version = "=0.41.0", features = ["bundled"] }
+casca-core = { path = "crates/casca-core" }
+casca-store = { path = "crates/casca-store" }
 
-[lib]
-crate-type = ["rlib", "cdylib"]
+[profile.release]
+# Cross-crate inlining for the APK cdylib; keeps the split crates from growing it.
+lto = true
+codegen-units = 1

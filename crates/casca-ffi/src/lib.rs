@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Synchronous host-tested ABI. No JNI/Android runtime or Bluetooth IO.
-use crate::{
-    activity_db::{ActivityDb, StoreError},
-    ingestion::Source,
-};
+use casca_core::ingestion::Source;
+use casca_store::activity_db::{ActivityDb, StoreError};
 use serde::Deserialize;
 use std::{
     collections::HashMap,

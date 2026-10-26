@@ -1,6 +1,6 @@
 # SQLite local para Activity8
 
-Implementação em src/activity_db.rs; testes de arquivo real em tests/activity_db.rs.
+Implementação em crates/casca-store/src/activity_db.rs; testes de arquivo real em crates/casca-store/tests/activity_db.rs.
 Caminho fechado nesta etapa: bytes sintéticos → decode_activity8 → transação SQLite
 → fechar handle → reabrir → consulta e retomada. É teste host, sem Android ou Band.
 HR6/SpO2 usam outro arquivo SQLite experimental em [event-storage.md](event-storage.md); não são persistidos nesta tabela Activity8.

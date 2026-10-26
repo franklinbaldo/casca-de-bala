@@ -1,4 +1,4 @@
-use band7_terminal::gatt_bridge::{b7_gatt_json, process, MAX_INPUT, MAX_OUTPUT};
+use casca_core::gatt_bridge::{b7_gatt_json, process, MAX_INPUT, MAX_OUTPUT};
 use serde_json::{json, Value};
 fn call(value: Value) -> Value {
     serde_json::from_slice(&process(&serde_json::to_vec(&value).unwrap())).unwrap()

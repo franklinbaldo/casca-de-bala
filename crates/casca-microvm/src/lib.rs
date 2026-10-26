@@ -184,7 +184,7 @@ mod tests {
     #[test]
     fn shared_golden_vectors_round_trip_and_execute() {
         let vectors: Vec<Vector> =
-            serde_json::from_str(include_str!("../miniapp/vm/vectors.json")).unwrap();
+            serde_json::from_str(include_str!("../../../miniapp/vm/vectors.json")).unwrap();
         for vector in vectors {
             let bytes = from_hex(&vector.hex);
             let instructions = decode(&bytes).unwrap();

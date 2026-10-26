@@ -1,9 +1,12 @@
-use band7_terminal::gatt_bridge::process;
+use casca_core::gatt_bridge::process;
 use serde_json::{json, Value};
 use std::io::Write;
 use std::process::{Command, Stdio};
 fn fixture() -> Value {
-    serde_json::from_str(include_str!("fixtures/basic-snapshot-synthetic.json")).unwrap()
+    serde_json::from_str(include_str!(
+        "../../../fixtures/basic-snapshot-synthetic.json"
+    ))
+    .unwrap()
 }
 fn call(v: &Value) -> Value {
     serde_json::from_slice(&process(&serde_json::to_vec(v).unwrap())).unwrap()

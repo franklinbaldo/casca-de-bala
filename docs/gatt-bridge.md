@@ -35,7 +35,7 @@ chamador, sem atestação. Usar `our_app` não prova que houve callback ou hardw
 `outcome`: `{"state":"not_attempted"}`, `{"state":"permission_denied"}` ou
 `{"state":"gatt","status":0,"bytes":[...]}`. Status diferente de zero prevalece
 sobre o payload. Dados inválidos ficam `invalid_value`; nunca viram leitura válida.
-Os valores decodificados e erros são os mesmos de `src/gatt_basics.rs`.
+Os valores decodificados e erros são os mesmos de `crates/casca-core/src/gatt_basics.rs`.
 
 Exemplo de plano: 6159 = serviço 0x180F, 10777 = característica 0x2A19:
 
