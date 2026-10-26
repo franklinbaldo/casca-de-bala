@@ -25,6 +25,8 @@ struct Lab {
     runtime: Runtime,
     /// Opaque id -> Bluetooth address, filled by bonded listings and scans.
     known: Mutex<HashMap<String, String>>,
+    /// The app's private files directory (Context.getFilesDir()).
+    files: String,
 }
 
 static LAB: OnceLock<Lab> = OnceLock::new();
@@ -252,6 +254,8 @@ fn lab_info(env: &mut Env, context: &JObject) -> jni::errors::Result<Value> {
         "permissions": permissions,
         "ble_stack": "btleplug 0.13.5 (Rust)",
         "write_allowed": casca_mcp::write_allowed(),
+        // Ids of devices with a stored Huami key; the key itself never leaves the app.
+        "huami_keys": LAB.get().map(|lab| stored_keys(&lab.files).keys().map(|mac| opaque(mac)).collect::<Vec<_>>()),
     }))
 }
 
@@ -554,6 +558,7 @@ fn start(env: &mut Env, context: &JObject) -> Result<String, String> {
         return Ok("já iniciado".into());
     }
     btleplug::platform::init(env).map_err(|e| format!("btleplug::platform::init: {e}"))?;
+    let files = files_dir(env, context).map_err(|e| format!("getFilesDir: {e}"))?;
     let context = env
         .new_global_ref(context)
         .map_err(|e| format!("global ref: {e}"))?;
@@ -568,6 +573,7 @@ fn start(env: &mut Env, context: &JObject) -> Result<String, String> {
             context,
             runtime,
             known: Mutex::new(HashMap::new()),
+            files,
         })
         .is_err()
     {
@@ -591,6 +597,168 @@ pub extern "system" fn Java_org_workspace_band7_app_BleNative_start<'caller>(
     unowned_env
         .with_env(|env| -> jni::errors::Result<JString<'caller>> {
             let text = start(env, &context).unwrap_or_else(|e| format!("ERRO: {e}"));
+            JString::from_str(env, text)
+        })
+        .resolve::<jni::errors::ThrowRuntimeExAndDefault>()
+}
+
+// ---------- Huami account: auth key via Xiaomi OAuth (see account.rs) ----------
+
+fn files_dir(env: &mut Env, context: &JObject) -> jni::errors::Result<String> {
+    let dir = env
+        .call_method(
+            context,
+            jni_str!("getFilesDir"),
+            jni_sig!("()Ljava/io/File;"),
+            &[],
+        )?
+        .l()?;
+    let path = env
+        .call_method(
+            &dir,
+            jni_str!("getAbsolutePath"),
+            jni_sig!("()Ljava/lang/String;"),
+            &[],
+        )?
+        .l()?;
+    Ok(string(env, path)?.unwrap_or_default())
+}
+
+const KEY_FILE: &str = "huami-keys.json";
+
+/// MAC -> 32-hex auth key, from the app-private key file.
+fn stored_keys(files: &str) -> Map<String, Value> {
+    std::fs::read(std::path::Path::new(files).join(KEY_FILE))
+        .ok()
+        .and_then(|b| serde_json::from_slice::<Value>(&b).ok())
+        .and_then(|v| v.get("keys").and_then(Value::as_object).cloned())
+        .unwrap_or_default()
+}
+
+fn store_keys(files: &str, keys: &[(String, String)]) -> Result<(), String> {
+    let mut all = stored_keys(files);
+    for (mac, key) in keys {
+        all.insert(mac.clone(), json!(key));
+    }
+    let dir = std::path::Path::new(files);
+    let temporary = dir.join("huami-keys.json.tmp");
+    let body = json!({"version": 1, "keys": all});
+    std::fs::write(&temporary, body.to_string()).map_err(|e| format!("gravar chave: {e}"))?;
+    std::fs::rename(temporary, dir.join(KEY_FILE)).map_err(|e| format!("gravar chave: {e}"))
+}
+
+fn body(response: &mut ureq::http::Response<ureq::Body>) -> Result<Value, String> {
+    let text = response
+        .body_mut()
+        .read_to_string()
+        .map_err(|e| format!("resposta: {e}"))?;
+    serde_json::from_str(&text).map_err(|_| "resposta não é JSON".to_owned())
+}
+
+/// Exchanges the OAuth code for the account's device keys and stores them.
+fn huami_exchange(files: &str, code: &str) -> Result<String, String> {
+    let agent: ureq::Agent = ureq::Agent::config_builder()
+        .timeout_global(Some(Duration::from_secs(20)))
+        .build()
+        .into();
+    let mut seed = [0u8; 3];
+    std::fs::File::open("/dev/urandom")
+        .and_then(|mut f| std::io::Read::read_exact(&mut f, &mut seed))
+        .map_err(|e| format!("aleatório: {e}"))?;
+    let device_id = format!("02:00:00:{:02x}:{:02x}:{:02x}", seed[0], seed[1], seed[2]);
+    let form = crate::account::login_form(code, &device_id);
+    let mut login = agent
+        .post(crate::account::LOGIN)
+        .send_form(form.iter().map(|(k, v)| (*k, v.as_str())))
+        .map_err(|e| format!("login na Huami: {e}"))?;
+    let session = crate::account::session(&body(&mut login)?)?;
+    let url = crate::account::DEVICES.replace("{user_id}", &session.user_id);
+    let mut devices = agent
+        .get(&url)
+        .query("enableMultiDevice", "true")
+        .header("apptoken", &session.app_token)
+        .call()
+        .map_err(|e| format!("lista de dispositivos: {e}"))?;
+    let devices = body(&mut devices)?;
+    let total = devices
+        .get("items")
+        .and_then(Value::as_array)
+        .map_or(0, Vec::len);
+    let keys = crate::account::keys(&devices)?;
+    // Best effort: do not leave the session open on Huami's side.
+    let _ = agent
+        .post(crate::account::LOGOUT)
+        .send_form([("login_token", session.login_token.as_str())]);
+    store_keys(files, &keys)?;
+    let ids: Vec<String> = keys.iter().map(|(mac, _)| opaque(mac)).collect();
+    casca_mcp::log(&format!(
+        "huami: {total} dispositivo(s) na conta, chave guardada para {}",
+        ids.join(", ")
+    ));
+    Ok(match ids.len() {
+        0 => format!("A conta tem {total} dispositivo(s), mas nenhuma chave veio na resposta."),
+        n => format!("Chave obtida para {n} dispositivo(s) da conta ({}). Ela fica só neste celular, no armazenamento privado do Casca.", ids.join(", ")),
+    })
+}
+
+/// Bounded copy of a Java string argument.
+fn jstring_arg(s: &JString) -> String {
+    s.to_string()
+        .chars()
+        .take(4096)
+        .collect::<String>()
+        .trim()
+        .to_owned()
+}
+
+/// `BleNative.huamiAuthorize()`: the official Xiaomi OAuth page to open.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_org_workspace_band7_app_BleNative_huamiAuthorize<'caller>(
+    mut unowned_env: EnvUnowned<'caller>,
+    _class: JClass<'caller>,
+) -> JString<'caller> {
+    unowned_env
+        .with_env(|env| -> jni::errors::Result<JString<'caller>> {
+            JString::from_str(env, crate::account::AUTHORIZE)
+        })
+        .resolve::<jni::errors::ThrowRuntimeExAndDefault>()
+}
+
+/// `BleNative.huamiCode(url)`: the OAuth code when `url` is the redirect, else null.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_org_workspace_band7_app_BleNative_huamiCode<'caller>(
+    mut unowned_env: EnvUnowned<'caller>,
+    _class: JClass<'caller>,
+    url: JString<'caller>,
+) -> JString<'caller> {
+    unowned_env
+        .with_env(|env| -> jni::errors::Result<JString<'caller>> {
+            let url = jstring_arg(&url);
+            match crate::account::code_from_redirect(&url) {
+                Some(code) => JString::from_str(env, code),
+                None => Ok(JString::default()),
+            }
+        })
+        .resolve::<jni::errors::ThrowRuntimeExAndDefault>()
+}
+
+/// `BleNative.huamiExchange(filesDir, code)`: blocking HTTPS; call off the UI thread.
+/// Returns a message for the owner, starting with "ERRO:" on failure.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_org_workspace_band7_app_BleNative_huamiExchange<'caller>(
+    mut unowned_env: EnvUnowned<'caller>,
+    _class: JClass<'caller>,
+    files: JString<'caller>,
+    code: JString<'caller>,
+) -> JString<'caller> {
+    unowned_env
+        .with_env(|env| -> jni::errors::Result<JString<'caller>> {
+            let files = jstring_arg(&files);
+            let code = jstring_arg(&code);
+            let text = huami_exchange(&files, &code).unwrap_or_else(|e| {
+                casca_mcp::log(&format!("huami: falhou: {e}"));
+                format!("ERRO: {e}")
+            });
             JString::from_str(env, text)
         })
         .resolve::<jni::errors::ThrowRuntimeExAndDefault>()

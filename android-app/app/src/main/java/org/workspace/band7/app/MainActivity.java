@@ -85,6 +85,7 @@ public final class MainActivity extends Activity {
         time=text(root,R.string.waiting,15);details=button(root,R.string.technical);details.setOnClickListener(v->showDetails());
         diagnostic=button(root,R.string.snapshot_action);diagnostic.setOnClickListener(v->showSnapshot());
         space(root,16);mcpInfo=text(root,R.string.mcp_off_help,16);mcpInfo.setTextIsSelectable(true);mcpToggle=button(root,R.string.mcp_turn_on);mcpToggle.setOnClickListener(v->toggleMcp());
+        button(root,R.string.huami_action).setOnClickListener(v->startActivity(new Intent(this,HuamiLoginActivity.class)));
         space(root,16);text(root,R.string.version,14).setText(getString(R.string.version,versionName()));
         Button license=button(root,R.string.license_action);license.setOnClickListener(v->showLicense());setContentView(scroll);
         discovery=new BleDiscovery(this,new DiscoverySession.Observer(){

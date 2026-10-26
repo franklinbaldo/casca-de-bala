@@ -9,4 +9,10 @@ final class BleNative {
     private BleNative() {}
     /** "ok", "já iniciado" or "ERRO: …". */
     static native String start(Context context);
+    /** Official Xiaomi OAuth page that yields the Huami code (Zepp Life accounts signed in with Xiaomi). */
+    static native String huamiAuthorize();
+    /** The OAuth code if url is the final redirect, else null. */
+    static native String huamiCode(String url);
+    /** Blocking HTTPS: code -> band keys stored in filesDir. Message for the owner; "ERRO: …" on failure. */
+    static native String huamiExchange(String filesDir,String code);
 }

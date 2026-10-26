@@ -9,6 +9,15 @@
     ]
   },
   {
+    "name": "base64",
+    "version": "0.23.1",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/base64-0.23.1/LICENSE-APACHE",
+      "third_party/licenses/base64-0.23.1/LICENSE-MIT"
+    ]
+  },
+  {
     "name": "bitflags",
     "version": "2.13.2",
     "declared_license": "MIT OR Apache-2.0",
@@ -237,6 +246,15 @@
     ]
   },
   {
+    "name": "getrandom",
+    "version": "0.2.17",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/getrandom-0.2.17/LICENSE-APACHE",
+      "third_party/licenses/getrandom-0.2.17/LICENSE-MIT"
+    ]
+  },
+  {
     "name": "hashbrown",
     "version": "0.14.5",
     "declared_license": "MIT OR Apache-2.0",
@@ -261,6 +279,24 @@
     "notice_files": [
       "third_party/licenses/hashlink-0.12.2/LICENSE-APACHE",
       "third_party/licenses/hashlink-0.12.2/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "http",
+    "version": "1.5.0",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/http-1.5.0/LICENSE-APACHE",
+      "third_party/licenses/http-1.5.0/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "httparse",
+    "version": "1.10.1",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/httparse-1.10.1/LICENSE-APACHE",
+      "third_party/licenses/httparse-1.10.1/LICENSE-MIT"
     ]
   },
   {
@@ -380,6 +416,15 @@
     ]
   },
   {
+    "name": "percent-encoding",
+    "version": "2.3.2",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/percent-encoding-2.3.2/LICENSE-APACHE",
+      "third_party/licenses/percent-encoding-2.3.2/LICENSE-MIT"
+    ]
+  },
+  {
     "name": "pin-project-lite",
     "version": "0.2.17",
     "declared_license": "Apache-2.0 OR MIT",
@@ -416,6 +461,16 @@
     ]
   },
   {
+    "name": "ring",
+    "version": "0.17.14",
+    "declared_license": "Apache-2.0 AND ISC",
+    "notice_files": [
+      "third_party/licenses/ring-0.17.14/LICENSE",
+      "third_party/licenses/ring-0.17.14/LICENSE-BoringSSL",
+      "third_party/licenses/ring-0.17.14/LICENSE-other-bits"
+    ]
+  },
+  {
     "name": "rusqlite",
     "version": "0.41.0",
     "declared_license": "MIT",
@@ -430,6 +485,33 @@
     "notice_files": [
       "third_party/licenses/rustc_version-0.4.1/LICENSE-APACHE",
       "third_party/licenses/rustc_version-0.4.1/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "rustls",
+    "version": "0.23.45",
+    "declared_license": "Apache-2.0 OR ISC OR MIT",
+    "notice_files": [
+      "third_party/licenses/rustls-0.23.45/LICENSE-APACHE",
+      "third_party/licenses/rustls-0.23.45/LICENSE-ISC",
+      "third_party/licenses/rustls-0.23.45/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "rustls-pki-types",
+    "version": "1.15.1",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/rustls-pki-types-1.15.1/LICENSE-APACHE",
+      "third_party/licenses/rustls-pki-types-1.15.1/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "rustls-webpki",
+    "version": "0.103.16",
+    "declared_license": "ISC",
+    "notice_files": [
+      "third_party/licenses/rustls-webpki-0.103.16/LICENSE"
     ]
   },
   {
@@ -577,6 +659,14 @@
     ]
   },
   {
+    "name": "subtle",
+    "version": "2.6.1",
+    "declared_license": "BSD-3-Clause",
+    "notice_files": [
+      "third_party/licenses/subtle-2.6.1/LICENSE"
+    ]
+  },
+  {
     "name": "syn",
     "version": "2.0.119",
     "declared_license": "MIT OR Apache-2.0",
@@ -657,6 +747,41 @@
     ]
   },
   {
+    "name": "untrusted",
+    "version": "0.9.0",
+    "declared_license": "ISC",
+    "notice_files": [
+      "third_party/licenses/untrusted-0.9.0/LICENSE.txt"
+    ]
+  },
+  {
+    "name": "ureq",
+    "version": "3.4.2",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/ureq-3.4.2/LICENSE-APACHE",
+      "third_party/licenses/ureq-3.4.2/LICENSE-MIT"
+    ]
+  },
+  {
+    "name": "ureq-proto",
+    "version": "0.6.5",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/ureq-proto-0.6.5/LICENSE-APACHE.txt",
+      "third_party/licenses/ureq-proto-0.6.5/LICENSE-MIT.txt"
+    ]
+  },
+  {
+    "name": "utf8-zero",
+    "version": "0.8.1",
+    "declared_license": "MIT OR Apache-2.0",
+    "notice_files": [
+      "third_party/licenses/utf8-zero-0.8.1/LICENSE-APACHE",
+      "third_party/licenses/utf8-zero-0.8.1/LICENSE-MIT"
+    ]
+  },
+  {
     "name": "uuid",
     "version": "1.29.0",
     "declared_license": "Apache-2.0 OR MIT",
@@ -691,6 +816,23 @@
       "third_party/licenses/walkdir-2.5.0/COPYING",
       "third_party/licenses/walkdir-2.5.0/LICENSE-MIT",
       "third_party/licenses/walkdir-2.5.0/UNLICENSE"
+    ]
+  },
+  {
+    "name": "webpki-roots",
+    "version": "1.0.11",
+    "declared_license": "CDLA-Permissive-2.0",
+    "notice_files": [
+      "third_party/licenses/webpki-roots-1.0.11/LICENSE"
+    ]
+  },
+  {
+    "name": "zeroize",
+    "version": "1.9.1",
+    "declared_license": "Apache-2.0 OR MIT",
+    "notice_files": [
+      "third_party/licenses/zeroize-1.9.1/LICENSE-APACHE",
+      "third_party/licenses/zeroize-1.9.1/LICENSE-MIT"
     ]
   },
   {
