@@ -1,0 +1,79 @@
+name: Android build and release draft
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Cancel superseded PR previews only. Every main commit retains its own run.
+concurrency:
+  group: android-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@0b6dd653ba04f4f93bf581ec31e66cbd7dcb644d # v4
+        with:
+          gradle-version: '8.11.1'
+          cache-disabled: true
+      - name: Official pinned toolchains
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install 1.99.1 --profile minimal --component rustfmt --component clippy --target aarch64-linux-android
+          rustup default 1.99.1
+          # Use the hosted image's existing SDK licence; never auto-accept terms.
+          test -s "$ANDROID_HOME/licenses/android-sdk-license"
+          sdkmanager --install 'platforms;android-35' 'build-tools;35.0.0' 'ndk;27.0.12077973' </dev/null
+      - name: CI contracts
+        run: python3 -m unittest discover -s ci -p 'test_*.py' -v
+      - name: Tests, native rebuild and repeatable unsigned ARM64 APK
+        env:
+          GRADLE_BIN: gradle
+          CI_PREPARE_NETWORK: '1'
+        run: |
+          export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.0.12077973"
+          sh ci/build.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts/ci/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+  draft:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: android-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts/ci/
+      - name: Verify build output
+        run: cd artifacts/ci && sha256sum --check SHA256SUMS
+      - name: Prepare draft; publication waits for the trusted signer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 ci/prepare-draft.py artifacts/ci

@@ -7,8 +7,14 @@ android {
         applicationId 'org.workspace.band7.basicreader'
         minSdk 31
         targetSdk 35
-        versionCode 5
-        versionName '0.5-lab'
+        def ciCode = providers.gradleProperty('cascaVersionCode').orElse('5').get()
+        def ciName = providers.gradleProperty('cascaVersionName').orElse('0.5-lab').get()
+        if (!(ciCode ==~ /[1-9][0-9]*/) || ciCode.toBigInteger() > 2100000000)
+            throw new GradleException('Invalid cascaVersionCode')
+        if (!(ciName ==~ /[A-Za-z0-9][A-Za-z0-9._-]{0,79}/))
+            throw new GradleException('Invalid cascaVersionName')
+        versionCode ciCode.toInteger()
+        versionName ciName
         ndk { abiFilters 'arm64-v8a' }
     }
     // Reuse JNI/core contracts; no AndroidX, networking or copied decoder.

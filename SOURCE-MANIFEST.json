@@ -1,5 +1,5 @@
 {
-  "date_utc": "2026-10-25",
+  "date_utc": "2026-10-26",
   "license": "AGPL-3.0-or-later",
   "scope": "Source, documentation, configuration, synthetic/sanitized fixtures and third-party notices only",
   "excluded": [
@@ -13,6 +13,11 @@
   ],
   "self_hash": "SOURCE-MANIFEST.json is excluded from its own file list",
   "files": [
+    {
+      "path": ".github/workflows/android.yml",
+      "bytes": 2865,
+      "sha256": "e6c21f3578f919d1671346208ae877bb5e98bebd045bf2b184989d76558b4474"
+    },
     {
       "path": ".gitignore",
       "bytes": 388,
@@ -75,13 +80,13 @@
     },
     {
       "path": "android-app/app/build.gradle",
-      "bytes": 1418,
-      "sha256": "0c5e7bdd7e0ab727161467efad99dcb3c8d935a91ea85518fbb9c5116a7c89c3"
+      "bytes": 1878,
+      "sha256": "0d6f4d5683e9ebfba6b66b5c9f20b2a1641fcff2344bb7656c6bf29b236fbdb7"
     },
     {
       "path": "android-app/app/src/main/AndroidManifest.xml",
-      "bytes": 886,
-      "sha256": "8aebd197d3d1dc4c87fdea5675867a74bc2c22609396b424010d23d906e202af"
+      "bytes": 871,
+      "sha256": "960c28e436baf5ce009d3a61b0d8c001bba818f587dcad7680834f7a7eb8f8ea"
     },
     {
       "path": "android-app/app/src/main/assets/NOTICE.txt",
@@ -119,6 +124,16 @@
       "sha256": "4d27161d1f68e920f56291578691ecb7990785fd32d2474f47380e4e9422431d"
     },
     {
+      "path": "android-app/app/src/main/res/drawable/ic_band.xml",
+      "bytes": 503,
+      "sha256": "2f42d327848d14efa28449ab06a11b1416cd9789fdbc3517fee23bb94425110b"
+    },
+    {
+      "path": "android-app/app/src/main/res/values-night/styles.xml",
+      "bytes": 415,
+      "sha256": "fffbffc06e7a8772b366ce07cc7a1200a3941f2bb4f86905acf3d68a6698e483"
+    },
+    {
       "path": "android-app/app/src/main/res/values/strings.xml",
       "bytes": 15349,
       "sha256": "6de0fd152e61c9d42fe25fd7f654c3c987859d4acb74f4975fab0467953652d6"
@@ -127,11 +142,6 @@
       "path": "android-app/app/src/main/res/values/styles.xml",
       "bytes": 419,
       "sha256": "bcab9e0a6a119fbc5dace78e51b1bd120cd27d481c904d419fe3315b80861291"
-    },
-    {
-      "path": "android-app/app/src/main/res/values-night/styles.xml",
-      "bytes": 415,
-      "sha256": "fffbffc06e7a8772b366ce07cc7a1200a3941f2bb4f86905acf3d68a6698e483"
     },
     {
       "path": "android-app/build-apk.sh",
@@ -149,14 +159,14 @@
       "sha256": "048ecfefe09971849fc8c9326de9d0e8af7e50e371aed980e2e1617124bb969f"
     },
     {
-      "path": "android-app/gradle/verification-metadata.xml",
-      "bytes": 110920,
-      "sha256": "fb2c2287192d4659dac3731fab2e9894d25497b94872a8c7a2e442a2a07a3cf8"
-    },
-    {
       "path": "android-app/gradle.properties",
       "bytes": 117,
       "sha256": "e74e0fcd151a423f61ea268a3c82f2fd5064709b5ebe26a0eca70a947143a10e"
+    },
+    {
+      "path": "android-app/gradle/verification-metadata.xml",
+      "bytes": 110920,
+      "sha256": "fb2c2287192d4659dac3731fab2e9894d25497b94872a8c7a2e442a2a07a3cf8"
     },
     {
       "path": "android-app/preflight.sh",
@@ -337,6 +347,36 @@
       "path": "bench/size.mjs",
       "bytes": 590,
       "sha256": "02adbcc068ced41f98bd5802bf87009a8c56ceb344049bd86eca9d89fca317ad"
+    },
+    {
+      "path": "ci/README.md",
+      "bytes": 3847,
+      "sha256": "4c93f506da198835aed4a5dfdb2cfda36bfd3dc75b4221d23f170309befababd"
+    },
+    {
+      "path": "ci/build.sh",
+      "bytes": 2815,
+      "sha256": "cf5eb08619f04c99ae412e96b7c4b6abdd24ad23cb1e7a1436d75910d99203d0"
+    },
+    {
+      "path": "ci/prepare-draft.py",
+      "bytes": 1902,
+      "sha256": "14945e0169da83c14e7070511f994bb702ad887352654fc4a393145a5aa44262"
+    },
+    {
+      "path": "ci/test_ci.py",
+      "bytes": 4167,
+      "sha256": "1e2a1c3ff554a98bfefac56a62018ee869600d011474ac5ee5fa7c2bac84a894"
+    },
+    {
+      "path": "ci/verify.py",
+      "bytes": 1950,
+      "sha256": "c393a479e6a3014ca36a63899e4f8a5b5d6e444b75737599fe42673dd508965c"
+    },
+    {
+      "path": "ci/version.py",
+      "bytes": 893,
+      "sha256": "2a08d64fe3c3133f2c43d0d5d8d3634fa203ce0296bc901f61f803768518e9c6"
     },
     {
       "path": "docs/android-experience.md",
