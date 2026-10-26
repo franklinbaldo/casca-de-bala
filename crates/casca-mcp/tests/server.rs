@@ -191,7 +191,15 @@ fn pairing_tools_and_restart() {
         .iter()
         .map(|t| t["name"].as_str().unwrap())
         .collect();
-    assert_eq!(names, ["casca_capabilities", "band_snapshot"]);
+    assert_eq!(
+        names,
+        [
+            "casca_capabilities",
+            "band_devices",
+            "band_read",
+            "band_snapshot"
+        ]
+    );
 
     let call = |name: &str| -> Value {
         let message = json!({"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": name, "arguments": {}}});
@@ -222,6 +230,64 @@ fn pairing_tools_and_restart() {
         .as_str()
         .unwrap()
         .contains("Xiaomi Smart Band 7"));
+
+    // Jobs: a simulated Android service takes each job once and answers it.
+    let service = thread::spawn(|| {
+        let mut answered = 0;
+        while answered < 3 {
+            for job in ctl(json!({"op": "jobs"}))["jobs"].as_array().unwrap() {
+                let result = match (
+                    job["kind"].as_str().unwrap(),
+                    job["args"]["device"].as_str(),
+                ) {
+                    ("band.devices", _) => {
+                        json!({"devices": [{"id": "a1b2c3", "name": "Xiaomi Smart Band 7"}]})
+                    }
+                    ("band.read", Some("a1b2c3")) => {
+                        json!({"device": {"id": "a1b2c3"}, "reading": {"battery": 61}})
+                    }
+                    ("band.read", _) => json!({"error": "Escolha uma pulseira com band_devices."}),
+                    _ => unreachable!(),
+                };
+                assert_eq!(
+                    ctl(json!({"op": "complete", "id": job["id"], "result": result}))["ok"],
+                    true
+                );
+                answered += 1;
+            }
+            thread::sleep(Duration::from_millis(5));
+        }
+    });
+    let call_with = |name: &str, arguments: Value| -> Value {
+        let message = json!({"jsonrpc": "2.0", "id": 8, "method": "tools/call", "params": {"name": name, "arguments": arguments}});
+        serde_json::from_str(&rpc(port, &token, message).1).unwrap()
+    };
+    let devices = call_with("band_devices", json!({}));
+    assert!(devices["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("a1b2c3"));
+    let read = call_with("band_read", json!({"device": "a1b2c3"}));
+    assert_eq!(read["result"]["isError"], false);
+    assert!(read["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("61"));
+    let unchosen = call_with("band_read", json!({}));
+    assert_eq!(unchosen["result"]["isError"], true);
+    assert_eq!(
+        call_with("band_read", json!({"device": 7}))["error"]["code"],
+        -32602
+    );
+    assert_eq!(
+        call_with("band_devices", json!({"x": 1}))["error"]["code"],
+        -32602
+    );
+    service.join().unwrap();
+    assert_eq!(
+        ctl(json!({"op": "complete", "id": 999_999, "result": {}}))["error"],
+        "unknown_job"
+    );
 
     // Tokens survive a restart; the listener really closes on stop.
     assert_eq!(ctl(json!({"op": "stop"}))["ok"], true);

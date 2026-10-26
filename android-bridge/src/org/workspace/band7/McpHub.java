@@ -13,6 +13,10 @@ public final class McpHub {
     public static String stop(){return call("{\"op\":\"stop\"}");}
     public static String status(){return call("{\"op\":\"status\"}");}
     public static String decide(long id,boolean approve){return call("{\"op\":\"decide\",\"id\":"+id+",\"approve\":"+approve+"}");}
+    /** Jobs waiting for the app (each handed out once): {"jobs":[{"id","kind","args"}]}. */
+    public static String jobs(){return call("{\"op\":\"jobs\"}");}
+    /** Answers a job; resultJson must be a JSON object, {"error":"…"} for a readable failure. */
+    public static String complete(long id,String resultJson){return call("{\"op\":\"complete\",\"id\":"+id+",\"result\":"+Objects.requireNonNull(resultJson)+"}");}
     public static String forget(String client){return call("{\"op\":\"forget\",\"client\":"+quote(client)+"}");}
     /** Takes the GATT bridge reply from BasicSnapshot.process, never raw GATT. */
     public static String publish(byte[] snapshotReply){

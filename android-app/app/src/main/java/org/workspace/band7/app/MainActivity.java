@@ -33,7 +33,8 @@ public final class MainActivity extends Activity {
     private Button primary,secondary,cancel,details,diagnostic;private ProgressBar progress;private LinearLayout rows,batteryCard,infoCard;
     private RadarGatt radarReader;private RadarSession.Snapshot radarSnapshot;private boolean selectingRadar;
     private Button radarOpen,radarMeasure,radarEnd,radarChoose;private LinearLayout radarPanel,radarPoints;
-    private Button mcpToggle;private TextView mcpInfo;private Snapshot mcpPublished;private long mcpPublishId;
+    private Button mcpToggle;private TextView mcpInfo;private Snapshot mcpPublished;private long mcpPublishId;private final Runnable mcpRefresh=this::renderMcp;
+    private static volatile String tailnetName;private static volatile boolean resolvingName;
     private TextView radarStatus,radarHelp;private int renderedRadarPoints=-1;private long renderedRadarGeneration=-1;
     private final Map<Integer,Button> rowButtons=new HashMap<>();private final Map<Integer,DiscoverySession.Row> rowData=new HashMap<>();private Runnable primaryAction,secondaryAction;
     /** In-process terminal entry point for a finished cached read. No new GATT IO.
@@ -84,7 +85,7 @@ public final class MainActivity extends Activity {
         time=text(root,R.string.waiting,15);details=button(root,R.string.technical);details.setOnClickListener(v->showDetails());
         diagnostic=button(root,R.string.snapshot_action);diagnostic.setOnClickListener(v->showSnapshot());
         space(root,16);mcpInfo=text(root,R.string.mcp_off_help,16);mcpInfo.setTextIsSelectable(true);mcpToggle=button(root,R.string.mcp_turn_on);mcpToggle.setOnClickListener(v->toggleMcp());
-        space(root,16);text(root,R.string.version,14);
+        space(root,16);text(root,R.string.version,14).setText(getString(R.string.version,versionName()));
         Button license=button(root,R.string.license_action);license.setOnClickListener(v->showLicense());setContentView(scroll);
         discovery=new BleDiscovery(this,new DiscoverySession.Observer(){
             public void changed(long token,DiscoverySession.Status value,List<DiscoverySession.Row> found){
@@ -149,7 +150,7 @@ public final class MainActivity extends Activity {
         else discovery.select(token,id,false);
     }
     @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] results){
-        super.onRequestPermissionsResult(code,permissions,results);if(code==42){if(checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)==PackageManager.PERMISSION_GRANTED&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED)toggleMcp();else set(mcpInfo,R.string.mcp_permission);return;}if(code!=41)return;
+        super.onRequestPermissionsResult(code,permissions,results);if(code==42){if(mcpPermissions().isEmpty())toggleMcp();else set(mcpInfo,R.string.mcp_permission);return;}if(code!=41)return;
         if(findIntent.permissionResult(granted()))findNow();
         else if(!granted()){screen=Screen.PERMISSION;render();}
     }
@@ -169,7 +170,7 @@ public final class MainActivity extends Activity {
     @Override protected void onResume(){super.onResume();resumed=true;renderMcp();
         if(findIntent.resume(granted())){findNow();return;}render();
     }
-    @Override protected void onStop(){resumed=false;interrupted=true;findIntent.stop();if(discovery!=null)discovery.close();if(reader!=null)reader.close(Cause.BACKGROUND);if(radarReader!=null)radarReader.stop(RadarSession.Reason.BACKGROUND);
+    @Override protected void onStop(){resumed=false;if(page!=null)page.removeCallbacks(mcpRefresh);interrupted=true;findIntent.stop();if(discovery!=null)discovery.close();if(reader!=null)reader.close(Cause.BACKGROUND);if(radarReader!=null)radarReader.stop(RadarSession.Reason.BACKGROUND);
         if(!findIntent.waiting()){selectedDevice=null;if(screen!=Screen.RADAR)screen=snapshot==null?Screen.HOME:Screen.DEVICE;homeMessage=R.string.background_help;}super.onStop();}
     @Override protected void onSaveInstanceState(Bundle out){out.putBoolean("asked_connect",askedConnect);out.putBoolean("asked_scan",askedScan);super.onSaveInstanceState(out);}
     private void render(){
@@ -285,17 +286,39 @@ public final class MainActivity extends Activity {
     }
     private void toggleMcp(){
         if(McpService.running){stopService(new Intent(this,McpService.class));page.postDelayed(this::renderMcp,300);return;}
-        List<String> missing=new ArrayList<>();
-        for(String p:new String[]{Manifest.permission.BLUETOOTH_CONNECT,Manifest.permission.POST_NOTIFICATIONS})if(checkSelfPermission(p)!=PackageManager.PERMISSION_GRANTED)missing.add(p);
+        List<String> missing=mcpPermissions();
         if(!missing.isEmpty()){requestPermissions(missing.toArray(new String[0]),42);return;}
         startForegroundService(new Intent(this,McpService.class));page.postDelayed(this::renderMcp,500);
+    }
+    /** POST_NOTIFICATIONS only exists from Android 13; on 12 notifications need no grant. */
+    private List<String> mcpPermissions(){
+        List<String> missing=new ArrayList<>();
+        if(checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)!=PackageManager.PERMISSION_GRANTED)missing.add(Manifest.permission.BLUETOOTH_CONNECT);
+        if(android.os.Build.VERSION.SDK_INT>=android.os.Build.VERSION_CODES.TIRAMISU&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)missing.add(Manifest.permission.POST_NOTIFICATIONS);
+        return missing;
     }
     private void renderMcp(){
         if(mcpToggle==null)return;boolean on=McpService.running;set(mcpToggle,on?R.string.mcp_turn_off:R.string.mcp_turn_on);
         if(!on){set(mcpInfo,R.string.mcp_off_help);return;}
-        int port=McpService.port;String host=tailnetAddress();String base=host==null?null:"http://"+host+":"+port;int clients=0;
+        int port=McpService.port;String ip=tailnetAddress();resolveName(ip);String host=tailnetName!=null&&ip!=null?tailnetName:ip;
+        String base=host==null?null:"http://"+host+":"+port;int clients=0;
         try{clients=new JSONObject(McpHub.status()).getJSONArray("clients").length();}catch(JSONException|RuntimeException|LinkageError ignored){}
         set(mcpInfo,getString(R.string.mcp_on_help,base==null?getString(R.string.mcp_no_tailnet,port):base,clients,base==null?"http://<celular>:"+port:base));
+        page.removeCallbacks(mcpRefresh);if(resumed)page.postDelayed(mcpRefresh,2000);
+    }
+    /** MagicDNS name (celular.tailnet.ts.net) by reverse lookup through Tailscale's resolver; IP stays as fallback. */
+    private void resolveName(String ip){
+        if(ip==null||tailnetName!=null||resolvingName)return;resolvingName=true;
+        new Thread(()->{
+            try{String name=java.net.InetAddress.getByName(ip).getCanonicalHostName();
+                if(name.endsWith("."))name=name.substring(0,name.length()-1);
+                if(!name.equals(ip)&&name.endsWith(".ts.net"))tailnetName=name;}
+            catch(java.io.IOException|RuntimeException ignored){}
+            resolvingName=false;
+        },"casca-magicdns").start();
+    }
+    private String versionName(){
+        try{return getPackageManager().getPackageInfo(getPackageName(),0).versionName;}catch(PackageManager.NameNotFoundException|RuntimeException e){return "?";}
     }
     /** The phone's Tailscale IPv4 (100.64.0.0/10), when the VPN is up. */
     private static String tailnetAddress(){

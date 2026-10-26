@@ -59,7 +59,7 @@
     <string name="pnp_details">Fabricante: 0x%1$04X\nProduto: 0x%2$04X\nVersão do produto: 0x%3$04X\n\nEsses códigos não determinam a região ou o alvo de miniapp. Nenhum endereço Bluetooth é exibido.</string>
     <string name="pnp_missing">Os códigos de produto não ficaram disponíveis nesta leitura.</string>
     <string name="close">Fechar</string>
-    <string name="version">Laboratório 0.5 · radar por sinal e leitura básica</string>
+    <string name="version">Casca de Bala %1$s · leitura, radar e servidor MCP</string>
     <string name="bonded">Já vinculadas ao celular</string>
     <string name="nearby">Buscar por perto</string>
     <string name="bonded_home_help">Sua pulseira já foi vinculada ao Bluetooth do celular? Comece pela lista de vinculadas. Também é possível buscar anúncios por perto.</string>
@@ -173,7 +173,7 @@ RSSI</string>
     <string name="mcp_deny">Negar</string>
     <string name="mcp_turn_on">Ligar servidor MCP</string>
     <string name="mcp_turn_off">Desligar servidor MCP</string>
-    <string name="mcp_off_help">Servidor MCP desligado. Ligado, suas IAs na tailnet (ou via Funnel no Termux) leem a última leitura da pulseira, depois que você aprovar cada uma aqui no celular.</string>
+    <string name="mcp_off_help">Servidor MCP desligado. Ligado, suas IAs na tailnet (ou via Funnel no Termux) listam e leem sua pulseira sob demanda, depois que você aprovar cada uma aqui no celular.</string>
     <string name="mcp_on_help">Servidor MCP ativo em %1$s. Clientes aprovados: %2$d.\n\nPara parear uma IA:\ncurl -N -X POST %3$s/pair -d \'{\"client\":\"nome\"}\'\nAprove a notificação com o mesmo código e use o CASCA_TOKEN como Bearer em %3$s/mcp.</string>
     <string name="mcp_no_tailnet">este celular (porta %1$d; ligue o Tailscale para aparecer o endereço)</string>
     <string name="mcp_permission">Para manter o servidor ativo e pedir sua aprovação, o Casca precisa de Dispositivos próximos e de notificações.</string>
