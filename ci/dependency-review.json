@@ -1,0 +1,31 @@
+{
+  "review_date_utc": "2026-10-26",
+  "purpose": "Explicit maintenance of two missing Gradle metadata pins, not runtime dependency update",
+  "trust_anchor": "https://junit.org/ links upstream KEYS",
+  "entries": [
+    {
+      "coordinate": "org.junit:junit-bom:5.10.2",
+      "artifact": "junit-bom-5.10.2.module",
+      "sha256": "de23b114b3e4119a8fe6eb17bed5a3852816698bace67071579d6d927ebb080a",
+      "signature": "PASS upstream release key FF6E2C001948C5F2F38B0CC385911F425EC61B51",
+      "signature_status": "[GNUPG:] VALIDSIG FF6E2C001948C5F2F38B0CC385911F425EC61B51 2024-02-04 1707035677 0 4 0 1 8 00 FF6E2C001948C5F2F38B0CC385911F425EC61B51",
+      "source": "https://repo.maven.apache.org/maven2/org/junit/junit-bom/5.10.2/junit-bom-5.10.2.module",
+      "key_source": "https://raw.githubusercontent.com/junit-team/junit-framework/main/KEYS",
+      "pom_sha256_matches_existing_pin": "169dd904a4b0f6520cffe658cc62292bfe9f3c14a989fa92120724cde43a9968",
+      "bom_constraints_match_pinned_pom": true,
+      "binary_payloads": false
+    },
+    {
+      "coordinate": "org.junit:junit-bom:5.9.2",
+      "artifact": "junit-bom-5.9.2.module",
+      "sha256": "ab137ba5a8e32c9b066bf9126a1c76dd5614b724ba5c0b02549772b5e9f4cf1f",
+      "signature": "PASS upstream release key FF6E2C001948C5F2F38B0CC385911F425EC61B51",
+      "signature_status": "[GNUPG:] VALIDSIG FF6E2C001948C5F2F38B0CC385911F425EC61B51 2023-01-10 1673348473 0 4 0 1 8 00 FF6E2C001948C5F2F38B0CC385911F425EC61B51",
+      "source": "https://repo.maven.apache.org/maven2/org/junit/junit-bom/5.9.2/junit-bom-5.9.2.module",
+      "key_source": "https://raw.githubusercontent.com/junit-team/junit-framework/main/KEYS",
+      "pom_sha256_matches_existing_pin": "2ed07d65845131f5336a86476c9a4056b59d0b58b9815ab3679bb0f36f35f705",
+      "bom_constraints_match_pinned_pom": true,
+      "binary_payloads": false
+    }
+  ]
+}

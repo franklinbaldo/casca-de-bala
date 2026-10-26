@@ -1,5 +1,5 @@
 {
-  "date_utc": "2026-10-25",
+  "date_utc": "2026-10-26",
   "license": "AGPL-3.0-or-later",
   "scope": "Source, documentation, configuration, synthetic/sanitized fixtures and third-party notices only",
   "excluded": [
@@ -13,6 +13,11 @@
   ],
   "self_hash": "SOURCE-MANIFEST.json is excluded from its own file list",
   "files": [
+    {
+      "path": ".github/workflows/android.yml",
+      "bytes": 5295,
+      "sha256": "d2afcab862a51b1799751df700ddf21888231b381e5eeb2111e3528e0cd97ce8"
+    },
     {
       "path": ".gitignore",
       "bytes": 388,
@@ -75,13 +80,13 @@
     },
     {
       "path": "android-app/app/build.gradle",
-      "bytes": 1418,
-      "sha256": "0c5e7bdd7e0ab727161467efad99dcb3c8d935a91ea85518fbb9c5116a7c89c3"
+      "bytes": 1878,
+      "sha256": "0d6f4d5683e9ebfba6b66b5c9f20b2a1641fcff2344bb7656c6bf29b236fbdb7"
     },
     {
       "path": "android-app/app/src/main/AndroidManifest.xml",
-      "bytes": 886,
-      "sha256": "8aebd197d3d1dc4c87fdea5675867a74bc2c22609396b424010d23d906e202af"
+      "bytes": 871,
+      "sha256": "960c28e436baf5ce009d3a61b0d8c001bba818f587dcad7680834f7a7eb8f8ea"
     },
     {
       "path": "android-app/app/src/main/assets/NOTICE.txt",
@@ -119,6 +124,16 @@
       "sha256": "4d27161d1f68e920f56291578691ecb7990785fd32d2474f47380e4e9422431d"
     },
     {
+      "path": "android-app/app/src/main/res/drawable/ic_band.xml",
+      "bytes": 503,
+      "sha256": "2f42d327848d14efa28449ab06a11b1416cd9789fdbc3517fee23bb94425110b"
+    },
+    {
+      "path": "android-app/app/src/main/res/values-night/styles.xml",
+      "bytes": 415,
+      "sha256": "fffbffc06e7a8772b366ce07cc7a1200a3941f2bb4f86905acf3d68a6698e483"
+    },
+    {
       "path": "android-app/app/src/main/res/values/strings.xml",
       "bytes": 15349,
       "sha256": "6de0fd152e61c9d42fe25fd7f654c3c987859d4acb74f4975fab0467953652d6"
@@ -127,11 +142,6 @@
       "path": "android-app/app/src/main/res/values/styles.xml",
       "bytes": 419,
       "sha256": "bcab9e0a6a119fbc5dace78e51b1bd120cd27d481c904d419fe3315b80861291"
-    },
-    {
-      "path": "android-app/app/src/main/res/values-night/styles.xml",
-      "bytes": 415,
-      "sha256": "fffbffc06e7a8772b366ce07cc7a1200a3941f2bb4f86905acf3d68a6698e483"
     },
     {
       "path": "android-app/build-apk.sh",
@@ -149,14 +159,14 @@
       "sha256": "048ecfefe09971849fc8c9326de9d0e8af7e50e371aed980e2e1617124bb969f"
     },
     {
-      "path": "android-app/gradle/verification-metadata.xml",
-      "bytes": 110920,
-      "sha256": "fb2c2287192d4659dac3731fab2e9894d25497b94872a8c7a2e442a2a07a3cf8"
-    },
-    {
       "path": "android-app/gradle.properties",
       "bytes": 117,
       "sha256": "e74e0fcd151a423f61ea268a3c82f2fd5064709b5ebe26a0eca70a947143a10e"
+    },
+    {
+      "path": "android-app/gradle/verification-metadata.xml",
+      "bytes": 111451,
+      "sha256": "b804dff4c079ffee13dc045a7f62836c5996c40d7ebfc0f11c63afc7fa5a6d34"
     },
     {
       "path": "android-app/preflight.sh",
@@ -337,6 +347,71 @@
       "path": "bench/size.mjs",
       "bytes": 590,
       "sha256": "02adbcc068ced41f98bd5802bf87009a8c56ceb344049bd86eca9d89fca317ad"
+    },
+    {
+      "path": "ci/README.md",
+      "bytes": 5877,
+      "sha256": "6847327a859fdcdbdf0e1ab37883a3255bb4715b79c4bf3ba7b836edd7142d7a"
+    },
+    {
+      "path": "ci/build.sh",
+      "bytes": 2815,
+      "sha256": "cf5eb08619f04c99ae412e96b7c4b6abdd24ad23cb1e7a1436d75910d99203d0"
+    },
+    {
+      "path": "ci/dependency-review.json",
+      "bytes": 1885,
+      "sha256": "8b6510271c3a63b2ad4ce60b4549306975972a8ce30836a22fcaf7df2bd7860c"
+    },
+    {
+      "path": "ci/prepare-draft.py",
+      "bytes": 1902,
+      "sha256": "14945e0169da83c14e7070511f994bb702ad887352654fc4a393145a5aa44262"
+    },
+    {
+      "path": "ci/publish_release.py",
+      "bytes": 4216,
+      "sha256": "ed331834d34a085b048717eaadbe46320044166c65e441e0a93748d2e4913dfb"
+    },
+    {
+      "path": "ci/release-config.json",
+      "bytes": 244,
+      "sha256": "d08c4648973fccb9b94317b4de0972a388c16edac41c261701500567550116b0"
+    },
+    {
+      "path": "ci/release_contract.py",
+      "bytes": 2962,
+      "sha256": "11c5a842f28937129eb05bc704dbb94c7b0592b34f44aa69ff762263df49d6a4"
+    },
+    {
+      "path": "ci/setup-android.sh",
+      "bytes": 712,
+      "sha256": "8cff67132204077cf2d1ac479548516fe92ebe9d7b2037c4dd8c1af33b52180a"
+    },
+    {
+      "path": "ci/sign_apk.py",
+      "bytes": 4218,
+      "sha256": "556969dd3282d72bfeb8d424c2c145aa9557eddc4e76ac7a9215368f6bcd1aa5"
+    },
+    {
+      "path": "ci/test_ci.py",
+      "bytes": 6398,
+      "sha256": "6c282ceccc0faeb2df9083b31a0cb464b0f47e3c695f5367a78cd1325f1e1fd6"
+    },
+    {
+      "path": "ci/test_release.py",
+      "bytes": 9059,
+      "sha256": "32f16a23618559e9ecc3324ac23a97b53c9920ba6db1a4d58c04d2bf05792408"
+    },
+    {
+      "path": "ci/verify.py",
+      "bytes": 2359,
+      "sha256": "774f69dc5a171b173df3e762471db1486b389cb91b52208c604d91660601e5fd"
+    },
+    {
+      "path": "ci/version.py",
+      "bytes": 893,
+      "sha256": "2a08d64fe3c3133f2c43d0d5d8d3634fa203ce0296bc901f61f803768518e9c6"
     },
     {
       "path": "docs/android-experience.md",
