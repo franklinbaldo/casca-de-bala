@@ -337,8 +337,17 @@ fn pairing_tools_and_restart() {
     });
     let unlocked = call_with("lab_unlock_write", json!({"minutes": 5}));
     phone.join().unwrap();
+    // The tool answers at once; the window opens when the phone approves.
     assert_eq!(unlocked["result"]["isError"], false);
-    assert_eq!(ctl(json!({"op": "status"}))["write_allowed"], true);
+    assert!(unlocked["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .starts_with("Pedido enviado"));
+    let opened = (0..200).any(|_| {
+        thread::sleep(Duration::from_millis(10));
+        ctl(json!({"op": "status"}))["write_allowed"] == true
+    });
+    assert!(opened, "approved window never opened");
     let ble = thread::spawn(|| loop {
         let jobs = ctl(json!({"op": "jobs", "prefixes": ["ble."]}));
         if let Some(job) = jobs["jobs"].as_array().unwrap().first() {
