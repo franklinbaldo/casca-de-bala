@@ -27,6 +27,49 @@ Aprovar dá acesso a tudo que o celular intermedeia: sem lista de escopos por
 padrão. Os tokens ficam em armazenamento privado do app e sobrevivem a
 reinícios.
 
+## Cliente de diagnóstico no Jatobá
+
+O repositório também contém `scripts/casca_mcp_client.py`, um cliente mínimo
+Python (somente biblioteca padrão) para testar `initialize`, `tools/list` e
+`tools/call`, sem colocar o Bearer na linha de comando, em logs ou no chat.
+Ele não é um servidor OAuth nem publica o MCP na internet.
+
+Na máquina que chega ao celular pela tailnet, usando o IP mostrado no app:
+
+```sh
+python3 scripts/casca_mcp_client.py --url http://100.x.y.z:8765 pair
+# Confira no telefone o código que aparecer e toque em Permitir.
+python3 scripts/casca_mcp_client.py --url http://100.x.y.z:8765 doctor
+python3 scripts/casca_mcp_client.py --url http://100.x.y.z:8765 tools
+python3 scripts/casca_mcp_client.py --url http://100.x.y.z:8765 capabilities
+python3 scripts/casca_mcp_client.py --url http://100.x.y.z:8765 snapshot
+```
+
+Se o pareamento **já foi aprovado** e a resposta foi capturada em um arquivo
+privado com `CASCA_TOKEN=`, não crie mais um cliente: importe essa resposta
+localmente, usando `import-pair /caminho/privado/response.txt` após
+`--url http://100.x.y.z:8765`. O arquivo de origem precisa ter modo `0600`.
+O cliente guarda a credencial em
+`$XDG_CONFIG_HOME/casca-de-bala/jatoba.json` (ou
+`~/.config/casca-de-bala/jatoba.json`), com modo `0600`; o diretório é
+`0700`. Nunca versione o arquivo, copie o token para o chat ou compartilhe
+logs que o contenham. Apague o arquivo local e revogue o cliente no app caso
+o computador deixe de ser confiável.
+
+O cliente recusa qualquer destino que não seja um IP numérico de loopback
+ou Tailscale (IPv4 `100.64.0.0/10`, IPv6 `fd7a:115c:a1e0::/48`).
+O teste `doctor` só comprova o transporte e a descoberta das ferramentas;
+não demonstra autenticação proprietária com a pulseira, leitura BLE ao vivo
+ou integração direta do ChatGPT hospedado com a tailnet. Essa última etapa
+ainda requer uma ponte com autenticação e transporte adequados, sem expor o
+servidor privado.
+
+Teste sintético reproduzível, sem celular:
+
+```sh
+python3 -m unittest discover -s ci -p test_casca_mcp_client.py
+```
+
 ## Ferramentas
 
 | Ferramenta | O que faz |
