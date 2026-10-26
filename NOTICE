@@ -10,3 +10,7 @@ External dependency licenses remain their own. See third_party/rust-licenses.jso
 third_party/licenses/, third_party/SQLITE-NOTICE.txt and PROVENANCE.md.
 ZMake is external GPL-3.0-or-later software by MelianMiko; no external source tree
 or toolchain distribution is bundled. This source snapshot contains no APK.
+
+Local encrypted2021 preparation: test-only Gadgetbridge encoder/decoder/handler,
+Copyright2022–2024 José Rebelo, AGPL-3.0-or-later. Attributed AES/CRC method
+subsets retain their original community notices. See android-bridge/crypto-reference.

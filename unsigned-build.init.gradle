@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Candidate metadata only. No key generation, loading, copying or configuration.
+allprojects { p ->
+    p.plugins.withId('com.android.application') {
+        p.androidComponents.finalizeDsl { dsl ->
+            dsl.defaultConfig.versionCode = 6
+            dsl.defaultConfig.versionName = '0.6-pilot-unsigned'
+            if (dsl.buildTypes.getByName('release').signingConfig != null)
+                throw new GradleException('Refusing non-null release signing configuration')
+            println('Verified unsigned release: null signing configuration; version6/0.6-pilot-unsigned')
+        }
+    }
+}
+gradle.taskGraph.whenReady { graph ->
+    def forbidden = graph.allTasks.findAll { t ->
+        t.name.toLowerCase().contains('createdebugkeystore') ||
+        t.name.toLowerCase().startsWith('validatesigning') ||
+        t.name.toLowerCase().startsWith('signrelease')
+    }
+    if (!forbidden.empty) throw new GradleException('Refusing signing/key tasks: ' + forbidden*.path)
+    gradle.rootProject.allprojects.findAll { it.plugins.hasPlugin('com.android.application') }.each { p ->
+        if (p.android.defaultConfig.versionCode != 6 || p.android.defaultConfig.versionName != '0.6-pilot-unsigned')
+            throw new GradleException('Unsigned candidate metadata override did not apply')
+    }
+}

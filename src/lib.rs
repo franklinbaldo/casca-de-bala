@@ -1,6 +1,10 @@
 //! Offline host contracts. No BLE, shell or MCP transport.
+pub mod auth_bridge;
 pub mod basic_snapshot;
+pub mod huami_auth;
+pub mod huami_handshake;
 pub mod microvm;
+pub mod zepp_capabilities;
 use serde::{Deserialize, Serialize};
 pub const OPERATIONS: &[&str] = &[
     "miniapps.list",
@@ -536,3 +540,4 @@ pub mod sync_session;
 pub mod gatt_basics;
 
 pub mod gatt_bridge;
+pub mod zepp_bridge;

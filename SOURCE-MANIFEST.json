@@ -30,8 +30,8 @@
     },
     {
       "path": "BUILDING.md",
-      "bytes": 6573,
-      "sha256": "c4db5608df776fd138adc46e5ad4fbf2b25b336bb796bac8f074a6e60a9d7794"
+      "bytes": 6641,
+      "sha256": "2f3b80f090671b72141a38175dab5bb3df6647cd19f5f468974223cd4b65b0e6"
     },
     {
       "path": "Cargo.lock",
@@ -55,18 +55,23 @@
     },
     {
       "path": "NOTICE",
-      "bytes": 735,
-      "sha256": "cc10f48859730f9020186a368b5ed825190e4e9436795f9a22fb6224a99dc5fb"
+      "bytes": 983,
+      "sha256": "5d400ee189a21184aef00f8d832a3c9b7e266dac5b708c91ffc8315835d42fa8"
     },
     {
       "path": "PROVENANCE.md",
-      "bytes": 5096,
-      "sha256": "9cf4ad08bfcd80b7ebf621b2a037174003aabd4c6c5859c017a74be168850757"
+      "bytes": 7695,
+      "sha256": "0afd281c4af0e05c34e6b81654855186d704da7cc371d6deb1497e5fb3c7fa2a"
     },
     {
       "path": "README.md",
-      "bytes": 4574,
-      "sha256": "0cea487f4b540125fd891f54baa1fc6890b0db37ee0541a9e8d35f27c5cc416a"
+      "bytes": 5197,
+      "sha256": "7c714036e20b106a49a7bf90091f46cdcd9fce74cb9b96a59d148bfcc3019ebb"
+    },
+    {
+      "path": "UNSIGNED-REPRODUCE.md",
+      "bytes": 1742,
+      "sha256": "dba1f4344bff0434ae53d9f52d1504bc1625473db384aa9aa7e6baef39aabbcc"
     },
     {
       "path": "android-app/README.md",
@@ -80,13 +85,38 @@
     },
     {
       "path": "android-app/app/build.gradle",
-      "bytes": 1878,
-      "sha256": "0d6f4d5683e9ebfba6b66b5c9f20b2a1641fcff2344bb7656c6bf29b236fbdb7"
+      "bytes": 3808,
+      "sha256": "6835a6cf82b9d3e673575cc368ebe1f41ab87a6a110894cd9aca560c11084c59"
+    },
+    {
+      "path": "android-app/app/src/activityFixture/AndroidManifest.xml",
+      "bytes": 489,
+      "sha256": "9c21d01026a5224a40aca958a3d9fcc048f01f8f9f576bcee1dece194e78ce34"
+    },
+    {
+      "path": "android-app/app/src/activityFixture/assets/openssl-b163-public-test-vector.txt",
+      "bytes": 301,
+      "sha256": "7e40c9f66155731b2ccb4b2bf6331b1a82fe7bbb0610c2412ebc36acf2c7efa5"
+    },
+    {
+      "path": "android-app/app/src/activityFixture/java/org/workspace/band7/AuthFixtureActivity.java",
+      "bytes": 8111,
+      "sha256": "54088aa96cdbe14853d8e2c49f95a52df84f65260f0f35645b9aa2f21f946c45"
+    },
+    {
+      "path": "android-app/app/src/activityFixture/java/org/workspace/band7/AuthFixtureInstrumentation.java",
+      "bytes": 24028,
+      "sha256": "b541f8a88e4198f4f7dda02f3d2987b3d911f68b36d11301fb3a135e3c94bf4b"
+    },
+    {
+      "path": "android-app/app/src/activityFixture/java/org/workspace/band7/PilotFixtureActivity.java",
+      "bytes": 3197,
+      "sha256": "e4a7e0a4379e48fe308bf8f45cf588eb80c50ad2a825eb8af2843d3feed53bf6"
     },
     {
       "path": "android-app/app/src/main/AndroidManifest.xml",
-      "bytes": 871,
-      "sha256": "960c28e436baf5ce009d3a61b0d8c001bba818f587dcad7680834f7a7eb8f8ea"
+      "bytes": 947,
+      "sha256": "b1b642d90ea7192b23fd3888be17cfaf43aee584970f5f421013dad03e22a77f"
     },
     {
       "path": "android-app/app/src/main/assets/NOTICE.txt",
@@ -109,9 +139,19 @@
       "sha256": "fa516fca303fd81be96320d0d82102305cfe57007f7468d6f91344d90ded05ec"
     },
     {
+      "path": "android-app/app/src/main/java/org/workspace/band7/app/HuamiGattAdapter.java",
+      "bytes": 11384,
+      "sha256": "8702332eaf84bb001a81f438c8c4b19a5ab27beb92177056374e2793efec90bb"
+    },
+    {
       "path": "android-app/app/src/main/java/org/workspace/band7/app/MainActivity.java",
-      "bytes": 32141,
-      "sha256": "7d473c73afab0681ed7d222fe9d4a56724d5c5a6a73bd012fbb0be83f964f263"
+      "bytes": 32773,
+      "sha256": "7c0727917b7b49134387802f575a0d1699a9a7e9e06c77f117463c0215670d9f"
+    },
+    {
+      "path": "android-app/app/src/main/java/org/workspace/band7/app/PilotActivity.java",
+      "bytes": 12325,
+      "sha256": "3e4ccd46b6794d952259638419e48d5d4cc83176569c4028170311f2ce5c9796"
     },
     {
       "path": "android-app/app/src/main/java/org/workspace/band7/app/RadarGatt.java",
@@ -135,8 +175,8 @@
     },
     {
       "path": "android-app/app/src/main/res/values/strings.xml",
-      "bytes": 15349,
-      "sha256": "6de0fd152e61c9d42fe25fd7f654c3c987859d4acb74f4975fab0467953652d6"
+      "bytes": 19312,
+      "sha256": "215c09006fb75d354e2588656fc2f5cffaa5b2685ce9e692f39291e5e4d71154"
     },
     {
       "path": "android-app/app/src/main/res/values/styles.xml",
@@ -165,8 +205,8 @@
     },
     {
       "path": "android-app/gradle/verification-metadata.xml",
-      "bytes": 111451,
-      "sha256": "b804dff4c079ffee13dc045a7f62836c5996c40d7ebfc0f11c63afc7fa5a6d34"
+      "bytes": 112034,
+      "sha256": "c50a4e8eed454ea7131d43dcf921def82ccc9fd456a50e0a733a228dedbfe1b5"
     },
     {
       "path": "android-app/preflight.sh",
@@ -180,8 +220,8 @@
     },
     {
       "path": "android-app/settings.gradle",
-      "bytes": 277,
-      "sha256": "9987bdaa7c011d4053ca549ae5f8ca39a2592a28ff3c04931a8fb25c55b42ffa"
+      "bytes": 882,
+      "sha256": "b41b98288f7a7c265e187d291386b84178aa9182abcc13e9e631b16a7b4f7cff"
     },
     {
       "path": "android-app/toolchain-receipt.json",
@@ -194,9 +234,179 @@
       "sha256": "dfae2d052048f5c44c7bb7d72918af6a3a671c998ec8af4ae01e66fe1ab9383e"
     },
     {
+      "path": "android-bridge/android-fixtures/org/workspace/band7/AndroidOwnerDispatchFixture.java",
+      "bytes": 3697,
+      "sha256": "d8aeadc3e3ce30ca29890e81d1ab7e8b159b8748b386cd78be30e4b9b06f5f69"
+    },
+    {
       "path": "android-bridge/band7_jni.c",
-      "bytes": 2965,
-      "sha256": "25c66a4aab532366cfe6f508c1951029f68e04d31b07a3d12f7b33211dd5fb01"
+      "bytes": 6222,
+      "sha256": "576ac43c1b35e15d90efadd4951e68aaacbfb87c437cb0fd578720cd6f214698"
+    },
+    {
+      "path": "android-bridge/build_android_x86_64_fixture.sh",
+      "bytes": 1420,
+      "sha256": "dea3067d7aa7af94a4a5a6b280d0d6a9a94a3559877559169fb2abb863663377"
+    },
+    {
+      "path": "android-bridge/build_art_fixture.sh",
+      "bytes": 1338,
+      "sha256": "4d076921b4deb6cb142300f5e1c6d4680627d38913fe72c5e4415075341252ef"
+    },
+    {
+      "path": "android-bridge/build_art_jni_fixture.sh",
+      "bytes": 1498,
+      "sha256": "f49359dd64002981b02f918af95fc444a149c75a677dd46f5fe14203d2ed6a38"
+    },
+    {
+      "path": "android-bridge/crypto-reference/README.md",
+      "bytes": 1380,
+      "sha256": "cdc05e98d5f3eb076ad8d77d8128c9e76cbd93550797fea0d5a05d5daa5bf1a2"
+    },
+    {
+      "path": "android-bridge/crypto-reference/REFERENCE-MANIFEST.json",
+      "bytes": 1163,
+      "sha256": "a708690f16d1d5a141fc91b38e4f3e86a9241b438dca6c3735560137bd01a54a"
+    },
+    {
+      "path": "android-bridge/crypto-reference/android/bluetooth/BluetoothGattCharacteristic.java",
+      "bytes": 77,
+      "sha256": "7077e49c796c0b585596df16e2beae037bf6a8de825b04dbe817c74ec99a64fc"
+    },
+    {
+      "path": "android-bridge/crypto-reference/nodomain/freeyourgadget/gadgetbridge/service/btle/TransactionBuilder.java",
+      "bytes": 331,
+      "sha256": "8e3d5e2be7729a798db2fabbf0d64f469052becac5f48ab2211b039c4798a24d"
+    },
+    {
+      "path": "android-bridge/crypto-reference/nodomain/freeyourgadget/gadgetbridge/service/devices/huami/Huami2021ChunkedDecoder.java",
+      "bytes": 5401,
+      "sha256": "f689f4101f21ac7d4ce975b109c740c48aea5b95cd755f386dfa330e90bc4546"
+    },
+    {
+      "path": "android-bridge/crypto-reference/nodomain/freeyourgadget/gadgetbridge/service/devices/huami/Huami2021ChunkedEncoder.java",
+      "bytes": 6361,
+      "sha256": "393f89aa7488637c008a6a2844889701d986a767ca7ca00d0d138c091ddd1308"
+    },
+    {
+      "path": "android-bridge/crypto-reference/nodomain/freeyourgadget/gadgetbridge/service/devices/huami/Huami2021Handler.java",
+      "bytes": 922,
+      "sha256": "eab6132fca4439c14f5761dad1681b61566e3ad7df2a3d41dab9850fa83ea15a"
+    },
+    {
+      "path": "android-bridge/crypto-reference/nodomain/freeyourgadget/gadgetbridge/util/CheckSums.java",
+      "bytes": 1235,
+      "sha256": "ee85c70351cb24c94f47ea1bf6453e762bd25788d90db1a7739aade274cbd67a"
+    },
+    {
+      "path": "android-bridge/crypto-reference/nodomain/freeyourgadget/gadgetbridge/util/CryptoUtils.java",
+      "bytes": 1912,
+      "sha256": "cccd7a610692d5f9275e5b77b6b47fb02ff1750fd417aefbe1b83782bbf57656"
+    },
+    {
+      "path": "android-bridge/crypto-reference/nodomain/freeyourgadget/gadgetbridge/util/GB.java",
+      "bytes": 161,
+      "sha256": "c75a2e0bba8d69d7f7c6cecc3006f51d740d462da17a29a1b85d025d40a30b65"
+    },
+    {
+      "path": "android-bridge/crypto-reference/org/apache/commons/lang3/ArrayUtils.java",
+      "bytes": 205,
+      "sha256": "d52faf99f6bcb5ad42c78bdb6745e3e8749dc7e6c240963be26c849e8ff1fc7b"
+    },
+    {
+      "path": "android-bridge/crypto-reference/org/slf4j/Logger.java",
+      "bytes": 173,
+      "sha256": "4f1f243a9ea402adaf5db68e1c29ea92ad6be041b069beda099024b98e1b5bbb"
+    },
+    {
+      "path": "android-bridge/crypto-reference/org/slf4j/LoggerFactory.java",
+      "bytes": 147,
+      "sha256": "24dc5e67bb6b2928b730e8d13a1a4e6b5a7c7646e1db164a0eef2d4b6e64a4a5"
+    },
+    {
+      "path": "android-bridge/crypto-reference/org/workspace/band7/EncryptedReferenceTest.java",
+      "bytes": 4134,
+      "sha256": "78d3bb2803b7141d5cad2d4d366a73701faf0258fcb21a855ccd89cfb30dcef7"
+    },
+    {
+      "path": "android-bridge/crypto-src/org/workspace/band7/HuamiAuthOwner.java",
+      "bytes": 9479,
+      "sha256": "0573c9b9984f3f7dec34625d5629b70c1a21dcc02dbdf07cd70e1a7096de087e"
+    },
+    {
+      "path": "android-bridge/crypto-src/org/workspace/band7/HuamiAuthTransport.java",
+      "bytes": 5321,
+      "sha256": "bcc936f8935d14d5ab0ec944b5838903c53510dfbe7f3dffdea255998e4462d8"
+    },
+    {
+      "path": "android-bridge/crypto-src/org/workspace/band7/HuamiEncryptedFrames.java",
+      "bytes": 6219,
+      "sha256": "1b28f92f91e3ea595a67eac32cced7d795765c5ade041a0472d297b8a5ea54a1"
+    },
+    {
+      "path": "android-bridge/crypto-src/org/workspace/band7/HuamiSessionCrypto.java",
+      "bytes": 6790,
+      "sha256": "35335c3dd657d4166cf8fb468444e6e3cff91d5add30f92836c9fdedbc5834fc"
+    },
+    {
+      "path": "android-bridge/crypto-src/org/workspace/band7/ReadOnlyBatteryQuery.java",
+      "bytes": 4056,
+      "sha256": "6b4624dd773ce4a22a88d07315c4d2d85a2d54e8edfb4b305f3a6cd1f10f3bbb"
+    },
+    {
+      "path": "android-bridge/crypto-src/org/workspace/band7/ServiceListProbe.java",
+      "bytes": 1204,
+      "sha256": "61f527773343317936f432270c26faf6edc51eea8fcb093fa36f51055741a31c"
+    },
+    {
+      "path": "android-bridge/crypto-tests/README.md",
+      "bytes": 1223,
+      "sha256": "793408079f2e25256cd6eb4e28b541a5db5c58dcfc9291ee97bdb6af1fe7d76d"
+    },
+    {
+      "path": "android-bridge/crypto-tests/openssl-b163-public-test-vector.txt",
+      "bytes": 301,
+      "sha256": "7e40c9f66155731b2ccb4b2bf6331b1a82fe7bbb0610c2412ebc36acf2c7efa5"
+    },
+    {
+      "path": "android-bridge/crypto-tests/org/workspace/band7/AuthLifecycleTest.java",
+      "bytes": 8437,
+      "sha256": "f74a05c1cb3316749f52e3a2e51fe29ac0ca942979b5df14f722b45025f9fe94"
+    },
+    {
+      "path": "android-bridge/crypto-tests/org/workspace/band7/BatteryQueryTest.java",
+      "bytes": 4802,
+      "sha256": "b77f2251c868f0637d7946e7b31d455e73dff10fe6ca0e5e17f5aa740cf7a7f3"
+    },
+    {
+      "path": "android-bridge/crypto-tests/org/workspace/band7/CancellationContractTest.java",
+      "bytes": 4142,
+      "sha256": "3e7b7372243f005f968d404064981b61e001bd6d53ec5de5da3a158f3f78d92a"
+    },
+    {
+      "path": "android-bridge/crypto-tests/org/workspace/band7/CryptoBridgeSmoke.java",
+      "bytes": 1932,
+      "sha256": "c531148a503200600db90cd375f3e2ab6ca9c7aaf44665e522521d764918bcd1"
+    },
+    {
+      "path": "android-bridge/crypto-tests/org/workspace/band7/EncryptedFramesTest.java",
+      "bytes": 4531,
+      "sha256": "5a0d38f6adfcc79f9ca3826e4781f503123239ca13e5c1a37c74bb5d0c6104b2"
+    },
+    {
+      "path": "android-bridge/crypto-tests/org/workspace/band7/FramingTransportTest.java",
+      "bytes": 4828,
+      "sha256": "426b32178f3caad9395f2ed9ad9148d34f945a58f31e4c39ce9b933fb920554b"
+    },
+    {
+      "path": "android-bridge/crypto-tests/org/workspace/band7/HuamiCryptoTest.java",
+      "bytes": 4134,
+      "sha256": "97a0c015567b670198e2b096646b2128fcd09fb2c6e1d4b936d0c2f22bd465c6"
+    },
+    {
+      "path": "android-bridge/crypto-tests/org/workspace/band7/LocalCredentialTest.java",
+      "bytes": 1589,
+      "sha256": "33c8d02c156150b66b5fe1057277f446a4cb1759fc0d2306db038d4fd4da8cca"
     },
     {
       "path": "android-bridge/jni_host_subset.h",
@@ -204,9 +414,19 @@
       "sha256": "b24d2815b5b3f579bb95da045d41af0135f1128da5ab1022f80ba762bb7fa5c5"
     },
     {
+      "path": "android-bridge/run_crypto_host.sh",
+      "bytes": 2116,
+      "sha256": "b320d39083d07b931e8149bd06ccba82ab5dbdea4d8f24580eac7348e7bfbc68"
+    },
+    {
+      "path": "android-bridge/run_encrypted_reference_host.sh",
+      "bytes": 935,
+      "sha256": "4baf338170fc8858e7c9adbaeed9b7c25c1bd8a4a333d092b9f6edf0233ea84a"
+    },
+    {
       "path": "android-bridge/run_host.sh",
-      "bytes": 1606,
-      "sha256": "15c71f8feaef0e863f2786abf4a957d16eaf1c406d032aba64f3292b58abd0e7"
+      "bytes": 1756,
+      "sha256": "d3daa2723dc940eabec2c44bb02817aef53fdcbf8a5ee48c0266377d2c014002"
     },
     {
       "path": "android-bridge/run_survey_host.sh",
@@ -254,14 +474,24 @@
       "sha256": "8bd6a32408b0a18cc98d2e1160d038d23c96a055b652458aab3afc03551af4af"
     },
     {
+      "path": "android-bridge/src/org/workspace/band7/LocalCredential.java",
+      "bytes": 921,
+      "sha256": "f4429d17feb7e67690d776433e6cca0b9747342ccfea9a134de7e7ede287d07b"
+    },
+    {
       "path": "android-bridge/src/org/workspace/band7/NativeBridge.java",
-      "bytes": 309,
-      "sha256": "8f09bd096232a0438d3d1800228bc4b3db3f1146e7be229f67cdc542cee5ddd0"
+      "bytes": 604,
+      "sha256": "2d6084b601648257afa028e291d7e2d8e306d90ef6eee261ebc8730091a6eb18"
     },
     {
       "path": "android-bridge/src/org/workspace/band7/PermissionDecision.java",
       "bytes": 1056,
       "sha256": "f8bd97c73cb997f2b3b156631218ae94716d4f7c72a1d774e68dd77e70a8040e"
+    },
+    {
+      "path": "android-bridge/src/org/workspace/band7/PilotConnection.java",
+      "bytes": 1130,
+      "sha256": "df8041c262bd206e4dcd8447edbff64fe3866cb1546c6a62b3067bf188c8dc5d"
     },
     {
       "path": "android-bridge/src/org/workspace/band7/RadarFeedback.java",
@@ -350,13 +580,18 @@
     },
     {
       "path": "ci/README.md",
-      "bytes": 5877,
-      "sha256": "6847327a859fdcdbdf0e1ab37883a3255bb4715b79c4bf3ba7b836edd7142d7a"
+      "bytes": 6780,
+      "sha256": "e6ce12bd73458514ee97fb158966e211939281b6f6e7646b07da10edb91e84b2"
+    },
+    {
+      "path": "ci/bc-artifact.py",
+      "bytes": 1780,
+      "sha256": "c4ae06e0517b2f4055d3761407b4e4972e364bb723315e4e0bb0b79b220c22c2"
     },
     {
       "path": "ci/build.sh",
-      "bytes": 2815,
-      "sha256": "cf5eb08619f04c99ae412e96b7c4b6abdd24ad23cb1e7a1436d75910d99203d0"
+      "bytes": 2989,
+      "sha256": "f933656e58c9f021c81a16f0b9bd194cd12ba6ca4ab73a3b62627a8143f479bd"
     },
     {
       "path": "ci/dependency-review.json",
@@ -375,8 +610,8 @@
     },
     {
       "path": "ci/release-config.json",
-      "bytes": 244,
-      "sha256": "d08c4648973fccb9b94317b4de0972a388c16edac41c261701500567550116b0"
+      "bytes": 246,
+      "sha256": "1f905ff1dbc5dc09f1086767fd8555d2655d7c97e4bf94a57351cc9e9bbb8caf"
     },
     {
       "path": "ci/release_contract.py",
@@ -394,6 +629,11 @@
       "sha256": "556969dd3282d72bfeb8d424c2c145aa9557eddc4e76ac7a9215368f6bcd1aa5"
     },
     {
+      "path": "ci/test_bc_metadata.py",
+      "bytes": 1359,
+      "sha256": "6af11b017d206ed9d8bef48c8e8faf6361d0d396699003318e3282cbfb5210d7"
+    },
+    {
       "path": "ci/test_ci.py",
       "bytes": 6398,
       "sha256": "6c282ceccc0faeb2df9083b31a0cb464b0f47e3c695f5367a78cd1325f1e1fd6"
@@ -405,13 +645,18 @@
     },
     {
       "path": "ci/verify.py",
-      "bytes": 2359,
-      "sha256": "774f69dc5a171b173df3e762471db1486b389cb91b52208c604d91660601e5fd"
+      "bytes": 3192,
+      "sha256": "857d509744c3e5927a24e0de471c99280d99b7d1ab1ae913d7491990a6867ef7"
     },
     {
       "path": "ci/version.py",
       "bytes": 893,
       "sha256": "2a08d64fe3c3133f2c43d0d5d8d3634fa203ce0296bc901f61f803768518e9c6"
+    },
+    {
+      "path": "docs/activity-gate-0.6.md",
+      "bytes": 6315,
+      "sha256": "9b96334df42ed86d9db9b3bc062a684e536b7dd056bca7362b2644ed682d8e68"
     },
     {
       "path": "docs/android-experience.md",
@@ -424,9 +669,44 @@
       "sha256": "4f5d7b36f32c1430b556d74209eeecd1fce5eddc4fadd8cbed871e8d7f616daf"
     },
     {
+      "path": "docs/art-jni-0.6.md",
+      "bytes": 4823,
+      "sha256": "d8a01d37b76ff26c06a33024d67fddbd929a60a3bd58bd1f23b5b764b9394230"
+    },
+    {
+      "path": "docs/art-runtime-0.6.md",
+      "bytes": 4078,
+      "sha256": "6c0f7a18c113a71980e4aba1018dd6c6ce197d62d42e672daf92b6dd920f02ef"
+    },
+    {
+      "path": "docs/art-rx-review-0.6.md",
+      "bytes": 4768,
+      "sha256": "a1cf4671e70d65976c5a0f9cf974dbba26339eacbfbdad9e9bcbdc78e27caf7a"
+    },
+    {
+      "path": "docs/auth-gatt-0.6.md",
+      "bytes": 6563,
+      "sha256": "c7c4f673eac77565e64b215b387eca4c6a630d8b46f0444147c5eef02025cdf4"
+    },
+    {
+      "path": "docs/auth-lifecycle-0.6.md",
+      "bytes": 8141,
+      "sha256": "2ea3c61f0d594730c37127f18d6cafc65c5bd14491dc39c97d391bddfd7eeae5"
+    },
+    {
       "path": "docs/basic-snapshot.md",
       "bytes": 5465,
       "sha256": "734005219114b26379013617d83bdba4dc3a702acdf0d3a70a1e308f9e1b6653"
+    },
+    {
+      "path": "docs/battery-query-0.6.md",
+      "bytes": 5819,
+      "sha256": "c8a24e99f2b693a52bba4b6d795eb59c02a431ab8615640f77b983cba68e3831"
+    },
+    {
+      "path": "docs/cancel-resolution-0.6.md",
+      "bytes": 2344,
+      "sha256": "aa10813f16c3f7c593e37548ddde41dec014053c7a9b6cc8be0e35eed32747b2"
     },
     {
       "path": "docs/contract.md",
@@ -434,9 +714,29 @@
       "sha256": "dc630c9b5d827f08f6383862abd7f0616f46cc115dac96cb8cfb379becff3a27"
     },
     {
+      "path": "docs/crypto-0.6-verified-provider.md",
+      "bytes": 5309,
+      "sha256": "8b7921d1191ae95439567711b65ce1dfc3228b0003a16a418cf3324f51239b0c"
+    },
+    {
+      "path": "docs/crypto-0.6.md",
+      "bytes": 7733,
+      "sha256": "04bd81668755eacde5244b427adfb2842ebcb2fb1370a44e8b162fe11a1ca9ed"
+    },
+    {
       "path": "docs/data-coverage.md",
       "bytes": 13746,
       "sha256": "72b21ac1531143bf267b97e056d6fcd6cd4ac4a84d4680a0efd941139c260d73"
+    },
+    {
+      "path": "docs/encrypted-transport-0.6.md",
+      "bytes": 7311,
+      "sha256": "81822ea0bef8b3fe30bb6610395e7ad11d7ebc7309f270556f09ae09b5184e94"
+    },
+    {
+      "path": "docs/endgame-0.6.md",
+      "bytes": 9759,
+      "sha256": "3ea4fa3969ff1cb0aacc0654628c091bb78ab58f548878cce490be303d4df0f9"
     },
     {
       "path": "docs/event-storage.md",
@@ -479,6 +779,11 @@
       "sha256": "0fdff2b6cbdbfab0f81a728858fe7df61243b403042d0c47a9e95efaee96fbdf"
     },
     {
+      "path": "docs/product-pilot-0.6.md",
+      "bytes": 8870,
+      "sha256": "b6f1f79dbcc67c75470d5e41123eca378b8aa55152bdc055ee76548b8745d3fc"
+    },
+    {
       "path": "docs/radar.md",
       "bytes": 3581,
       "sha256": "32fbad3cf539fd78b79d38b9795336bab96e5eb90ae1027c0bee0442cde3319a"
@@ -514,14 +819,24 @@
       "sha256": "8df3ea49bb71bd7b944d380419b8027ed4c0804ec7fc83260852e278570cc934"
     },
     {
+      "path": "docs/zepp-capabilities-0.6.md",
+      "bytes": 4277,
+      "sha256": "6a141a6ef7578b9f836a5359f0aaa29415fb631b639a45c404e6bff41401600d"
+    },
+    {
+      "path": "examples/prepare_zepp.rs",
+      "bytes": 395,
+      "sha256": "ed95e1a6095ab0b6a93cf0b9118c0cb942c4a3d0ec94d75eece8ee0621bf9151"
+    },
+    {
       "path": "ffi/README.md",
       "bytes": 1109,
       "sha256": "73fa54ebc2a54d1c9895e8a2707bc7d12676a8c28f2610941029d9549d943e50"
     },
     {
       "path": "ffi/band7.h",
-      "bytes": 1134,
-      "sha256": "e57ff356a60d7efaecc4387fca3d398bf9e12078dc284ea1e1bdf0ee2ea585dd"
+      "bytes": 2068,
+      "sha256": "eec7e15f273af8e48e598200450d568c9c9adc3c10bd8e05ede743dbddbb9651"
     },
     {
       "path": "ffi/host_smoke.c",
@@ -624,6 +939,11 @@
       "sha256": "f632a1e1aa57812c3c3409342c25504eb60dcf962bc49bc0407813b7f4db7390"
     },
     {
+      "path": "src/auth_bridge.rs",
+      "bytes": 9322,
+      "sha256": "8ca92ac5a4704e0eea9974cecf9f43bd50d693ee4b39637278589e5097ef0302"
+    },
+    {
       "path": "src/basic_snapshot.rs",
       "bytes": 3444,
       "sha256": "de9fa29782de0816db747bce41ba54641e58279dd107b57e788707b3cf065556"
@@ -635,8 +955,8 @@
     },
     {
       "path": "src/ffi.rs",
-      "bytes": 5446,
-      "sha256": "e2fe5b11aeef6f1145a098b38148a36a62cffab9b491785c6f2cda2903ff6752"
+      "bytes": 6288,
+      "sha256": "f78cd6924a7d15cbc5cf945ae090822a72e07325c6e7749852d6ef0d889fd852"
     },
     {
       "path": "src/gatt_basics.rs",
@@ -654,9 +974,19 @@
       "sha256": "ad47b347d14159ff705fbf92dcb908ff3721cd61d44f0831643f8f3ddabb507f"
     },
     {
+      "path": "src/huami_auth.rs",
+      "bytes": 2377,
+      "sha256": "6b0b428cacc5398c50fd04a6000921c34d779581098eb7d8c01ddfa61a8b87e6"
+    },
+    {
       "path": "src/huami_chunk.rs",
-      "bytes": 4828,
-      "sha256": "5f4a681bd8935181e628c64e59bc516c0b8ad5a1d7ed9513446cc2d802de7d1e"
+      "bytes": 7279,
+      "sha256": "e075779e417b6d4b767b92082c9f509433afaf46cf339bb0cc4cf810a13a9c96"
+    },
+    {
+      "path": "src/huami_handshake.rs",
+      "bytes": 4873,
+      "sha256": "006bdc1a3b1d8fead7ea0d8dcca82ccae71293df3ffbd8cb119743604876a744"
     },
     {
       "path": "src/ingestion.rs",
@@ -665,8 +995,8 @@
     },
     {
       "path": "src/lib.rs",
-      "bytes": 15963,
-      "sha256": "6f7631d156213ad9e9a7b9af39ff10da2f0fdbe6be09b46c21287b6e792c013e"
+      "bytes": 16077,
+      "sha256": "0356ea96b9bf59c8d9d83e4b8003c074cf68f0bef0a50a1ab3003c1049aa9ab9"
     },
     {
       "path": "src/main.rs",
@@ -684,9 +1014,29 @@
       "sha256": "8f0eae655f6c25f922f43df13cdd0a9b4ba8829599bdfd56cfadf81263f029cf"
     },
     {
+      "path": "src/zepp_bridge.rs",
+      "bytes": 3036,
+      "sha256": "636f64c87936d3c43914ce6b9e36b3bda7f55c25295fb24b6e1b7cdbb7e01f30"
+    },
+    {
+      "path": "src/zepp_capabilities.rs",
+      "bytes": 7330,
+      "sha256": "6c71ba21a5061d69f67a004c41798983e31aaa19d5e626a3bd23ae7206cae5f1"
+    },
+    {
       "path": "tests/activity_db.rs",
       "bytes": 5511,
       "sha256": "37780aa33a8c9c1c3fb6cc598d4c2a7ada7b6a4a8bbda6e280d57b3a62795d1c"
+    },
+    {
+      "path": "tests/auth_ffi.rs",
+      "bytes": 716,
+      "sha256": "a5bd802583225b16b64948be98a69f7a2f767f14a6c6cb26fbe77acca965a224"
+    },
+    {
+      "path": "tests/auth_reply.rs",
+      "bytes": 3213,
+      "sha256": "5d14e94e3ded2221b3bcc0a72b10571e047ad893050ef6fe5e8db331b45c8bf3"
     },
     {
       "path": "tests/basic_snapshot.rs",
@@ -734,6 +1084,11 @@
       "sha256": "36105f7db302ffb5e57f71289de57defaf7f79189e0766ca0efab5980505e461"
     },
     {
+      "path": "tests/handshake_state.rs",
+      "bytes": 3102,
+      "sha256": "42bb3c4af54962a47d94ff987557c3a6f8ec7294d42aef7fa661448b33904ea5"
+    },
+    {
       "path": "tests/health_samples.rs",
       "bytes": 4901,
       "sha256": "2ba34d8fd1ce4db0d67b2b648b8138fa4da82ab6ae54285e1f2e3bf5e61c963c"
@@ -754,9 +1109,24 @@
       "sha256": "2b40a3c03a2e3c837781f42806cc09d5acaa937a3d36d37f582c87f3408f5e0b"
     },
     {
+      "path": "tests/zepp_capabilities.rs",
+      "bytes": 4500,
+      "sha256": "40189dccbb057d127794c74065fb2cf9a3d8189efb8784d6dbb08dd30389d1d9"
+    },
+    {
       "path": "third_party/SQLITE-NOTICE.txt",
       "bytes": 562,
       "sha256": "35971e314de8952d67fc5433c88fe4b0c22632fa5398c8c4af756d9a7303c30f"
+    },
+    {
+      "path": "third_party/bcprov-1.86-download.json",
+      "bytes": 508,
+      "sha256": "83d5bef2319f2de3813ee3432eb9157c176351f10e97d97a6824b9f641eba274"
+    },
+    {
+      "path": "third_party/licenses/bcprov-1.86/LICENSE.md",
+      "bytes": 1171,
+      "sha256": "0e01f1549c9022f406392ac2947d32223b7c2e977d21ea2f8c182fdeb4dae5fd"
     },
     {
       "path": "third_party/licenses/bitflags-2.13.2/LICENSE-APACHE",
@@ -862,6 +1232,11 @@
       "path": "third_party/licenses/memchr-2.8.3/UNLICENSE",
       "bytes": 1211,
       "sha256": "7e12e5df4bae12cb21581ba157ced20e1986a0508dd10d0e8a4ab9a4cf94e85c"
+    },
+    {
+      "path": "third_party/licenses/openssl-3.5.7/LICENSE.txt",
+      "bytes": 10175,
+      "sha256": "7d5450cb2d142651b8afa315b5f238efc805dad827d91ba367d8516bc9d49e7a"
     },
     {
       "path": "third_party/licenses/pkg-config-0.3.34/LICENSE-APACHE",
@@ -1037,6 +1412,11 @@
       "path": "third_party/rust-licenses.json",
       "bytes": 7110,
       "sha256": "5cb5bb6eeb75d7e70ee35f768e784eb1c3606b40926547c5eaaeb2caad511dc0"
+    },
+    {
+      "path": "unsigned-build.init.gradle",
+      "bytes": 1350,
+      "sha256": "801868e6f137010b009981883d699d95478ebe39d8e3b2efdbca0d9061e375cd"
     }
   ]
 }

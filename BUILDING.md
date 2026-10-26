@@ -64,7 +64,7 @@ cd android-app
 privados próprios. Dependências Maven precisam ter sido resolvidas anteriormente;
 remova --offline somente para preparação consciente de rede/cache. Repositórios
 estão declarados em settings.gradle; verification-metadata.xml preserva hashes.
-Não usamos CI remoto, submódulos ou serviços cloud para este build.
+O fluxo CI está documentado em ci/README.md; esta integração 0.6 permanece local, sem publicação ou execução GitHub desta revisão.
 
 O script prepare-local-java.sh só se aplica a imagens Java reduzidas: exige
 JAVA_SOURCE_HOME e JAVA_COPY_HOME explícitos e copia módulos existentes, sem

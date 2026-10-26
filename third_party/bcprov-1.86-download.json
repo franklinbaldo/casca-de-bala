@@ -1,0 +1,12 @@
+{
+  "bcprov-jdk18on-1.86.pom": {
+    "sha256": "970b70cb75a184639b6fb9ba3c465aca6a4e1a5f3fff4d65ce8574b2fd79ef38",
+    "bytes": 1160,
+    "source": "https://repo.maven.apache.org/maven2/org/bouncycastle/bcprov-jdk18on/1.86/bcprov-jdk18on-1.86.pom"
+  },
+  "bcprov-jdk18on-1.86.jar": {
+    "sha256": "2af190b300cbb0b35e248ccf5f4a06b6072030aeb3da7a98ec73abe5b4cb371f",
+    "bytes": 7224011,
+    "source": "https://repo.maven.apache.org/maven2/org/bouncycastle/bcprov-jdk18on/1.86/bcprov-jdk18on-1.86.jar"
+  }
+}

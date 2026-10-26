@@ -1,0 +1,1 @@
+package nodomain.freeyourgadget.gadgetbridge.service.btle; import java.util.*;import android.bluetooth.BluetoothGattCharacteristic; public final class TransactionBuilder {public final List<byte[]> frames=new ArrayList<>();public TransactionBuilder write(BluetoothGattCharacteristic c,byte[] b){frames.add(b.clone());return this;}}

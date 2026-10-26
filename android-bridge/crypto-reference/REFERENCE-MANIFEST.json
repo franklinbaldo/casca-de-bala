@@ -1,0 +1,32 @@
+{
+  "repository": "https://github.com/Freeyourgadget/Gadgetbridge",
+  "revision": "a0948ee1cbc2a870f91d313f8e37df5f524465f7",
+  "license": "AGPL-3.0-or-later",
+  "files": {
+    "service/devices/huami/Huami2021ChunkedEncoder.java": {
+      "sha256": "393f89aa7488637c008a6a2844889701d986a767ca7ca00d0d138c091ddd1308",
+      "bytes": 6361,
+      "mode": "unmodified full copy"
+    },
+    "service/devices/huami/Huami2021ChunkedDecoder.java": {
+      "sha256": "f689f4101f21ac7d4ce975b109c740c48aea5b95cd755f386dfa330e90bc4546",
+      "bytes": 5401,
+      "mode": "unmodified full copy"
+    },
+    "service/devices/huami/Huami2021Handler.java": {
+      "sha256": "eab6132fca4439c14f5761dad1681b61566e3ad7df2a3d41dab9850fa83ea15a",
+      "bytes": 922,
+      "mode": "unmodified full copy"
+    },
+    "util/CryptoUtils.java": {
+      "sha256": "d30f4343c793026ad6cc0a7023b44811584769d0fdd38f1a5f5daa3ba48aa9c9",
+      "bytes": 7394,
+      "mode": "attributed method subset"
+    },
+    "util/CheckSums.java": {
+      "sha256": "16fb3d689d1b74703394278d05aa75c326a9af7b0791ca36fc9424c26f887c76",
+      "bytes": 7960,
+      "mode": "attributed method subset"
+    }
+  }
+}
