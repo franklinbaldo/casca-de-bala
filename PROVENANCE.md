@@ -83,3 +83,47 @@ RadarFeedback, RadarVisualModel, RadarPulseView e modo contínuo são código lo
 sobre as mesmas APIs Android. Sem biblioteca nova, GPS ou modelo espacial.
 O usuário relatou que o snapshot0.4 abriu sem erro e bateria74% coincidiu com
 a tela; não houve captura/telemetria ou comparação individual dos demais campos.
+
+## Preparação Huami AUTH0.6 (local)
+
+src/huami_auth.rs valida envelopes de InitOperation2021/Huami2021Service no
+mesmo commit Gadgetbridge fixado, AGPL-3.0-or-later; crédito2021–2024 Andreas
+Shimokawa e José Rebelo. Não inclui cifra, ECDH ou material de chave upstream.
+
+A sonda criptográfica privada preserva o header GPL-3.0-or-later de ECDH_B163
+(upstream Andreas Shimokawa2022–2024). Não foi incorporada ao app; ver
+docs/crypto-0.6.md para licença e resultado negativo de ordem baixa.
+
+Atualização local BC1.86: dependência oficial/MIT, hash e licença preservados em
+third_party/bcprov-1.86-download.json e third_party/licenses/bcprov-1.86/LICENSE.md.
+FixtureB163 e seu avisoApache2.0 preservados; ver crypto-tests/README.md. A
+observação negativa da referênciaGPL não afirma vulnerabilidade geral no upstream.
+
+## Encrypted2021 transport preparation
+
+`HuamiEncryptedFrames` follows Gadgetbridge's extended2021 protocol at revision
+`a0948ee1cbc2a870f91d313f8e37df5f524465f7`; it remains AGPL-3.0-or-later.
+Test-only unmodified encoder/decoder/handler copies and attributed AES/CRC subsets
+are under `android-bridge/crypto-reference`, with original copyright/license
+notices. Compatibility shims are explicitly synthetic, not Bluetooth implementations.
+They are excluded from Android source sets. See that directory's README and
+`docs/encrypted-transport-0.6.md` for evidence limits and differences in RX checks.
+## Offline Zepp capability preparation
+
+`src/zepp_capabilities.rs`, its synthetic tests and example use protocol mappings
+from Gadgetbridge a0948ee1cbc2a870f91d313f8e37df5f524465f7 (AGPL-3.0-or-later),
+especially Huami2021Service, ZeppOsSupport, HuamiBatteryInfo and
+ZeppOsNotificationService. Credit the Gadgetbridge contributors, including
+Andreas Shimokawa and José Rebelo; upstream notices remain preserved. The new
+module is AGPL-3.0-or-later. Sources and deviations are documented in
+docs/zepp-capabilities-0.6.md; fixtures are synthetic, not device captures.
+
+
+A consulta explícita ReadOnlyBatteryQuery e o ABI zepp_bridge compõem o framing,
+crypto e decoders já atribuídos; consulta de serviços baseada em ZeppOsServicesService
+(José Rebelo2023–2024) no mesmo commit upstream. Não invoca initializeServices
+nem reproduz suas escritas de hora/perfil/configuração. Veja docs/battery-query-0.6.md.
+
+A UI de piloto, parser LocalCredential, contrato PilotConnection e drawable ic_band
+são incrementos deste projeto sob AGPL-3.0-or-later. A fixture de UI usa somente
+os vetores públicos já atribuídos; nenhuma chave real ou imagem do usuário.

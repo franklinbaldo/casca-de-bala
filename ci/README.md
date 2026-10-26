@@ -1,10 +1,10 @@
 # CI Android e releases
 
-Estado: build de PR validado no GitHub; assinatura real e publicação aguardam
-o primeiro push aprovado na main. A fonte pública atual é 0.5; esta mudança
-não importa silenciosamente funcionalidades da preparação local 0.6.
-Inclui somente a correção do ícone próprio já existente nessa preparação:
-o ícone do framework usado na0.5 impedia `aapt dump badging` de validar o APK.
+Estado: build, assinatura permanente e publicação da base 0.5 passaram na main
+8c0f9b5502d14153544c29b30b41c81050319e52, execução
+[40381344254](https://github.com/franklinbaldo/casca-de-bala/actions/runs/40381344254).
+Esta proposta integra a fonte 0.6 sem alterar os guards de secrets ou o certificado.
+O novo piloto ainda não foi autenticado no hardware.
 
 ## Fluxo
 
@@ -86,8 +86,8 @@ foram implementadas e não substituem assinatura APK.
 A primeira migração de chaves temporárias diferentes pode exigir remover somente
 o Casca anterior; preservar Zepp Life e pareamento. A assinatura é do projeto,
 não uma certificação Google Play. Os testes de signer/publicador usam ferramentas
-simuladas e valores sintéticos; a assinatura real com a chave permanente só pode
-ser comprovada após o primeiro merge autorizado e push na main.
+simuladas e valores sintéticos; a assinatura real da base 0.5 foi verificada na execução acima. Uma release 0.6
+ainda depende do merge desta proposta e de sua própria execução bem-sucedida.
 
 GitHub fornece gratuitamente runners **padrão** em repositórios públicos;
 runners maiores são cobrados. Não é autorização de infraestrutura paga.
@@ -97,3 +97,18 @@ https://docs.github.com/en/actions/reference/security/secure-use .
 Testes host/build não demonstram ART, BLE ou funcionamento físico. Registros de
 validação da PR devem separar PASS, FAIL e NOT_RUN sem reaproveitar contagens
 de outra revisão.
+
+## Integração local 0.6
+
+O build inclui os harnesses de autenticação, criptografia e referência upstream,
+além dos testes anteriores. BC 1.86 é aceito somente com o hash já revisado; o
+fetch oficial ocorre apenas com CI_PREPARE_NETWORK=1. Offline, definir BC_JAR
+para o artefato já validado. O mirror Maven local opcional usa
+ORG_GRADLE_PROJECT_band7BcRepository e mantém a verificação estrita.
+
+Fixtures Android e testes criptográficos entram somente no perfil isolado de
+emulador. A validação do release usa apkanalyzer dex packages --defined-only para
+verificar a presença do piloto e ausência de fixtures/referências de teste.
+APKANALYZER permite indicar o executável oficial existente fora do SDK padrão.
+Testes ART históricos não são atribuídos automaticamente ao novo checkout integrado.
+A PR valida host/build; autenticação física permanece NOT_RUN.

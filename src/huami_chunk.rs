@@ -156,3 +156,75 @@ impl Receiver {
         })
     }
 }
+
+/// Plaintext extended headers from the pinned Huami2021ChunkedEncoder. No cipher
+/// or transmission. Conservative 23..515 MTU keeps every fragment <=512 bytes.
+pub fn encode_plain(
+    endpoint: u16,
+    handle: u8,
+    mtu: usize,
+    payload: &[u8],
+) -> Result<Vec<Vec<u8>>, RxError> {
+    if !(23..=515).contains(&mtu) || payload.is_empty() || payload.len() > MAX_MESSAGE {
+        return Err(RxError::Length);
+    }
+    let mut out = Vec::new();
+    let mut offset = 0;
+    let mut sequence = 0u16;
+    while offset < payload.len() {
+        if sequence > 255 {
+            return Err(RxError::Sequence);
+        }
+        let header = if sequence == 0 { 11 } else { 5 };
+        let take = (mtu - 3 - header).min(payload.len() - offset);
+        let mut frame = vec![
+            3,
+            if sequence == 0 { 1 } else { 0 },
+            0,
+            handle,
+            sequence as u8,
+        ];
+        if sequence == 0 {
+            frame.extend_from_slice(&(payload.len() as u32).to_le_bytes());
+            frame.extend_from_slice(&endpoint.to_le_bytes());
+        }
+        if offset + take == payload.len() {
+            frame[1] |= 6;
+        }
+        frame.extend_from_slice(&payload[offset..offset + take]);
+        out.push(frame);
+        offset += take;
+        sequence += 1;
+    }
+    Ok(out)
+}
+
+#[cfg(test)]
+mod tx_tests {
+    use super::*;
+    #[test]
+    fn source_header_and_roundtrip_are_bounded() {
+        // Synthetic request, source-defined service endpoint0/CMD_GET_LIST03.
+        assert_eq!(
+            encode_plain(0, 1, 23, &[3]).unwrap(),
+            vec![vec![3, 7, 0, 1, 0, 1, 0, 0, 0, 0, 0, 3]]
+        );
+        for n in [1, 9, 10, 33, 52, 67, 500] {
+            let bytes = vec![0x5a; n];
+            let frames = encode_plain(0x82, 17, 23, &bytes).unwrap();
+            let mut rx = Receiver::new(42);
+            let mut message = None;
+            for frame in frames {
+                assert!(frame.len() <= 20);
+                message = rx.receive(42, 0, &frame).unwrap().message;
+            }
+            assert_eq!(message.unwrap().payload, bytes);
+        }
+        for mtu in [0, 22, 516] {
+            assert!(encode_plain(0, 1, mtu, &[1]).is_err());
+        }
+        assert!(encode_plain(0, 1, 23, &[]).is_err());
+        assert!(encode_plain(0, 1, 23, &vec![0; 4097]).is_err());
+        assert!(encode_plain(0, 1, 23, &vec![0; 4096]).is_err()); // sequence overflow atMTU23
+    }
+}

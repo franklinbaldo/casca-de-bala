@@ -7,7 +7,8 @@ TEST_BUILD=$(mktemp -d /tmp/band7-jni-host-XXXXXX)
 trap 'rm -rf "$TEST_BUILD"' EXIT HUP INT TERM
 cargo build --offline --manifest-path "$CRATE_ROOT/Cargo.toml"
 java -m jdk.compiler/com.sun.tools.javac.Main -Xlint:all -Werror -d "$TEST_BUILD/classes" \
-    "$BRIDGE_ROOT"/src/org/workspace/band7/*.java "$BRIDGE_ROOT"/tests/org/workspace/band7/*.java
+    "$BRIDGE_ROOT"/src/org/workspace/band7/*.java "$BRIDGE_ROOT"/tests/org/workspace/band7/*.java \
+    "$BRIDGE_ROOT"/crypto-tests/org/workspace/band7/LocalCredentialTest.java
 cc -std=c11 -Wall -Wextra -Werror -fPIC -shared -DB7_HOST_JNI_SUBSET \
     "$BRIDGE_ROOT/band7_jni.c" -L "$CRATE_ROOT/target/debug" -lband7_terminal \
     -Wl,-rpath,"$CRATE_ROOT/target/debug" -o "$TEST_BUILD/libband7_jni.so"
@@ -23,3 +24,4 @@ java -cp "$TEST_BUILD/classes" org.workspace.band7.RadarSessionTest
 
 java -cp "$TEST_BUILD/classes" org.workspace.band7.RadarContinuousTest
 java -cp "$TEST_BUILD/classes" org.workspace.band7.RadarFeedbackTest
+java -cp "$TEST_BUILD/classes" org.workspace.band7.LocalCredentialTest

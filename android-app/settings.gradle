@@ -1,4 +1,20 @@
 pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
-dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        // Optional local mirror of already verified official BC artifacts.
+        // No new remote source or relaxed dependency verification is introduced.
+        if (providers.gradleProperty('band7BcRepository').isPresent()) {
+            def localBc = file(providers.gradleProperty('band7BcRepository').get())
+            if (!localBc.isDirectory()) throw new GradleException('Missing local BC mirror')
+            maven {
+                url = localBc.toURI()
+                content { includeVersion('org.bouncycastle', 'bcprov-jdk18on', '1.86') }
+            }
+        }
+        google()
+        mavenCentral()
+    }
+}
 rootProject.name = 'Band7BasicReader'
 include ':app'

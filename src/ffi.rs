@@ -182,3 +182,23 @@ pub unsafe extern "C" fn b7_call(input: *const u8, length: usize, output: *mut B
     }
     value.status
 }
+
+/// Classify a reassembled AUTH reply only; never authenticates or retains data.
+/// Returns0 invalid/unsupported,1 challenge,2 peer success,3 peer bad-key.
+/// # Safety
+/// Nonnull input must point to `length` readable bytes for this call. Length
+/// is capped at67 before a slice is formed. No credential input is expected.
+#[no_mangle]
+pub unsafe extern "C" fn b7_auth_reply_kind(endpoint: u16, input: *const u8, length: usize) -> i32 {
+    if input.is_null() || length == 0 || length > 67 {
+        return 0;
+    }
+    let payload = unsafe { std::slice::from_raw_parts(input, length) };
+    use crate::huami_auth::{decode_reply, Reply};
+    match decode_reply(endpoint, payload) {
+        Ok(Reply::Challenge(_)) => 1,
+        Ok(Reply::PeerReportedSuccess) => 2,
+        Ok(Reply::PeerReportedBadKey) => 3,
+        Err(_) => 0,
+    }
+}

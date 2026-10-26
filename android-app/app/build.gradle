@@ -1,4 +1,10 @@
 plugins { id 'com.android.application' }
+def fixtureAbi = providers.gradleProperty('band7FixtureAbi').orNull
+def fixtureSuffix = providers.gradleProperty('band7FixtureSuffix').getOrElse('.activitytest')
+if (!(fixtureSuffix in ['.activitytest','.cancelfixture','.batteryfixture','.pilotfixture'])) throw new GradleException('Unrecognized isolated fixture suffix')
+if (fixtureAbi != null && !providers.gradleProperty('band7DebugKeystore').isPresent()) throw new GradleException('Fixture profile requires isolated explicit test keystore')
+if (fixtureAbi != null && fixtureAbi != 'x86_64') throw new GradleException('Fixture ABI must be x86_64')
+if (fixtureAbi != null && gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }) throw new GradleException('Fixture mode is debug-only')
 android {
     namespace 'org.workspace.band7.app'
     compileSdk 35
@@ -7,18 +13,25 @@ android {
         applicationId 'org.workspace.band7.basicreader'
         minSdk 31
         targetSdk 35
-        def ciCode = providers.gradleProperty('cascaVersionCode').orElse('5').get()
-        def ciName = providers.gradleProperty('cascaVersionName').orElse('0.5-lab').get()
+        def ciCode = providers.gradleProperty('cascaVersionCode').orElse('1004').get()
+        def ciName = providers.gradleProperty('cascaVersionName').orElse('0.6-pilot').get()
         if (!(ciCode ==~ /[1-9][0-9]*/) || ciCode.toBigInteger() > 2100000000)
             throw new GradleException('Invalid cascaVersionCode')
         if (!(ciName ==~ /[A-Za-z0-9][A-Za-z0-9._-]{0,79}/))
             throw new GradleException('Invalid cascaVersionName')
         versionCode ciCode.toInteger()
         versionName ciName
-        ndk { abiFilters 'arm64-v8a' }
+        ndk { abiFilters(fixtureAbi == null ? 'arm64-v8a' : fixtureAbi) }
+        if (fixtureAbi != null) { applicationIdSuffix fixtureSuffix; versionNameSuffix '-activity-fixture' }
     }
     // Reuse JNI/core contracts; no AndroidX, networking or copied decoder.
-    sourceSets.main.java.srcDirs += ['../../android-bridge/src']
+    sourceSets.main.java.srcDirs += ['../../android-bridge/src', '../../android-bridge/crypto-src']
+    if (fixtureAbi != null) {
+        sourceSets.debug.jniLibs.srcDirs += [providers.gradleProperty('band7FixtureNativeDir').get()]
+        sourceSets.debug.java.srcDirs += ['src/activityFixture/java', '../../android-bridge/crypto-tests']
+        sourceSets.debug.assets.srcDirs += ['src/activityFixture/assets']
+        sourceSets.debug.manifest.srcFile 'src/activityFixture/AndroidManifest.xml'
+    }
     sourceSets.main.assets.srcDirs += ['../../docs/licenses', '../../third_party']
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     // Standard debug signing, but callers can confine the temporary key to a
@@ -26,14 +39,23 @@ android {
     signingConfigs.debug {
         if (providers.gradleProperty('band7DebugKeystore').isPresent())
             storeFile = file(providers.gradleProperty('band7DebugKeystore').get())
+        if (fixtureAbi != null) {
+            keyAlias = 'casca-activity-fixture'
+            storePassword = providers.environmentVariable('CASCA_FIXTURE_STORE_PASSWORD').get()
+            keyPassword = providers.environmentVariable('CASCA_FIXTURE_STORE_PASSWORD').get()
+        }
     }
 }
 tasks.register('checkNativeInputs') {
     doLast {
         ['libband7_terminal.so','libband7_jni.so'].each { name ->
-            if (!file("src/main/jniLibs/arm64-v8a/$name").isFile())
+            def nativeFile = fixtureAbi == null ? file("src/main/jniLibs/arm64-v8a/$name") : file(providers.gradleProperty('band7FixtureNativeDir').get()+"/x86_64/$name")
+            if (!nativeFile.isFile())
                 throw new GradleException("Missing $name; run sh build-native.sh with approved NDK/target first")
         }
     }
 }
 tasks.named('preBuild').configure { dependsOn 'checkNativeInputs' }
+
+// Official BC1.86, hashes verified before inclusion; no global provider registration.
+dependencies { implementation 'org.bouncycastle:bcprov-jdk18on:1.86' }

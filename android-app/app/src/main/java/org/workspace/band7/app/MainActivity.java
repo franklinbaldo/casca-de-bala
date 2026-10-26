@@ -30,7 +30,7 @@ public final class MainActivity extends Activity {
     private RadarVisualModel.Palette colors;private ScrollView page;private TextView subtitle;
     private RadarPulseView radarPulse;private FrameLayout radarDial;private TextView radarMetric,radarCounter,radarBest,radarGuide;private ProgressBar radarSamples;
     private int rowCount;private TextView title,status,body,battery,hardware,software,time,device;
-    private Button primary,secondary,cancel,details,diagnostic;private ProgressBar progress;private LinearLayout rows,batteryCard,infoCard;
+    private Button primary,secondary,cancel,details,diagnostic,pilotOpen;private ProgressBar progress;private LinearLayout rows,batteryCard,infoCard;
     private RadarGatt radarReader;private RadarSession.Snapshot radarSnapshot;private boolean selectingRadar;
     private Button radarOpen,radarMeasure,radarEnd,radarChoose;private LinearLayout radarPanel,radarPoints;
     private TextView radarStatus,radarHelp;private int renderedRadarPoints=-1;private long renderedRadarGeneration=-1;
@@ -82,8 +82,9 @@ public final class MainActivity extends Activity {
         text(infoCard,R.string.software,16);software=text(infoCard,R.string.not_available,20);
         time=text(root,R.string.waiting,15);details=button(root,R.string.technical);details.setOnClickListener(v->showDetails());
         diagnostic=button(root,R.string.snapshot_action);diagnostic.setOnClickListener(v->showSnapshot());
+        pilotOpen=button(root,R.string.pilot_open);pilotOpen.setOnClickListener(v->{if(selectedDevice!=null)PilotActivity.open(this,selectedDevice);});
         space(root,16);text(root,R.string.version,14);
-        Button license=button(root,R.string.license_action);license.setOnClickListener(v->showLicense());setContentView(scroll);
+        Button license=button(root,R.string.license_action);license.setOnClickListener(v->showLicense());if((getApplicationInfo().flags&android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0){android.content.Intent fixture=new android.content.Intent().setClassName(getPackageName(),"org.workspace.band7.AuthFixtureActivity");if(fixture.resolveActivity(getPackageManager())!=null){Button test=button(root,R.string.auth_fixture);test.setOnClickListener(v->startActivity(fixture));}}setContentView(scroll);
         discovery=new BleDiscovery(this,new DiscoverySession.Observer(){
             public void changed(long token,DiscoverySession.Status value,List<DiscoverySession.Row> found){
                 searchStatus=value;rowCount=found.size();
@@ -177,7 +178,7 @@ public final class MainActivity extends Activity {
         progress.setVisibility(reading||searching?View.VISIBLE:View.GONE);cancel.setVisibility(reading||searching?View.VISIBLE:View.GONE);
         secondary.setVisibility(View.GONE);primary.setVisibility(reading||screen==Screen.RADAR?View.GONE:View.VISIBLE);primaryAction=()->beginFind(route,selectingRadar);set(primary,R.string.bonded);
         rows.setVisibility(screen==Screen.SEARCH?View.VISIBLE:View.GONE);radarPanel.setVisibility(screen==Screen.RADAR?View.VISIBLE:View.GONE);radarOpen.setVisibility(screen==Screen.HOME||screen==Screen.DEVICE&&!reading?View.VISIBLE:View.GONE);
-        boolean show=screen==Screen.DEVICE&&snapshot!=null;diagnostic.setVisibility(show&&snapshot.isFinal()?View.VISIBLE:View.GONE);device.setVisibility(show?View.VISIBLE:View.GONE);batteryCard.setVisibility(show?View.VISIBLE:View.GONE);infoCard.setVisibility(show?View.VISIBLE:View.GONE);details.setVisibility(show?View.VISIBLE:View.GONE);time.setVisibility(View.GONE);
+        boolean show=screen==Screen.DEVICE&&snapshot!=null;pilotOpen.setVisibility(show&&snapshot.isFinal()&&selectedDevice!=null?View.VISIBLE:View.GONE);diagnostic.setVisibility(show&&snapshot.isFinal()?View.VISIBLE:View.GONE);device.setVisibility(show?View.VISIBLE:View.GONE);batteryCard.setVisibility(show?View.VISIBLE:View.GONE);infoCard.setVisibility(show?View.VISIBLE:View.GONE);details.setVisibility(show?View.VISIBLE:View.GONE);time.setVisibility(View.GONE);
         if(show){
             set(device,selectedName==null?getString(R.string.unnamed):selectedName);
             set(battery,snapshot.battery==null?getString(reading?R.string.waiting:R.string.not_available):getString(R.string.battery_percent,snapshot.battery));

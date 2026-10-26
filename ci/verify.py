@@ -30,6 +30,17 @@ def verify(apk, signed=False):
                            'android.permission.BLUETOOTH_SCAN'}
     xml = run(tools / 'aapt', 'dump', 'xmltree', apk, 'AndroidManifest.xml')
     assert not re.search(r'android:(debuggable|testOnly).*0xffffffff', xml)
+    analyzer = Path(os.environ.get('APKANALYZER', str(
+        Path(os.environ['ANDROID_HOME']) / 'cmdline-tools/latest/bin/apkanalyzer')))
+    classes = run(analyzer, 'dex', 'packages', '--defined-only', apk)
+    assert 'org.workspace.band7.app.PilotActivity' in classes
+    assert 'org.workspace.band7.HuamiSessionCrypto' in classes
+    forbidden = ('AuthFixtureActivity', 'PilotFixtureActivity', 'AuthFixtureInstrumentation',
+                 'HuamiCryptoTest', 'CryptoBridgeSmoke', 'AuthLifecycleTest',
+                 'FramingTransportTest', 'EncryptedReferenceTest', 'CancellationContractTest',
+                 'BatteryQueryTest', 'EncryptedFramesTest', 'LocalCredentialTest')
+    assert all('org.workspace.band7.' + name not in classes for name in forbidden)
+    assert 'nodomain.freeyourgadget.gadgetbridge' not in classes
     with zipfile.ZipFile(apk) as z:
         assert z.testzip() is None
         assert {n.split('/')[1] for n in z.namelist() if n.startswith('lib/')} == {'arm64-v8a'}
