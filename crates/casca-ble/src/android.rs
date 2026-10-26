@@ -3,6 +3,7 @@
 //! Rust thread that takes `ble.*`/`lab.*` jobs from the MCP queue and answers
 //! them. Device ids are SHA-256 prefixes of the address, the same opaque ids
 //! as `band_devices`; addresses never leave the phone.
+use crate::format::{hex, value};
 use btleplug::api::{
     bleuuid::uuid_from_u16, Central, CharPropFlags, Characteristic, Manager as _, Peripheral as _,
     ScanFilter, WriteType,
@@ -28,29 +29,12 @@ struct Lab {
 
 static LAB: OnceLock<Lab> = OnceLock::new();
 const MAX_READS: usize = 40;
-const SHOWN_BYTES: usize = 64;
 
 fn opaque(address: &str) -> String {
     Sha256::digest(address.as_bytes())[..6]
         .iter()
         .map(|b| format!("{b:02x}"))
         .collect()
-}
-
-fn hex(bytes: &[u8]) -> String {
-    bytes.iter().map(|b| format!("{b:02x}")).collect()
-}
-
-/// Hex plus text when the bytes are printable UTF-8 (revision strings, names).
-fn value(bytes: &[u8]) -> Value {
-    let shown = &bytes[..bytes.len().min(SHOWN_BYTES)];
-    let mut v = json!({"len": bytes.len(), "hex": hex(shown)});
-    if let Ok(text) = std::str::from_utf8(bytes) {
-        if !text.is_empty() && text.chars().all(|c| !c.is_control()) {
-            v["text"] = json!(text);
-        }
-    }
-    v
 }
 
 fn short(uuid: &Uuid) -> String {
@@ -500,6 +484,9 @@ async fn write(address: &str, job: &Value) -> Result<Value, String> {
     let peripheral = connect(address).await?;
     let outcome = async {
         let c = find(&peripheral, job)?;
+        if crate::format::write_forbidden(&c.service_uuid.to_string()) {
+            return Err(format!("escrita recusada: {} é serviço de atualização de firmware (DFU)", c.service_uuid));
+        }
         let kind = if job["response"].as_bool().unwrap_or(true) { WriteType::WithResponse } else { WriteType::WithoutResponse };
         tokio::time::timeout(Duration::from_secs(8), peripheral.write(&c, &bytes, kind))
             .await

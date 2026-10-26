@@ -42,7 +42,7 @@ pub(crate) fn tools() -> Vec<Value> {
                 "seconds": {"type": "integer", "minimum": 1, "maximum": 60}}), &["device", "characteristic"]),
             "annotations": read_only}),
         json!({"name": "ble_write", "title": "Escrever característica",
-            "description": "Escreve bytes (hex) numa característica. Exige escrita liberada no celular (lab_unlock_write). Pode mudar o estado do dispositivo.",
+            "description": "Escreve bytes (hex) numa característica. Exige escrita liberada no celular (lab_unlock_write). Pode mudar o estado do dispositivo. Serviços de atualização de firmware (DFU) são sempre recusados.",
             "inputSchema": schema(json!({"device": device, "characteristic": characteristic, "service": service,
                 "value_hex": {"type": "string", "description": "bytes em hex, até 512"},
                 "response": {"type": "boolean", "description": "write with response (padrão true)"}}), &["device", "characteristic", "value_hex"]),
