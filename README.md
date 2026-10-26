@@ -48,19 +48,20 @@ Objetivo: MCP → console no Android/núcleo Rust → BLE → Band, com eventos 
 
 ## Compilar e testar
 
-Veja [BUILDING.md](BUILDING.md) para versões exatas, caches, Android e licença SDK.
-Execute na raiz extraída, sem depender do monorepo:
+Com [just](https://just.systems), Rust (o `rust-toolchain.toml` fixa a versão),
+Java 21, Node e um compilador C:
 
 ```sh
-cargo test --offline
-cargo fmt --all -- --check
-cargo clippy --offline --all-targets -- -D warnings
-sh android-bridge/run_host.sh
-sh android-bridge/run_worker_host.sh
-node --test miniapp/tests/page.test.mjs miniapp/tests/vm.test.mjs
+just test      # Rust, ponte JNI, miniapp e contratos de CI; sem Android SDK
+just lint      # rustfmt, clippy e guarda de arquivos versionados
+just apk       # APK release unsigned (ANDROID_HOME e ANDROID_NDK_HOME)
+just install   # APK debug no celular conectado via adb
+just ci        # exatamente o que o CI roda
 cargo run --offline -- --gatt-json < tests/fixtures/basic-snapshot-synthetic.json
-node scripts/check-source.mjs
 ```
+
+O Gradle vem pelo wrapper (`android-app/gradlew`, distribuição fixada por SHA-256).
+Veja [BUILDING.md](BUILDING.md) para versões exatas, caches, Android e licença SDK.
 
 Offline requer dependências já baixadas. Preparação de caches é explícita;
 nenhum script aceita contratos ou instala SDK automaticamente. O exemplo de
@@ -69,7 +70,8 @@ snapshot é sintético e não se conecta ao celular ou ao relógio.
 ## Organização
 
 `src/` e `tests/`: um crate Rust, biblioteca cdylib e CLI. `android-app/`: aplicativo
-Android e build Gradle. `android-bridge/` e `ffi/`: Java/JNI/C ABI e harnesses.
+Android e build Gradle. `android-bridge/`: módulo Gradle `:bridge` (Java puro),
+shim JNI e harnesses de host (`test.sh`). `ffi/`: C ABI.
 `miniapp/` e `bench/`: experimentos existentes. `docs/`: contratos, evidências,
 limites e plano de recuperação. [Validação desta fonte](docs/validation.md).
 Não há diretórios vazios para funcionalidades futuras.

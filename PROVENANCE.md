@@ -55,8 +55,8 @@ A fixture user_gatt sanitizada continua explicitamente leitura externa por nRF;
 não foi renomeada como callback físico do app. Os demais ensaios descritos como
 sintéticos não passaram a ser físicos por causa da exportação.
 
-SOURCE-MANIFEST.json registra hashes de todos os arquivos distribuídos, exceto
-seu próprio hash. Mudanças desta exportação: licença/metadados, documentação
+O tarball de fonte de cada release do CI acompanha SHA256SUMS; o
+scripts/check-source.mjs barra artefatos e identificadores privados nos arquivos versionados. Mudanças desta exportação: licença/metadados, documentação
 pública, receitas relativas, recibos sanitizados e construção de endereço
 estritamente sintético no teste de sanitização em vez de literal no arquivo.
 Nenhuma implementação foi retirada para disfarçar origem ou alterar licença.

@@ -76,8 +76,7 @@ nesta fronteira pura. Não toca SQLite ou mutex/handles de ActivitySession.
 cargo test --offline
 cargo fmt --all -- --check
 cargo clippy --offline --all-targets -- -D warnings
-sh android-bridge/run_host.sh
-sh android-bridge/run_worker_host.sh
+sh android-bridge/test.sh
 ```
 
 `GattBridgeSmoke` usa exclusivamente envelopes sintéticos e JNI/Rust reais:

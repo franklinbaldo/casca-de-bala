@@ -28,7 +28,8 @@ antigos podem terminar depois; os rascunhos nunca são marcados como latest.
 
 ## Ferramentas e dependências
 
-Rust 1.99.1 + componentes/target fixados; Gradle 8.11.1; AGP 8.9.2; SDK 35,
+Rust 1.99.1 + componentes/target fixados em rust-toolchain.toml; Gradle 8.11.1 pelo
+wrapper, com SHA-256 da distribuição e validação do JAR pelo setup-gradle; AGP 8.9.2; SDK 35,
 build-tools 35.0.0 e NDK 27.0.12077973. JDK 21 Temurin e imagem Ubuntu recebem
 atualizações: este não é um ambiente hermético nem promessa de bytes idênticos
 entre imagens futuras. A repetibilidade é verificada dentro de cada run.
@@ -54,7 +55,6 @@ Reprodução com ferramentas/caches já existentes, raiz de checkout completo:
 
 ```sh
 python3 -m unittest discover -s ci -p 'test_*.py' -v
-export GRADLE_BIN=/caminho/gradle-8.11.1/bin/gradle
 export ANDROID_HOME=/caminho/sdk
 export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.0.12077973"
 # Em sandbox com HOME somente leitura, usar também ANDROID_USER_HOME gravável.

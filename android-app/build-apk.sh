@@ -2,7 +2,7 @@
 # Laboratory APK only. Temporary standard debug key; never a production identity.
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-: "${GRADLE_BIN:?Set GRADLE_BIN to approved Gradle 8.11.1}"
+GRADLE_BIN=${GRADLE_BIN:-"$ROOT/gradlew"}
 : "${ANDROID_HOME:?Set ANDROID_HOME to approved SDK}"
 test -s "$ROOT/gradle/verification-metadata.xml" || { echo 'Missing pinned verification metadata; refusing build' >&2; exit 2; }
 cd "$ROOT"

@@ -94,7 +94,7 @@ cargo test --offline
 cargo fmt --all -- --check
 cargo clippy --offline --all-targets -- -D warnings
 # Na raiz do repo:
-sh android-bridge/run_host.sh
+sh android-bridge/test.sh
 ```
 
 Seis testes novos (um unitário + cinco de integração): framing não classifica

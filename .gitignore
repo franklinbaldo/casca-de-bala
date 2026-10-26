@@ -23,3 +23,4 @@ android-app/app/src/main/jniLibs/
 .env
 .env.*
 /artifacts/
+android-bridge/build/

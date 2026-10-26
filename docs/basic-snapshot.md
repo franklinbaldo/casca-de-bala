@@ -61,8 +61,7 @@ cargo run --offline -- --gatt-json < tests/fixtures/basic-snapshot-synthetic.jso
 cargo test --offline
 cargo fmt --all -- --check
 cargo clippy --offline --all-targets -- -D warnings
-sh android-bridge/run_host.sh
-sh android-bridge/run_worker_host.sh
+sh android-bridge/test.sh
 ```
 
 `--gatt-json` aceita os mesmos envelopes plan/interpret/snapshot da fronteira
