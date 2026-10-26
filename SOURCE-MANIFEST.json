@@ -370,8 +370,8 @@
     },
     {
       "path": "ci/publish_release.py",
-      "bytes": 3235,
-      "sha256": "5392590d4817734bc671b94393d36cdd199e6c16052a18ae43597d336e15a736"
+      "bytes": 4216,
+      "sha256": "ed331834d34a085b048717eaadbe46320044166c65e441e0a93748d2e4913dfb"
     },
     {
       "path": "ci/release-config.json",
@@ -400,8 +400,8 @@
     },
     {
       "path": "ci/test_release.py",
-      "bytes": 7750,
-      "sha256": "c61c45ae92f7e40d4fe64d340c3c3cb4f87d76ebf876310a0dd9e944658ad208"
+      "bytes": 9059,
+      "sha256": "32f16a23618559e9ecc3324ac23a97b53c9920ba6db1a4d58c04d2bf05792408"
     },
     {
       "path": "ci/verify.py",

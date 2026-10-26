@@ -37,6 +37,8 @@ def publish(directory):
     if release['targetCommitish'] != version['commit']:
         raise ValueError('Release target collision')
     asset_names = {a['name'] for a in release['assets']}
+    if asset_names - set(files):
+        raise ValueError('Unexpected existing release assets; refusing publication')
     for name in files:
         if name not in asset_names:
             if not release['isDraft']:
@@ -50,8 +52,19 @@ def publish(directory):
             if digest(Path(d) / name) != digest(directory / name):
                 raise ValueError('Existing release asset conflict; no overwrite')
     if release['isDraft']:
-        if gh('release', 'edit', tag, '--draft=false', '--prerelease', '--latest=false').returncode:
-            raise ValueError('Publication outcome uncertain; inspect before retry')
+        # A resumed unsigned draft may still say it is waiting for signature.
+        # Replace its notes only after every delivery byte has been verified.
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.md') as notes:
+            notes.write(f"Fonte do produto: {CONFIG['productVersion']}. Commit: {version['commit']}.\n\n"
+                        'APK ARM64 assinado e verificado para Android 12+.\n'
+                        'Fonte AGPL, hashes e recibo de assinatura acompanham esta versão.\n'
+                        'A migração de uma chave temporária diferente pode exigir remover somente '
+                        'o Casca anterior; preserve Zepp Life e pareamento.\n'
+                        'Build e assinatura não comprovam funções físicas da Band.\n')
+            notes.flush()
+            if gh('release', 'edit', tag, '--notes-file', notes.name,
+                  '--draft=false', '--prerelease', '--latest=false').returncode:
+                raise ValueError('Publication outcome uncertain; inspect before retry')
     print('PASS release assets verified; existing assets never overwritten')
 
 

@@ -122,11 +122,14 @@ class ReleaseTest(unittest.TestCase):
                 else:
                     out = json.dumps({'isDraft': mode != 'existing',
                         'targetCommitish': 'a' * 40,
-                        'assets': [{'name': n} for n in names] if mode == 'existing' else []})
+                        'assets': ([{'name': n} for n in names] if mode in ['existing', 'draft', 'extra'] else [])
+                            + ([{'name': 'unexpected.apk'}] if mode == 'extra' else [])})
             if args[2] == 'download':
                 name = args[args.index('--pattern') + 1]
                 dest = Path(args[args.index('--dir') + 1]) / name
                 dest.write_bytes(b'conflict' if conflict else (self.output / name).read_bytes())
+            if args[2] == 'edit' and '--notes-file' in args:
+                self.published_notes = Path(args[args.index('--notes-file') + 1]).read_text()
             return subprocess.CompletedProcess(args, code, out, err)
         return peer, calls
 
@@ -161,6 +164,26 @@ class ReleaseTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'conflict'):
                 publish_release.publish(self.output)
         self.assertTrue(all(a[2] in ['view', 'download'] for a in calls))
+
+    def test_unexpected_draft_assets_block_without_deletion(self):
+        self.signed_fixture()
+        peer, calls = self.publish_peer('extra')
+        with patch.object(publish_release.subprocess, 'run', peer):
+            with self.assertRaisesRegex(ValueError, 'Unexpected existing release assets'):
+                publish_release.publish(self.output)
+        self.assertEqual([a[2] for a in calls], ['view'])
+
+    def test_resumed_draft_notes_updated_after_verification(self):
+        self.signed_fixture()
+        peer, calls = self.publish_peer('draft')
+        with patch.object(publish_release.subprocess, 'run', peer):
+            publish_release.publish(self.output)
+        self.assertEqual(sum(a[2] == 'download' for a in calls), 5)
+        self.assertEqual(calls[-1][2], 'edit')
+        self.assertIn('--draft=false', calls[-1])
+        self.assertIn('--notes-file', calls[-1])
+        self.assertNotIn('aguardando assinatura', self.published_notes.lower())
+        self.assertIn('assinado e verificado', self.published_notes)
 
 
 if __name__ == '__main__':
