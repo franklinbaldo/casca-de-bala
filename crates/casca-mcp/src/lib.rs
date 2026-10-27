@@ -6,6 +6,7 @@
 //! std + serde_json: no async runtime and no HTTP framework in the APK.
 mod http;
 mod hub;
+#[cfg(feature = "lab")]
 mod lab;
 mod peer;
 mod rpc;

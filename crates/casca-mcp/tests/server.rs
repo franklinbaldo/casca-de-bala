@@ -198,6 +198,8 @@ fn pairing_tools_and_restart() {
             "band_devices",
             "band_read",
             "band_notify",
+            "band_find",
+            "band_sync",
             "band_snapshot",
             "lab_info",
             "lab_log",
@@ -244,7 +246,7 @@ fn pairing_tools_and_restart() {
     // Jobs: a simulated Android service takes each job once and answers it.
     let service = thread::spawn(|| {
         let mut answered = 0;
-        while answered < 4 {
+        while answered < 6 {
             for job in ctl(json!({"op": "jobs"}))["jobs"].as_array().unwrap() {
                 let result = match (
                     job["kind"].as_str().unwrap(),
@@ -257,6 +259,11 @@ fn pairing_tools_and_restart() {
                         json!({"device": {"id": "a1b2c3"}, "reading": {"battery": 61}})
                     }
                     ("band.read", _) => json!({"error": "Escolha uma pulseira com band_devices."}),
+                    ("band.find", Some("a1b2c3")) => {
+                        assert_eq!(job["args"]["seconds"], 3);
+                        json!({"vibrating": true})
+                    }
+                    ("band.sync", None) => json!({"requested": true}),
                     ("band.notify", _) => {
                         assert_eq!(
                             job["args"],
@@ -319,6 +326,22 @@ fn pairing_tools_and_restart() {
         json!({"title": 5}),
     ] {
         assert_eq!(call_with("band_notify", bad)["error"]["code"], -32602);
+    }
+    let find = call_with("band_find", json!({"device": "a1b2c3", "seconds": 3}));
+    assert_eq!(find["result"]["isError"], false);
+    let sync = call_with("band_sync", json!({}));
+    assert!(sync["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("requested"));
+    for (tool, bad) in [
+        ("band_find", json!({"seconds": 0})),
+        ("band_find", json!({"seconds": 31})),
+        ("band_find", json!({"device": ""})),
+        ("band_sync", json!({"seconds": 3})),
+        ("band_sync", json!([1])),
+    ] {
+        assert_eq!(call_with(tool, bad)["error"]["code"], -32602, "{tool}");
     }
     service.join().unwrap();
 

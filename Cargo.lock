@@ -164,6 +164,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "casca-mcp-jni"
+version = "0.1.0"
+dependencies = [
+ "casca-mcp",
+ "jni",
+]
+
+[[package]]
 name = "casca-microvm"
 version = "0.1.0"
 dependencies = [

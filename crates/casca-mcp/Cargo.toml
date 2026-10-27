@@ -6,5 +6,15 @@ edition.workspace = true
 publish.workspace = true
 license.workspace = true
 
+[features]
+default = ["lab"]
+# BLE lab tools (ble_*, lab_*, huami_import), answered by the Rust BLE worker
+# in casca-ble. Builds without that worker (the Gadgetbridge flavor) drop them.
+lab = []
+
 [dependencies]
 serde_json.workspace = true
+
+[[test]]
+name = "server"
+required-features = ["lab"]

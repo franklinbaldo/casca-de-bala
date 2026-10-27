@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="casca_launcher">Casca MCP</string>
+    <string name="casca_title">Casca MCP</string>
+    <string name="casca_off">Servidor MCP desligado. Ligado, suas IAs na tailnet listam os aparelhos do Gadgetbridge, mandam mensagens ao pulso, fazem a pulseira vibrar e pedem sincronização, depois que você aprovar cada uma aqui no celular.</string>
+    <string name="casca_on">Servidor MCP ativo em %1$s. Clientes aprovados: %2$d.\n\nPara parear uma IA:\ncurl -N -X POST %3$s/pair -d \'{"client":"nome"}\'\nAprove a notificação com o mesmo código e use o CASCA_TOKEN como Bearer em %3$s/mcp.</string>
+    <string name="casca_no_tailnet">este celular (porta %1$d; ligue o Tailscale para aparecer o endereço)</string>
+    <string name="casca_turn_on">Ligar servidor MCP</string>
+    <string name="casca_turn_off">Desligar servidor MCP</string>
+    <string name="casca_running">Ativo na porta %1$d: suas IAs podem acessar seus aparelhos.</string>
+    <string name="casca_starting">Iniciando o servidor MCP…</string>
+    <string name="casca_stop">Desligar</string>
+    <string name="casca_channel_running">Servidor MCP ativo</string>
+    <string name="casca_channel_approval">Pedidos de acesso MCP</string>
+    <string name="casca_approve_title">Liberar acesso ao Casca?</string>
+    <string name="casca_approve_text">%1$s quer acessar seus aparelhos. Confira o código %2$d. Origem: %3$s.</string>
+    <string name="casca_write_title">Liberar ESCRITA nos aparelhos?</string>
+    <string name="casca_write_text">%1$s quer mudar ajustes dos seus aparelhos por %2$s. Só permita se foi você quem pediu.</string>
+    <string name="casca_allow">Permitir</string>
+    <string name="casca_deny">Negar</string>
+    <string name="casca_permission">Para manter o servidor ativo e pedir sua aprovação, o Casca precisa de notificações.</string>
+</resources>

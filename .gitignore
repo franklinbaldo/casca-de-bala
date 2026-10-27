@@ -25,3 +25,4 @@ android-app/app/src/main/jniLibs/
 /artifacts/
 android-bridge/build/
 android-app/app/generated/
+gb/work/
