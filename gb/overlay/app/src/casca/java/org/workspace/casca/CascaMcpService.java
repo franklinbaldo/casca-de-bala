@@ -119,7 +119,8 @@ public final class CascaMcpService extends Service {
             case "band.lists":{
                 GBDevice device=pick(args);if(device==null)return pickError(args);
                 if("set".equals(args.optString("action","")))
-                    return CascaBandLists.setAlarm(device,args);
+                    return "reminders".equals(args.optString("kind",""))
+                        ?CascaBandLists.setReminder(device,args):CascaBandLists.setAlarm(device,args);
                 return CascaBandLists.read(device,args.optString("kind",""));
             }
             case "band.settings":{
