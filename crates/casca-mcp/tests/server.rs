@@ -196,6 +196,9 @@ fn pairing_tools_and_restart() {
         [
             "casca_capabilities",
             "band_devices",
+            "band_settings",
+            "band_unlock_write",
+            "band_capabilities",
             "band_read",
             "band_notify",
             "band_find",
@@ -246,22 +249,32 @@ fn pairing_tools_and_restart() {
     // Jobs: a simulated Android service takes each job once and answers it.
     let service = thread::spawn(|| {
         let mut answered = 0;
-        while answered < 7 {
-            for job in ctl(json!({"op": "jobs"}))["jobs"].as_array().unwrap() {
+        while answered < 10 {
+            for job in ctl(json!({"op": "jobs", "prefixes": ["band."]}))["jobs"].as_array().unwrap() {
                 let result = match (
                     job["kind"].as_str().unwrap(),
                     job["args"]["device"].as_str(),
                 ) {
                     ("band.devices", _) => {
-                        json!({"devices": [{"id": "a1b2c3", "name": "Xiaomi Smart Band 7"}]})
+                        json!({"devices": [{"id": "a1b2c3d4e5f6", "name": "Xiaomi Smart Band 7"}]})
                     }
-                    ("band.read", Some("a1b2c3")) => {
+                    ("band.capabilities", Some("a1b2c3d4e5f6")) => json!({"device":"a1b2c3d4e5f6","service_endpoints":null,"configured_keys":[]}),
+                    ("band.settings", Some("a1b2c3d4e5f6")) if job["args"]["action"] == "get" => {
+                        assert_eq!(job["args"]["key"], "screen_auto_brightness");
+                        json!({"settings": {"screen_auto_brightness": {"observed": true, "value": false}}})
+                    }
+                    ("band.settings", Some("a1b2c3d4e5f6")) if job["args"]["action"] == "set" => {
+                        assert_eq!(job["args"]["key"], "screen_auto_brightness");
+                        assert_eq!(job["args"]["value"], true);
+                        json!({"requested": true, "confirmed": false})
+                    }
+                    ("band.read", Some("a1b2c3d4e5f6")) => {
                         let hours = job["args"]["hours"].as_u64().unwrap();
                         assert!(hours == 24 || hours == 48);
-                        json!({"device": {"id": "a1b2c3"}, "health": {"hours": hours, "activity": {"steps": 61}}})
+                        json!({"device": {"id": "a1b2c3d4e5f6"}, "health": {"hours": hours, "activity": {"steps": 61}}})
                     }
                     ("band.read", _) => json!({"error": "Escolha uma pulseira com band_devices."}),
-                    ("band.find", Some("a1b2c3")) => {
+                    ("band.find", Some("a1b2c3d4e5f6")) => {
                         assert_eq!(job["args"]["seconds"], 3);
                         json!({"vibrating": true})
                     }
@@ -292,21 +305,46 @@ fn pairing_tools_and_restart() {
     assert!(devices["result"]["content"][0]["text"]
         .as_str()
         .unwrap()
-        .contains("a1b2c3"));
-    let read = call_with("band_read", json!({"device": "a1b2c3"}));
+        .contains("a1b2c3d4e5f6"));
+    let caps = call_with("band_capabilities", json!({"device":"a1b2c3d4e5f6"}));
+    assert_eq!(caps["result"]["isError"], false);
+    assert!(caps["result"]["content"][0]["text"].as_str().unwrap().contains("service_endpoints"));
+    assert_eq!(call_with("band_capabilities", json!({"device":"AA:BB:CC:DD:EE:FF"}))["error"]["code"], -32602);
+    assert_eq!(call_with("band_capabilities", json!({"extra":1}))["error"]["code"], -32602);
+    let setting = json!({"action": "get", "device": "a1b2c3d4e5f6", "key": "screen_auto_brightness"});
+    assert!(call_with("band_settings", setting)["result"]["content"][0]["text"]
+        .as_str().unwrap().contains("observed"));
+    let write_setting = json!({"action":"set", "device":"a1b2c3d4e5f6", "key":"screen_auto_brightness", "value":true});
+    let blocked_setting = call_with("band_settings", write_setting.clone());
+    assert_eq!(blocked_setting["result"]["isError"], true);
+    for bad in [
+        json!({}),
+        json!({"action":"erase"}),
+        json!({"action":"get", "value":false}),
+        json!({"action":"get", "key":"PASSWORD_TEXT"}),
+        json!({"action":"get", "key":"huami_auth_key"}),
+        json!({"action":"get", "extra":1}),
+        json!({"action":"get", "device":"AA:BB:CC:DD:EE:FF"}),
+        json!({"action":"set", "key":"camera_remote", "value":"true"}),
+        json!({"action":"set", "key":"camera_remote", "value":1}),
+        json!({"action":"set", "key":"camera_remote"}),
+    ] {
+        assert_eq!(call_with("band_settings", bad)["error"]["code"], -32602);
+    }
+    let read = call_with("band_read", json!({"device": "a1b2c3d4e5f6"}));
     assert_eq!(read["result"]["isError"], false);
     assert!(read["result"]["content"][0]["text"]
         .as_str()
         .unwrap()
         .contains("61"));
-    let window = call_with("band_read", json!({"device": "a1b2c3", "hours": 48}));
+    let window = call_with("band_read", json!({"device": "a1b2c3d4e5f6", "hours": 48}));
     assert!(window["result"]["content"][0]["text"]
         .as_str()
         .unwrap()
         .contains("48"));
     for hours in [json!(0), json!(169), json!("24")] {
         assert_eq!(
-            call_with("band_read", json!({"device": "a1b2c3", "hours": hours}))["error"]["code"],
+            call_with("band_read", json!({"device": "a1b2c3d4e5f6", "hours": hours}))["error"]["code"],
             -32602
         );
     }
@@ -340,7 +378,7 @@ fn pairing_tools_and_restart() {
     ] {
         assert_eq!(call_with("band_notify", bad)["error"]["code"], -32602);
     }
-    let find = call_with("band_find", json!({"device": "a1b2c3", "seconds": 3}));
+    let find = call_with("band_find", json!({"device": "a1b2c3d4e5f6", "seconds": 3}));
     assert_eq!(find["result"]["isError"], false);
     let sync = call_with("band_sync", json!({}));
     assert!(sync["result"]["content"][0]["text"]
@@ -356,7 +394,6 @@ fn pairing_tools_and_restart() {
     ] {
         assert_eq!(call_with(tool, bad)["error"]["code"], -32602, "{tool}");
     }
-    service.join().unwrap();
 
     // Lab: the log records pairing; writes stay blocked until the owner
     // approves a window on the phone; then they reach the queue.
@@ -365,7 +402,7 @@ fn pairing_tools_and_restart() {
         .as_str()
         .unwrap()
         .contains("pareamento aprovado: jatoba"));
-    let write = json!({"device": "a1b2c3", "characteristic": "2a06", "value_hex": "0A0b"});
+    let write = json!({"device": "a1b2c3d4e5f6", "characteristic": "2a06", "value_hex": "0A0b"});
     let blocked = call_with("ble_write", write.clone());
     assert_eq!(blocked["result"]["isError"], true);
     assert!(blocked["result"]["content"][0]["text"]
@@ -375,7 +412,7 @@ fn pairing_tools_and_restart() {
     assert_eq!(
         call_with(
             "ble_write",
-            json!({"device": "a1b2c3", "characteristic": "2a06", "value_hex": "abc"})
+            json!({"device": "a1b2c3d4e5f6", "characteristic": "2a06", "value_hex": "abc"})
         )["error"]["code"],
         -32602
     );
@@ -385,7 +422,7 @@ fn pairing_tools_and_restart() {
     );
     // huami_import: same phone gate as writes; malformed input never reaches the queue.
     let key = "0x00112233445566778899AABBCCDDEEFF";
-    let import = call_with("huami_import", json!({"device": "a1b2c3", "auth_key": key}));
+    let import = call_with("huami_import", json!({"device": "a1b2c3d4e5f6", "auth_key": key}));
     assert_eq!(import["result"]["isError"], true);
     assert!(import["result"]["content"][0]["text"]
         .as_str()
@@ -393,13 +430,29 @@ fn pairing_tools_and_restart() {
         .contains("bloqueada"));
     for bad in [
         json!({"auth_key": key}),
-        json!({"device": "a1b2c3", "auth_key": "abc"}),
+        json!({"device": "a1b2c3d4e5f6", "auth_key": "abc"}),
         json!({"apptoken": "t", "userid": "not-digits"}),
         json!({"apptoken": "t"}),
         json!({}),
     ] {
         assert_eq!(call_with("huami_import", bad)["error"]["code"], -32602);
     }
+    // Only a new approval from this client can open a write window.
+    let requested = call_with("band_unlock_write", json!({"minutes":2}));
+    assert_eq!(requested["result"]["isError"], false);
+    let (approval_id, _) = pending_code("jatoba");
+    assert_eq!(ctl(json!({"op":"decide", "id":approval_id, "approve":true}))["ok"], true);
+    for _ in 0..200 {
+        if ctl(json!({"op":"status"}))["write_allowed"] == true { break; }
+        thread::sleep(Duration::from_millis(10));
+    }
+    assert_eq!(ctl(json!({"op":"status"}))["write_allowed"], true);
+    let accepted = call_with("band_settings", write_setting);
+    assert_eq!(accepted["result"]["isError"], false);
+    assert!(accepted["result"]["content"][0]["text"]
+        .as_str().unwrap().contains("confirmed"));
+    service.join().unwrap();
+
     let phone = thread::spawn(|| {
         for _ in 0..500 {
             let status = ctl(json!({"op": "status"}));

@@ -1,0 +1,82 @@
+--- a/app/src/main/java/nodomain/freeyourgadget/gadgetbridge/service/devices/huami/zeppos/services/ZeppOsConfigService.java
++++ b/app/src/main/java/nodomain/freeyourgadget/gadgetbridge/service/devices/huami/zeppos/services/ZeppOsConfigService.java
+@@ -27,6 +27,7 @@
+ import static nodomain.freeyourgadget.gadgetbridge.service.devices.huami.zeppos.services.ZeppOsConfigService.ConfigArg.LANGUAGE;
+ import static nodomain.freeyourgadget.gadgetbridge.service.devices.huami.zeppos.services.ZeppOsConfigService.ConfigArg.LANGUAGE_FOLLOW_PHONE;
+ 
++import android.content.SharedPreferences;
+ import android.text.TextUtils;
+ import android.widget.Toast;
+ 
+@@ -293,6 +294,17 @@
+             LOG.warn("Unexpected config capabilities response length {} for {} groups", payload.length, numGroups);
+         }
+ 
++        // Casca: persist only public protocol metadata, never configuration values.
++        if (payload.length >= numGroups + 3) {
++            final Set<String> groups = new HashSet<>();
++            for (int i = 0; i < numGroups; i++) {
++                groups.add(String.format(Locale.ROOT, "%02x", payload[3 + i] & 0xff));
++            }
++            GBApplication.getDeviceSpecificSharedPrefs(getSupport().getDevice().getAddress()).edit()
++                    .putInt("casca_zepp_config_api_level", version)
++                    .putStringSet("casca_zepp_config_groups", groups).apply();
++        }
++
+         final ZeppOsTransactionBuilder builder = createTransactionBuilder("configs request");
+         for (int i = 0; i < numGroups; i++) {
+             final ConfigGroup configGroup = ConfigGroup.fromValue(payload[3 + i]);
+@@ -338,6 +350,19 @@
+         if (prefs == null) {
+             return;
+         }
++
++        // The response confirms which configuration keys were actually received.
++        // Only retain names already mapped by Gadgetbridge; never values or passwords.
++        final SharedPreferences cascaPrefs = GBApplication.getDeviceSpecificSharedPrefs(getSupport().getDevice().getAddress());
++        final Set<String> declared = new HashSet<>(cascaPrefs.getStringSet("casca_zepp_declared_config_keys", Collections.emptySet()));
++        for (final String key : prefs.keySet()) {
++            final String lower = key.toLowerCase(Locale.ROOT);
++            if (PREF_TO_CONFIG.containsKey(key) && !lower.contains("password")
++                    && !lower.contains("auth") && !lower.contains("token") && !lower.contains("secret")) {
++                declared.add(key);
++            }
++        }
++        cascaPrefs.edit().putStringSet("casca_zepp_declared_config_keys", declared).apply();
+ 
+         final GBDeviceEventUpdatePreferences eventUpdatePreferences = new GBDeviceEventUpdatePreferences(prefs);
+         getSupport().evaluateGBDeviceEvent(eventUpdatePreferences);
+--- a/app/src/main/java/nodomain/freeyourgadget/gadgetbridge/service/devices/huami/zeppos/services/ZeppOsServicesService.java
++++ b/app/src/main/java/nodomain/freeyourgadget/gadgetbridge/service/devices/huami/zeppos/services/ZeppOsServicesService.java
+@@ -21,6 +21,10 @@
+ 
+ import java.nio.ByteBuffer;
+ import java.nio.ByteOrder;
++import java.util.HashSet;
++import java.util.Locale;
++import java.util.Set;
++import nodomain.freeyourgadget.gadgetbridge.GBApplication;
+ 
+ import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.zeppos.ZeppOsSupport;
+ import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.zeppos.AbstractZeppOsService;
+@@ -66,8 +70,11 @@
+ 
+         LOG.info("Number of services: {}", numServices);
+ 
++        // Casca: keep the endpoint IDs declared in this response (not cryptographic material).
++        final Set<String> cascaEndpoints = new HashSet<>();
+         for (int i = 0; i < numServices; i++) {
+             final short endpoint = buf.getShort();
++            cascaEndpoints.add(String.format(Locale.ROOT, "%04x", endpoint & 0xffff));
+             final byte encryptedByte = buf.get();
+             final Boolean encrypted = booleanFromByte(encryptedByte);
+ 
+@@ -87,6 +94,8 @@
+             getSupport().addSupportedService(endpoint, encrypted != null && encrypted);
+         }
+ 
++        GBApplication.getDeviceSpecificSharedPrefs(getSupport().getDevice().getAddress()).edit()
++                .putStringSet("casca_zepp_service_endpoints", cascaEndpoints).apply();
+         getSupport().initializeServices();
+ 
+         final int remainingBytes = buf.limit() - buf.position();

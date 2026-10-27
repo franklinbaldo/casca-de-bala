@@ -5,6 +5,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.SharedPreferences;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.os.Handler;
@@ -113,6 +114,25 @@ public final class CascaMcpService extends Service {
                 for(GBDevice device:devices())list.put(describe(device));
                 return new JSONObject().put("source","Gadgetbridge").put("devices",list);
             }
+            case "band.settings":{
+                GBDevice device=pick(args);if(device==null)return pickError(args);
+                return CascaBandSettings.handle(device,args);
+            }
+            case "band.capabilities":{
+                GBDevice device=pick(args);if(device==null)return pickError(args);
+                // Preferences hold configuration snapshots, not the complete on-wire protocol
+                // declarations. Do not confuse missing entries with unsupported capabilities.
+                SharedPreferences prefs=GBApplication.getDeviceSpecificSharedPrefs(device.getAddress());
+                return new JSONObject().put("device",deviceId(device.getAddress()))
+                    .put("source","Gadgetbridge: respostas de protocolo persistidas por dispositivo")
+                    .put("config_api_level",prefs.contains("casca_zepp_config_api_level")?prefs.getInt("casca_zepp_config_api_level",0):JSONObject.NULL)
+                    .put("config_groups",capabilitySet(prefs,"casca_zepp_config_groups"))
+                    .put("declared_config_keys",capabilitySet(prefs,"casca_zepp_declared_config_keys"))
+                    .put("service_endpoints",capabilitySet(prefs,"casca_zepp_service_endpoints"))
+                    .put("menu_items",JSONObject.NULL).put("reminder_slots",JSONObject.NULL)
+                    .put("contact_slots",JSONObject.NULL).put("installed_apps",JSONObject.NULL)
+                    .put("note","null significa não observado; configuração declarada não garante disponibilidade de escrita.");
+            }
             case "band.read":{
                 GBDevice device=pick(args);if(device==null)return pickError(args);
                 int hours=Math.max(1,Math.min(168,args.optInt("hours",24)));
@@ -147,6 +167,13 @@ public final class CascaMcpService extends Service {
             }
             default:return error("Tarefa desconhecida para este app.");
         }
+    }
+
+    /** Stable ordering and null for unobserved capability groups. */
+    private static Object capabilitySet(SharedPreferences prefs,String key){
+        if(!prefs.contains(key))return JSONObject.NULL;
+        List<String> values=new ArrayList<>(prefs.getStringSet(key,java.util.Collections.emptySet()));
+        java.util.Collections.sort(values);return new JSONArray(values);
     }
 
     private static List<GBDevice> devices(){return GBApplication.app().getDeviceManager().getDevices();}
