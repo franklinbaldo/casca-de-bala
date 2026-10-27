@@ -81,11 +81,14 @@ fn tools() -> Value {
         },
         {
             "name": "band_read",
-            "title": "Ler a pulseira agora",
-            "description": "Conecta na pulseira pelo celular e lê bateria, revisões de hardware/software e PnP (leva até ~20 s). Sem device, usa a última lida ou a única vinculada. Somente leitura: não escreve na pulseira nem pareia.",
+            "title": "Ler a pulseira e seus dados de saúde",
+            "description": "Estado da pulseira (bateria, conexão, firmware) e o que o celular já guardou dela nas últimas horas: passos, frequência cardíaca, sono (leve/profundo/REM), estresse, SpO2, FC de repouso e nota do sono, com totais e série por hora (até 48 h) ou por dia. Lê o banco do celular, sem conectar na pulseira; use band_sync antes para trazer o mais recente. Sem device, usa a única pulseira conectada.",
             "inputSchema": {
                 "type": "object",
-                "properties": {"device": {"type": "string", "description": "id vindo de band_devices"}},
+                "properties": {
+                    "device": {"type": "string", "description": "id vindo de band_devices"},
+                    "hours": {"type": "integer", "minimum": 1, "maximum": 168, "description": "janela em horas até agora (padrão 24)"},
+                },
                 "additionalProperties": false,
             },
             "annotations": read_only,
@@ -195,14 +198,21 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
             };
             if arguments
                 .as_object()
-                .is_some_and(|a| a.keys().any(|k| k != "device"))
+                .is_some_and(|a| a.keys().any(|k| k != "device" && k != "hours"))
             {
-                return error(id, -32602, "band_read takes only device");
+                return error(id, -32602, "band_read takes only device and hours");
             }
+            let hours = match arguments.get("hours") {
+                None | Some(Value::Null) => 24,
+                Some(h) => match h.as_u64() {
+                    Some(h @ 1..=168) => h,
+                    _ => return error(id, -32602, "hours must be an integer from 1 to 168"),
+                },
+            };
             on_phone(
                 id,
                 "band.read",
-                json!({"device": device}),
+                json!({"device": device, "hours": hours}),
                 Duration::from_secs(40),
             )
         }
@@ -216,7 +226,7 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
                 "devices": [{
                     "id": "band",
                     "model": "Xiaomi Smart Band 7",
-                    "access": "leitura sob demanda pelo celular (band_read), última leitura em cache (band_snapshot) e mensagens no pulso (band_notify, via o app que conduz a pulseira)",
+                    "access": "estado e dados de saúde guardados pelo celular (band_read), mensagens e vibração no pulso (band_notify, band_find) e sincronização (band_sync)",
                     "last_reading_unix_ms": snapshot_at,
                     "tools": ["band_devices", "band_read", "band_snapshot", "band_notify", "band_find", "band_sync"],
                 }],

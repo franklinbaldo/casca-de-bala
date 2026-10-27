@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
@@ -39,6 +41,7 @@ public final class CascaMcpService extends Service {
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final Set<Long> shown=new HashSet<>();
     private final Runnable poll=this::poll;
+    private final ExecutorService reads=Executors.newSingleThreadExecutor();
     private NotificationManager notifications;
 
     @Override public IBinder onBind(Intent intent){return null;}
@@ -61,7 +64,7 @@ public final class CascaMcpService extends Service {
     }
 
     @Override public void onDestroy(){
-        handler.removeCallbacksAndMessages(null);
+        handler.removeCallbacksAndMessages(null);reads.shutdownNow();
         if(running){try{McpNative.op("stop");}catch(JSONException|RuntimeException|LinkageError ignored){}}
         running=false;
         if(notifications!=null)for(long id:shown)notifications.cancel(APPROVAL_BASE+(int)id);
@@ -87,11 +90,20 @@ public final class CascaMcpService extends Service {
         for(int i=0;i<jobs.length();i++){
             JSONObject job=jobs.getJSONObject(i);long id=job.getLong("id");
             JSONObject args=job.optJSONObject("args");if(args==null)args=new JSONObject();
+            String kind=job.getString("kind");
+            // Database reads stay off the main thread.
+            if("band.read".equals(kind)){JSONObject a=args;reads.execute(()->complete(id,kind,a));continue;}
+            complete(id,kind,args);
+        }
+    }
+
+    private void complete(long id,String kind,JSONObject args){
+        try{
             JSONObject result;
-            try{result=handle(job.getString("kind"),args);}
+            try{result=handle(kind,args);}
             catch(JSONException|RuntimeException failed){result=error("Falha ao atender o pedido: "+failed.getClass().getSimpleName());}
             McpNative.call(new JSONObject().put("op","complete").put("id",id).put("result",result));
-        }
+        }catch(JSONException|RuntimeException|LinkageError ignored){}
     }
 
     private JSONObject handle(String kind,JSONObject args)throws JSONException{
@@ -102,8 +114,9 @@ public final class CascaMcpService extends Service {
                 return new JSONObject().put("source","Gadgetbridge").put("devices",list);
             }
             case "band.read":{
-                GBDevice device=pick(args);
-                return device==null?pickError(args):new JSONObject().put("device",describe(device));
+                GBDevice device=pick(args);if(device==null)return pickError(args);
+                int hours=Math.max(1,Math.min(168,args.optInt("hours",24)));
+                return new JSONObject().put("device",describe(device)).put("health",CascaHealth.read(device,hours));
             }
             case "band.notify":{
                 List<GBDevice> ready=new ArrayList<>();
