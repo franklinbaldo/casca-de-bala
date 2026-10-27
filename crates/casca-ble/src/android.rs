@@ -515,6 +515,7 @@ fn handle(kind: &str, job: &Value) -> Result<Value, String> {
         "ble.read" => lab.runtime.block_on(read(&device()?, job)),
         "ble.notify" => lab.runtime.block_on(notify(&device()?, job)),
         "ble.write" => lab.runtime.block_on(write(&device()?, job)),
+        "lab.huami_import" => huami_import(&lab.files, job, device),
         _ => Err(format!("tarefa desconhecida: {kind}")),
     }
 }
@@ -718,25 +719,46 @@ fn random_u64() -> Result<u64, String> {
     Ok(u64::from_le_bytes(seed))
 }
 
-/// Handles what the browser brought back to the loopback address.
-fn huami_return(files: &str, target: &str) -> Result<String, String> {
-    use crate::account::Return;
-    let agent: ureq::Agent = ureq::Agent::config_builder()
+fn huami_agent() -> ureq::Agent {
+    ureq::Agent::config_builder()
         .timeout_global(Some(Duration::from_secs(20)))
         .http_status_as_error(false)
         .build()
-        .into();
+        .into()
+}
+
+/// `huami_import` over MCP: a key for one device, or a Zepp session the
+/// phone uses to fetch the account's keys itself.
+fn huami_import(
+    files: &str,
+    job: &Value,
+    device: impl Fn() -> Result<String, String>,
+) -> Result<Value, String> {
+    if let Some(key) = job["auth_key"].as_str() {
+        let address = device()?;
+        store_keys(files, &[(address.to_ascii_uppercase(), key.to_owned())])?;
+        casca_mcp::log(&format!("huami: chave importada para {}", opaque(&address)));
+        return Ok(json!({"stored_for": opaque(&address)}));
+    }
+    let session = crate::account::Session {
+        app_token: job["apptoken"].as_str().unwrap_or_default().to_owned(),
+        user_id: job["userid"].as_str().unwrap_or_default().to_owned(),
+        login_token: None,
+    };
+    Ok(json!({"message": huami_fetch(&huami_agent(), files, &session)?}))
+}
+
+/// Handles what the browser brought back to the loopback address.
+fn huami_return(files: &str, target: &str) -> Result<String, String> {
+    use crate::account::Return;
+    let agent = huami_agent();
     let ret = crate::account::classify(&crate::account::query(target));
     let (code, country) = match &ret {
         Return::Session(_) => (String::new(), String::new()),
         Return::Access { access, country } => (access.clone(), country.clone()),
-        Return::AuthCode {
-            code,
-            name,
-            country,
-        } => {
+        Return::AuthCode { code, country, .. } => {
             casca_mcp::log(&format!(
-                "huami: retorno com huami_auth_code (name={name}, country={country})"
+                "huami: retorno com huami_auth_code (país {country})"
             ));
             (code.clone(), country.clone())
         }

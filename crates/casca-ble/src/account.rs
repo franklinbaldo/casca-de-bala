@@ -65,7 +65,7 @@ pub(crate) struct Attempt {
 
 /// Exchanges to try, in order. An access token goes as the web app sends it.
 /// `huami_auth_code` is undocumented: Zepp's callback returns it with `name`
-/// (the provider). Probing LOGIN with a fake code: `authorization_code` is a
+/// (the owner's display name, as the device test showed). Probing LOGIN with a fake code: `authorization_code` is a
 /// known grant (0104 bad code; an unknown grant gives 0100), `request_token`
 /// takes `huami` or a provider such as `google` (0106), and `google-zepp` is
 /// not a valid third_name (9527080). Each failure is logged with the answer.
@@ -76,18 +76,12 @@ pub(crate) fn attempts(ret: &Return) -> Vec<Attempt> {
     };
     match ret {
         Return::Access { .. } => vec![attempt("huami", "access_token")],
-        Return::AuthCode { name, .. } => {
-            let mut list = vec![
-                attempt("huami", "authorization_code"),
-                attempt("huami", "request_token"),
-            ];
-            if name != "huami" {
-                list.push(attempt(name, "request_token"));
-                list.push(attempt(name, "authorization_code"));
-            }
-            list.push(attempt("huami", "access_token"));
-            list
-        }
+        // `name` is the owner's display name, not a provider: never sent or logged.
+        Return::AuthCode { .. } => vec![
+            attempt("huami", "authorization_code"),
+            attempt("huami", "request_token"),
+            attempt("huami", "access_token"),
+        ],
         _ => Vec::new(),
     }
 }
@@ -142,11 +136,7 @@ pub(crate) enum Return {
     /// An access token still to be exchanged at LOGIN.
     Access { access: String, country: String },
     /// Zepp's code after a social sign-in (Google, Xiaomi…), with the provider.
-    AuthCode {
-        code: String,
-        name: String,
-        country: String,
-    },
+    AuthCode { code: String, country: String },
     /// A finished session.
     Session(Session),
     /// Neither: the parameter names (never values), to log.
@@ -177,13 +167,8 @@ pub(crate) fn classify(params: &HashMap<String, String>) -> Return {
         });
     }
     if let Some(code) = get("huami_auth_code") {
-        let name = get("name").unwrap_or_else(|| "huami".into());
         let country = get("country_code").unwrap_or_else(|| "US".into());
-        return Return::AuthCode {
-            code,
-            name,
-            country,
-        };
+        return Return::AuthCode { code, country };
     }
     if let Some(access) = get("access").or_else(|| get("access_token")) {
         let country = get("country_code")
@@ -304,15 +289,13 @@ mod tests {
             "/casca/n?appname=com.huami.webapp&huami_auth_code=C1&name=google-zepp&platform_app=x",
         );
         let ret = classify(&q);
-        assert!(
-            matches!(&ret, Return::AuthCode { code, name, .. } if code == "C1" && name == "google-zepp")
-        );
+        assert!(matches!(&ret, Return::AuthCode { code, .. } if code == "C1"));
         let tried = attempts(&ret);
         assert_eq!(
             (tried[0].third_name.as_str(), tried[0].grant_type),
             ("huami", "authorization_code")
         );
-        assert_eq!(tried.len(), 5);
+        assert_eq!(tried.len(), 3);
         let form = login_form("T", "BR-RO", "d", &tried[0]);
         assert!(form.contains(&("grant_type", "authorization_code".to_owned())));
         assert!(
