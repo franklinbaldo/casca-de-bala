@@ -36,4 +36,4 @@ gzip -n < artifacts/ci/source.tar > artifacts/ci/casca-de-bala-source.tar.gz
 rm artifacts/ci/source.tar
 (cd artifacts/ci && sha256sum casca-de-bala-arm64-unsigned.apk \
     casca-de-bala-source.tar.gz version.json > SHA256SUMS)
-echo 'PASS host/build/static/repeated unsigned APK. NOT_RUN ART/BLE/hardware/signing.'
+echo 'PASS host/build/static unsigned APK (Gadgetbridge flavor). NOT_RUN repeated-build check, ART/BLE/hardware/signing.'
