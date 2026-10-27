@@ -34,7 +34,7 @@ reinícios.
 | --- | --- |
 | `casca_capabilities` | Lista os dispositivos e o que cada um oferece agora. |
 | `band_devices` | Pulseiras vinculadas ao celular (só LE/dual), com id opaco: os 12 primeiros hex do SHA-256 do endereço. |
-| `band_read` | Conecta e lê bateria, revisões e PnP agora, com o app fechado. `device` opcional: sem ele, usa a última lida ou a única vinculada. |
+| `band_read` | No app antigo: conecta e lê bateria, revisões e PnP agora. No Casca atual: estado e dados de saúde do banco do Gadgetbridge (abaixo). |
 | `band_snapshot` | Última leitura feita (pelo app ou por `band_read`), sem conectar. |
 | `band_notify` | Mensagem no pulso: `title` (até 64) e `body` (até 512). Vira uma notificação no celular, que o app que conduz a pulseira leva ao pulso com vibração. |
 
@@ -50,7 +50,8 @@ dele; os jobs `band.*` usam as APIs internas:
 
 | Ferramenta | No Gadgetbridge |
 | --- | --- |
-| `band_devices` / `band_read` | aparelhos do Gadgetbridge: estado, bateria, firmware (id opaco) |
+| `band_devices` | aparelhos do Gadgetbridge: estado, bateria, firmware (id opaco) |
+| `band_read` | estado do aparelho e o que o banco do Gadgetbridge guardou nas últimas `hours` (1-168, padrão 24): passos, FC (mín/méd/máx), sono por estágio, estresse, SpO2, FC de repouso e nota do sono; série por hora até 48 h, por dia acima. Só lê o banco; `band_sync` traz o mais recente |
 | `band_notify` | `onNotification`: texto e vibração no pulso |
 | `band_find` | `onFindDevice`: a pulseira vibra por `seconds` (1-30, padrão 5) |
 | `band_sync` | `onFetchRecordedData`: atividade, FC, sono, SpO2… |

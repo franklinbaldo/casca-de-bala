@@ -246,7 +246,7 @@ fn pairing_tools_and_restart() {
     // Jobs: a simulated Android service takes each job once and answers it.
     let service = thread::spawn(|| {
         let mut answered = 0;
-        while answered < 6 {
+        while answered < 7 {
             for job in ctl(json!({"op": "jobs"}))["jobs"].as_array().unwrap() {
                 let result = match (
                     job["kind"].as_str().unwrap(),
@@ -256,7 +256,9 @@ fn pairing_tools_and_restart() {
                         json!({"devices": [{"id": "a1b2c3", "name": "Xiaomi Smart Band 7"}]})
                     }
                     ("band.read", Some("a1b2c3")) => {
-                        json!({"device": {"id": "a1b2c3"}, "reading": {"battery": 61}})
+                        let hours = job["args"]["hours"].as_u64().unwrap();
+                        assert!(hours == 24 || hours == 48);
+                        json!({"device": {"id": "a1b2c3"}, "health": {"hours": hours, "activity": {"steps": 61}}})
                     }
                     ("band.read", _) => json!({"error": "Escolha uma pulseira com band_devices."}),
                     ("band.find", Some("a1b2c3")) => {
@@ -297,6 +299,17 @@ fn pairing_tools_and_restart() {
         .as_str()
         .unwrap()
         .contains("61"));
+    let window = call_with("band_read", json!({"device": "a1b2c3", "hours": 48}));
+    assert!(window["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("48"));
+    for hours in [json!(0), json!(169), json!("24")] {
+        assert_eq!(
+            call_with("band_read", json!({"device": "a1b2c3", "hours": hours}))["error"]["code"],
+            -32602
+        );
+    }
     let unchosen = call_with("band_read", json!({}));
     assert_eq!(unchosen["result"]["isError"], true);
     assert_eq!(
