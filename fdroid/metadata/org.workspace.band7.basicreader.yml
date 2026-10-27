@@ -6,13 +6,14 @@ IssueTracker: https://github.com/franklinbaldo/casca-de-bala/issues
 Changelog: https://github.com/franklinbaldo/casca-de-bala/releases
 
 Name: Casca de Bala
-Summary: Leitura básica e radar BLE para a Xiaomi Smart Band 7
+Summary: Gadgetbridge com um hub MCP para as suas IAs
 Description: |-
-  Aplicativo pessoal e experimental para a Xiaomi Smart Band 7 comum, com núcleo Rust.
+  O Casca é o Gadgetbridge (https://gadgetbridge.org), com o mesmo suporte a pulseiras e
+  relógios, mais um servidor MCP que deixa as suas IAs usarem esses aparelhos pelo celular.
 
-  * Seleciona um dispositivo já vinculado ou busca anúncios BLE.
-  * Conecta só quando você pede e lê bateria, revisões de hardware/software e PnP.
-  * Radar visual contínuo de RSSI, sem estimar distância nem posição.
+  * Pareie a pulseira na tela do Gadgetbridge (a Xiaomi Smart Band 7 precisa da chave de autenticação).
+  * Em "Casca MCP", ligue o servidor: ele escuta no próprio celular e na sua tailnet (Tailscale).
+  * Cada IA pede acesso e você aprova o código numa notificação; ajustes que mudam o aparelho pedem nova aprovação.
+  * As IAs listam os aparelhos, mandam mensagens ao pulso, fazem a pulseira vibrar e pedem sincronização.
 
-  Não pareia automaticamente, não escreve na pulseira e não envia dados para a internet.
-  Build e assinatura não comprovam funções físicas da Band em todos os aparelhos.
+  Baseado no Gadgetbridge (AGPL-3.0-or-later). Não é o app oficial do Gadgetbridge.

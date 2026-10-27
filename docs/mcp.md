@@ -44,21 +44,27 @@ Bluetooth. `band_notify` só cria uma notificação no próprio celular, no cana
 
 ## Pulseira via Gadgetbridge
 
-O Casca não faz a autenticação própria da Band 7 (Huami2021). Quem conduz a
-pulseira é o Gadgetbridge, com a chave obtida na seção abaixo, e ele encaminha
-ao pulso as notificações dos apps permitidos. Preparação, uma vez:
+O app Casca é o Gadgetbridge com este servidor MCP (veja `gb/`). Quem conduz a
+pulseira é o próprio Gadgetbridge do app, com a autenticação e os protocolos
+dele; os jobs `band.*` usam as APIs internas:
 
-1. Instale o Gadgetbridge (F-Droid), force a parada do Zepp Life e adicione a
-   pulseira no Gadgetbridge com `0x` seguido da chave.
-2. No Gadgetbridge, em Configurações → Notificações, dê acesso às notificações,
-   permita o **Casca de Bala** na lista de apps e envie também com a tela
-   ligada.
-3. Teste: `band_notify {"title": "Casca", "body": "Olá do Casca"}` deve vibrar
-   a pulseira e mostrar o texto.
+| Ferramenta | No Gadgetbridge |
+| --- | --- |
+| `band_devices` / `band_read` | aparelhos do Gadgetbridge: estado, bateria, firmware (id opaco) |
+| `band_notify` | `onNotification`: texto e vibração no pulso |
+| `band_find` | `onFindDevice`: a pulseira vibra por `seconds` (1-30, padrão 5) |
+| `band_sync` | `onFetchRecordedData`: atividade, FC, sono, SpO2… |
 
-O Zepp Life também encaminha notificações, mas os dois não conduzem a pulseira
-ao mesmo tempo. Para voltar ao Zepp Life, desconecte no Gadgetbridge; a chave
-não muda.
+Preparação, uma vez:
+
+1. Abra **Casca** (a tela do Gadgetbridge) e adicione a pulseira. A Xiaomi Smart
+   Band 7 pede a chave de autenticação (`0x` + 32 hex; veja a seção da chave).
+   Se ela estiver no Zepp Life ou em outro Gadgetbridge, desconecte lá antes.
+2. Abra **Casca MCP** e ligue o servidor.
+3. Teste: `band_notify {"title": "Casca", "body": "Olá do Casca"}`.
+
+As ferramentas `ble_*`, `lab_*` e `huami_import` são do app de laboratório
+anterior (feature `lab` do `casca-mcp`) e não existem no app publicado.
 
 ## Laboratório (experimental)
 

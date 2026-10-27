@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Rust license inventory for the APK: every external crate compiled into
-libband7_terminal.so for aarch64-linux-android (normal and build deps of
-casca-ffi), with its declared license and the notice files it ships.
+libcasca_mcp.so for aarch64-linux-android (normal and build deps of
+casca-mcp-jni, the only Rust library in the Casca flavor of Gadgetbridge),
+with its declared license and the notice files it ships.
 
     python3 scripts/rust-licenses.py          # rewrite third_party/
     python3 scripts/rust-licenses.py --check  # fail if third_party/ is stale
@@ -26,7 +27,7 @@ def inventory():
     packages = {p['id']: p for p in meta['packages']}
     nodes = {n['id']: n for n in meta['resolve']['nodes']}
     members = set(meta['workspace_members'])
-    start = next(i for i in members if packages[i]['name'] == 'casca-ffi')
+    start = next(i for i in members if packages[i]['name'] == 'casca-mcp-jni')
     seen, stack = set(), [start]
     while stack:
         node = nodes[stack.pop()]
