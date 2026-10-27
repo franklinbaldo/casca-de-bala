@@ -169,3 +169,5 @@ Os pedidos de pareamento aparecem no terminal; responda `y <id>` ou `n <id>`.
 As tarefas de dispositivo recebem respostas sintéticas no lugar do app.
 O código é o mesmo do APK: crate `casca-mcp` (std + serde_json, sem runtime
 assíncrono), exposto ao app pela função `b7_mcp_json` da C ABI.
+
+`band_settings {"action":"status"}` consulta, sem selecionar dispositivo, se a janela de escrita aprovada está ativa. A confirmação é provisória: todo `set` verifica novamente a permissão no hub e no celular.

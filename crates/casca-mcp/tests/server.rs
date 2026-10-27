@@ -315,6 +315,9 @@ fn pairing_tools_and_restart() {
     assert!(call_with("band_settings", setting)["result"]["content"][0]["text"]
         .as_str().unwrap().contains("observed"));
     let write_setting = json!({"action":"set", "device":"a1b2c3d4e5f6", "key":"screen_auto_brightness", "value":true});
+    let write_status = call_with("band_settings", json!({"action":"status"}));
+    assert!(write_status["result"]["content"][0]["text"].as_str().unwrap().contains("write_allowed"));
+    assert_eq!(call_with("band_settings", json!({"action":"status","key":"screen_auto_brightness"}))["error"]["code"], -32602);
     let blocked_setting = call_with("band_settings", write_setting.clone());
     assert_eq!(blocked_setting["result"]["isError"], true);
     for bad in [

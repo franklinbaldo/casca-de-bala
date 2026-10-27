@@ -99,13 +99,29 @@ fn tools() -> Value {
             "annotations": read_only,
         },
         {
-            "name": "band_settings",
-            "title": "Configurações da pulseira",
-            "description": "Lê opções booleanas conhecidas pelo Gadgetbridge ou solicita sua alteração. Para set, exige aprovação prévia do dono no celular via band_unlock_write. Nunca altera firmware, senha ou pareamento.",
+            "name": "band_lists",
+            "title": "Listas da pulseira",
+            "description": "Consulta os alarmes ou lembretes existentes no banco do Gadgetbridge. Nesta etapa, somente action=get; alterações entrarão depois, sob aprovação do celular.",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "action": {"type": "string", "enum": ["get", "set"]},
+                    "action": {"type": "string", "enum": ["get"]},
+                    "kind": {"type": "string", "enum": ["alarms", "reminders"]},
+                    "device": {"type": "string", "pattern": "^[0-9a-f]{12}$"}
+                },
+                "required": ["action", "kind"],
+                "additionalProperties": false
+            },
+            "annotations": {"readOnlyHint": true, "openWorldHint": false},
+        },
+        {
+            "name": "band_settings",
+            "title": "Configurações da pulseira",
+            "description": "Consulta status de autorização, lê opções booleanas conhecidas pelo Gadgetbridge ou solicita sua alteração. Para set, exige aprovação prévia do dono no celular via band_unlock_write. Nunca altera firmware, senha ou pareamento.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "action": {"type": "string", "enum": ["get", "set", "status"]},
                     "device": {"type": "string", "pattern": "^[0-9a-f]{12}$", "description": "id opaco de band_devices"},
                     "key": {"type": "string", "enum": BOOLEAN_SETTINGS},
                     "value": {"type": "boolean", "description": "obrigatório somente para set"}
@@ -233,6 +249,7 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
         return reply;
     }
     match params["name"].as_str() {
+        Some("band_lists") => return band_lists(id, arguments),
         Some("band_settings") => return band_settings(id, arguments),
         Some("band_unlock_write") => {
             if !arguments.is_null() && !arguments.is_object() {
@@ -342,7 +359,7 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
                     "model": "Xiaomi Smart Band 7",
                     "access": "estado e dados de saúde guardados pelo celular (band_read), mensagens e vibração no pulso (band_notify, band_find) e sincronização (band_sync)",
                     "last_reading_unix_ms": snapshot_at,
-                    "tools": ["band_devices", "band_capabilities", "band_settings", "band_unlock_write", "band_read", "band_snapshot", "band_notify", "band_find", "band_sync"],
+                    "tools": ["band_devices", "band_capabilities", "band_lists", "band_settings", "band_unlock_write", "band_read", "band_snapshot", "band_notify", "band_find", "band_sync"],
                 }],
             });
             text(id, pretty(&body))
@@ -361,6 +378,34 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
     }
 }
 
+/// Database-backed list reads; never clear or mutate an existing list.
+fn band_lists(id: Value, arguments: &Value) -> Value {
+    let Some(args) = arguments.as_object() else {
+        return error(id, -32602, "band_lists expects an object");
+    };
+    if args.keys().any(|k| !["action", "kind", "device"].contains(&k.as_str())) {
+        return error(id, -32602, "unknown band_lists argument");
+    }
+    if args.get("action").and_then(Value::as_str) != Some("get") {
+        return error(id, -32602, "only action=get is available");
+    }
+    let kind = match args.get("kind").and_then(Value::as_str) {
+        Some(k @ ("alarms" | "reminders")) => k,
+        _ => return error(id, -32602, "kind must be alarms or reminders"),
+    };
+    let device = match args.get("device") {
+        None => Value::Null,
+        Some(Value::String(d))
+            if d.len() == 12
+                && d.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()) =>
+        {
+            Value::String(d.clone())
+        }
+        _ => return error(id, -32602, "device must be a 12-character opaque id"),
+    };
+    on_phone(id, "band.lists", json!({"kind": kind, "action": "get", "device": device}), Duration::from_secs(20))
+}
+
 /// Validate the entire settings request before enqueueing a phone job.
 /// Supported keys are intentionally limited to ConfigArg.BOOL preferences.
 fn band_settings(id: Value, arguments: &Value) -> Value {
@@ -374,9 +419,16 @@ fn band_settings(id: Value, arguments: &Value) -> Value {
         return error(id, -32602, "unknown band_settings argument");
     }
     let action = match args.get("action").and_then(Value::as_str) {
-        Some(a @ ("get" | "set")) => a,
-        _ => return error(id, -32602, "action must be get or set"),
+        Some(a @ ("get" | "set" | "status")) => a,
+        _ => return error(id, -32602, "action must be get, set or status"),
     };
+    if action == "status" {
+        if args.len() != 1 {
+            return error(id, -32602, "status accepts only action");
+        }
+        return text(id, pretty(&json!({"write_allowed": hub::write_allowed(),
+            "note": "A aprovação pode expirar; cada escrita é validada novamente no celular."})));
+    }
     let device = match args.get("device") {
         None => Value::Null,
         Some(Value::String(d))
