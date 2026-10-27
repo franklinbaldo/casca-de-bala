@@ -1,6 +1,6 @@
 --- a/app/build.gradle
 +++ b/app/build.gradle
-@@ -184,6 +184,15 @@
+@@ -184,6 +184,16 @@
              buildConfigField "boolean", "INTERNET_ACCESS", "true"
              // Note: app/src/banglejs/AndroidManifest.xml contains some extra permissions
          }
@@ -10,8 +10,9 @@
 +            dimension "device_type"
 +            applicationId "org.workspace.casca"
 +            versionNameSuffix "-casca"
-+            buildConfigField "boolean", "INTERNET_ACCESS", "true"
-+            // Note: app/src/casca/AndroidManifest.xml adds INTERNET for the MCP server
++            // app/src/casca/AndroidManifest.xml adds INTERNET only for the MCP server
++            // (inbound, loopback/tailnet). INTERNET_ACCESS stays false: Gadgetbridge's
++            // own outbound access works as in mainline, through the Internet Helper.
 +        }
      }
  
