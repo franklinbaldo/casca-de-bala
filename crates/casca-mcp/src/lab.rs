@@ -49,6 +49,13 @@ pub(crate) fn tools() -> Vec<Value> {
                 "value_hex": {"type": "string", "description": "bytes em hex, até 512"},
                 "response": {"type": "boolean", "description": "write with response (padrão true)"}}), &["device", "characteristic", "value_hex"]),
             "annotations": {"readOnlyHint": false, "destructiveHint": true, "openWorldHint": false}}),
+        json!({"name": "huami_import", "title": "Importar chave Huami",
+            "description": "Entrega ao celular a chave Huami da pulseira (auth_key, 32 hex, com device) ou uma sessão do Zepp (apptoken e userid), com a qual o próprio celular busca as chaves da conta. Exige escrita liberada no celular (lab_unlock_write). A chave fica só no armazenamento privado do app; nada disso vai para o lab_log.",
+            "inputSchema": schema(json!({"device": device,
+                "auth_key": {"type": "string", "description": "32 dígitos hex (0x opcional); exige device"},
+                "apptoken": {"type": "string", "description": "apptoken de uma sessão do Zepp"},
+                "userid": {"type": "string", "description": "userid da mesma sessão"}}), &[]),
+            "annotations": {"readOnlyHint": false, "destructiveHint": false, "openWorldHint": true}}),
         json!({"name": "lab_unlock_write", "title": "Pedir liberação de escrita",
             "description": "Pede ao dono, por notificação no celular, para liberar ble_write por alguns minutos. Responde na hora; o pedido vale 10 min e a liberação aparece em lab_info (write_allowed).",
             "inputSchema": schema(json!({"minutes": {"type": "integer", "minimum": 1, "maximum": 60}}), &[]),
@@ -200,6 +207,42 @@ pub(crate) fn call(id: Value, name: &str, arguments: &Value, client: &str) -> Op
                 job.insert("response".into(), json!(response));
                 hub::log(&format!("ble_write por {client}: {} bytes", hex.len() / 2));
                 on_phone(id.clone(), "ble.write", job, 45)
+            }
+            "huami_import" => {
+                args.only(&["device", "auth_key", "apptoken", "userid"])?;
+                let mut job = Map::new();
+                let what = match (
+                    args.text("auth_key", 40)?,
+                    args.text("apptoken", 512)?,
+                    args.text("userid", 32)?,
+                ) {
+                    (Some(key), None, None) => {
+                        let key = key.trim_start_matches("0x").to_ascii_lowercase();
+                        if key.len() != 32 || !key.bytes().all(|b| b.is_ascii_hexdigit()) {
+                            return Err("auth_key precisa ter 32 dígitos hex".into());
+                        }
+                        job.insert(
+                            "device".into(),
+                            json!(args.text("device", 64)?.ok_or("auth_key exige device")?),
+                        );
+                        job.insert("auth_key".into(), json!(key));
+                        "chave"
+                    }
+                    (None, Some(apptoken), Some(userid)) => {
+                        if !userid.bytes().all(|b| b.is_ascii_digit()) {
+                            return Err("userid deve ser numérico".into());
+                        }
+                        job.insert("apptoken".into(), json!(apptoken));
+                        job.insert("userid".into(), json!(userid));
+                        "sessão do Zepp"
+                    }
+                    _ => return Err("passe auth_key (com device) ou apptoken e userid".into()),
+                };
+                if !hub::write_allowed() {
+                    return Ok(ok_text(id.clone(), "Importação bloqueada. Chame lab_unlock_write e peça ao dono para aprovar no celular.".into(), true));
+                }
+                hub::log(&format!("huami_import por {client}: {what}"));
+                on_phone(id.clone(), "lab.huami_import", job, 40)
             }
             "lab_unlock_write" => {
                 args.only(&["minutes"])?;

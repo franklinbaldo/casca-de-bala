@@ -205,6 +205,7 @@ fn pairing_tools_and_restart() {
             "ble_read",
             "ble_notify",
             "ble_write",
+            "huami_import",
             "lab_unlock_write"
         ]
     );
@@ -318,6 +319,23 @@ fn pairing_tools_and_restart() {
         call_with("ble_scan", json!({"seconds": 99}))["error"]["code"],
         -32602
     );
+    // huami_import: same phone gate as writes; malformed input never reaches the queue.
+    let key = "0x00112233445566778899AABBCCDDEEFF";
+    let import = call_with("huami_import", json!({"device": "a1b2c3", "auth_key": key}));
+    assert_eq!(import["result"]["isError"], true);
+    assert!(import["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("bloqueada"));
+    for bad in [
+        json!({"auth_key": key}),
+        json!({"device": "a1b2c3", "auth_key": "abc"}),
+        json!({"apptoken": "t", "userid": "not-digits"}),
+        json!({"apptoken": "t"}),
+        json!({}),
+    ] {
+        assert_eq!(call_with("huami_import", bad)["error"]["code"], -32602);
+    }
     let phone = thread::spawn(|| {
         for _ in 0..500 {
             let status = ctl(json!({"op": "status"}));

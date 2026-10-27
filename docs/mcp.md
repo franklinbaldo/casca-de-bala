@@ -77,6 +77,20 @@ armazenamento privado do app e encerra a sessão. A senha fica com o Zepp ou o
 provedor; a chave nunca sai pelo MCP (`lab_info` mostra apenas `huami_keys`, os ids que têm
 chave). Não resete a Band: o reset invalida a chave no servidor.
 
+Quem entra no Zepp com Google recebe do Zepp, no retorno ao `127.0.0.1`, um
+`huami_auth_code` que o `v2/client/login` não aceita (testado com todos os
+grants; o `lab_log` registra as recusas). Para esses casos, a ferramenta MCP
+`huami_import` entrega a autorização ao celular, com a mesma aprovação da
+escrita (`lab_unlock_write`):
+
+- `auth_key` (32 hex) com `device`: grava a chave daquele dispositivo. A chave
+  sai, por exemplo, do método "On a computer" do Gadgetbridge (login com
+  Google em `watchface.zepp.com` e um script no console).
+- `apptoken` e `userid` de uma sessão do Zepp: o próprio celular lista os
+  dispositivos da conta e grava as chaves, sem que elas passem pelo agente.
+
+Nada disso vai para o `lab_log`, que registra só quem importou e o quê.
+
 ## Fila de tarefas
 
 O servidor roda em Rust, mas só o app fala Bluetooth. Uma ferramenta que
