@@ -15,7 +15,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".HuamiLoginActivity" android:exported="false" android:label="@string/huami_title" />
         <service android:name=".McpService" android:exported="false" android:foregroundServiceType="connectedDevice" />
         <receiver android:name=".McpDecisionReceiver" android:exported="false" />
     </application>

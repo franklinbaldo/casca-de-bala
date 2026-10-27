@@ -44,7 +44,7 @@ vendorizado no repositório dela), copiada do crate travado no Cargo.lock durant
 o build e distribuída sob o LICENSE.md da btleplug (BSD-3-Clause, com partes
 MIT/Apache-2.0), presente em third_party/licenses/btleplug-0.13.5/.
 
-O fluxo de chave da pulseira (crates/casca-ble/src/account.rs: sessão do login
+O fluxo de chave da pulseira (crates/casca-ble/src/account.rs: retorno do login
 web do Zepp, lista de dispositivos com os parâmetros do app Zepp e leitura de
 auth_key) segue a sequência do huami-token
 (https://codeberg.org/argrento/huami-token, MIT, Copyright (c) 2020-2025 Kirill

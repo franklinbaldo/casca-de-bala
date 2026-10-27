@@ -602,7 +602,7 @@ pub extern "system" fn Java_org_workspace_band7_app_BleNative_start<'caller>(
         .resolve::<jni::errors::ThrowRuntimeExAndDefault>()
 }
 
-// ---------- Huami account: auth key via Zepp's web login (see account.rs) ----------
+// ---------- Huami account: auth key via Zepp's web login in the browser (see account.rs) ----------
 
 fn files_dir(env: &mut Env, context: &JObject) -> jni::errors::Result<String> {
     let dir = env
@@ -661,20 +661,14 @@ fn body(step: &str, response: &mut ureq::http::Response<ureq::Body>) -> Result<V
     serde_json::from_str(&text).map_err(|_| format!("{step}: resposta não é JSON"))
 }
 
-/// Uses the session Zepp's web login left in the cookies to fetch the
-/// account's device keys, stores them, and signs that session out.
-fn huami_exchange(files: &str, cookies: &str) -> Result<String, String> {
-    let session = crate::account::session(cookies).ok_or("o login do Zepp não terminou")?;
-    let agent: ureq::Agent = ureq::Agent::config_builder()
-        .timeout_global(Some(Duration::from_secs(20)))
-        .http_status_as_error(false)
-        .build()
-        .into();
-    let mut seed = [0u8; 8];
-    std::fs::File::open("/dev/urandom")
-        .and_then(|mut f| std::io::Read::read_exact(&mut f, &mut seed))
-        .map_err(|e| format!("aleatório: {e}"))?;
-    let nonce = u64::from_le_bytes(seed).to_string();
+/// With a signed-in Zepp session: fetches the account's device keys, stores
+/// them, and signs that session out.
+fn huami_fetch(
+    agent: &ureq::Agent,
+    files: &str,
+    session: &crate::account::Session,
+) -> Result<String, String> {
+    let nonce = random_u64()?.to_string();
     let url = crate::account::DEVICES.replace("{user_id}", &session.user_id);
     let mut request = agent
         .get(&url)
@@ -692,7 +686,7 @@ fn huami_exchange(files: &str, cookies: &str) -> Result<String, String> {
         .call()
         .map_err(|e| format!("lista de dispositivos: {e}"))
         .and_then(|mut reply| body("lista de dispositivos", &mut reply));
-    // Best effort, even on failure: do not leave the web session open on Zepp's side.
+    // Best effort, even on failure: do not leave the session open on Zepp's side.
     if let Some(token) = &session.login_token {
         let _ = agent
             .post(crate::account::LOGOUT)
@@ -716,6 +710,121 @@ fn huami_exchange(files: &str, cookies: &str) -> Result<String, String> {
     })
 }
 
+fn random_u64() -> Result<u64, String> {
+    let mut seed = [0u8; 8];
+    std::fs::File::open("/dev/urandom")
+        .and_then(|mut f| std::io::Read::read_exact(&mut f, &mut seed))
+        .map_err(|e| format!("aleatório: {e}"))?;
+    Ok(u64::from_le_bytes(seed))
+}
+
+/// Handles what the browser brought back to the loopback address.
+fn huami_return(files: &str, target: &str) -> Result<String, String> {
+    use crate::account::Return;
+    let agent: ureq::Agent = ureq::Agent::config_builder()
+        .timeout_global(Some(Duration::from_secs(20)))
+        .http_status_as_error(false)
+        .build()
+        .into();
+    let session = match crate::account::classify(&crate::account::query(target)) {
+        Return::Session(session) => session,
+        Return::Access { access, country } => {
+            let device_id = format!("{:016x}", random_u64()?);
+            let form = crate::account::login_form(&access, &country, &device_id);
+            let mut request = agent.post(crate::account::LOGIN);
+            for (name, value) in crate::account::LOGIN_HEADERS {
+                request = request.header(name, value);
+            }
+            let mut reply = request
+                .send_form(form.iter().map(|(k, v)| (*k, v.as_str())))
+                .map_err(|e| format!("login no Zepp: {e}"))?;
+            crate::account::session(&body("login no Zepp", &mut reply)?)?
+        }
+        Return::Other(names) => {
+            return Err(format!(
+                "o Zepp voltou sem token (parâmetros: {})",
+                names.join(", ")
+            ))
+        }
+    };
+    huami_fetch(&agent, files, &session)
+}
+
+/// Generation of the current sign-in: a new one retires the previous listener.
+static HUAMI_GENERATION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+const HUAMI_WAIT: Duration = Duration::from_secs(900);
+
+/// Listens on a loopback port for Zepp's return and gives the login URL to
+/// open in the browser. Valid for 15 minutes; a new call replaces it.
+fn huami_start(files: String) -> Result<String, String> {
+    let generation = HUAMI_GENERATION.fetch_add(1, std::sync::atomic::Ordering::SeqCst) + 1;
+    let listener =
+        std::net::TcpListener::bind(("127.0.0.1", 0)).map_err(|e| format!("porta local: {e}"))?;
+    listener
+        .set_nonblocking(true)
+        .map_err(|e| format!("porta local: {e}"))?;
+    let port = listener
+        .local_addr()
+        .map_err(|e| format!("porta local: {e}"))?
+        .port();
+    let path = format!("/casca/{:016x}", random_u64()?);
+    let url = crate::account::login_page(&format!("http://127.0.0.1:{port}{path}"));
+    std::thread::Builder::new()
+        .name("huami-return".into())
+        .spawn(move || huami_serve(&listener, &path, &files, generation))
+        .map_err(|e| format!("thread: {e}"))?;
+    casca_mcp::log("huami: aguardando o retorno do login do Zepp no navegador");
+    Ok(url)
+}
+
+fn huami_serve(listener: &std::net::TcpListener, path: &str, files: &str, generation: u64) {
+    use std::io::{BufRead, Write};
+    let deadline = std::time::Instant::now() + HUAMI_WAIT;
+    let current = || HUAMI_GENERATION.load(std::sync::atomic::Ordering::SeqCst) == generation;
+    while std::time::Instant::now() < deadline && current() {
+        let mut stream = match listener.accept() {
+            Ok((stream, _)) => stream,
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                std::thread::sleep(Duration::from_millis(250));
+                continue;
+            }
+            Err(_) => return,
+        };
+        let _ = stream.set_nonblocking(false);
+        let _ = stream.set_read_timeout(Some(Duration::from_secs(10)));
+        let mut line = String::new();
+        let _ = std::io::BufReader::new(std::io::Read::take(&stream, 8192)).read_line(&mut line);
+        let target = line.split_whitespace().nth(1).unwrap_or("").to_owned();
+        let ours = target == path || target.starts_with(&format!("{path}?"));
+        let (status, text) = if !ours {
+            ("404 Not Found", "Endereço desconhecido.".to_owned())
+        } else {
+            match huami_return(files, &target) {
+                Ok(message) => ("200 OK", format!("{message} Pode voltar ao Casca.")),
+                Err(e) => {
+                    casca_mcp::log(&format!("huami: falhou: {e}"));
+                    ("200 OK", format!("ERRO: {e}"))
+                }
+            }
+        };
+        let html = format!(
+            "<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width'><title>Casca</title><p style='font:18px sans-serif;margin:24px'>{}</p>",
+            text.replace('&', "&amp;").replace('<', "&lt;")
+        );
+        let _ = write!(
+            stream,
+            "HTTP/1.1 {status}\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{html}",
+            html.len()
+        );
+        if ours {
+            return;
+        }
+    }
+    if current() {
+        casca_mcp::log("huami: o login do Zepp não voltou em 15 min");
+    }
+}
+
 /// Bounded copy of a Java string argument.
 fn jstring_arg(s: &JString) -> String {
     s.to_string()
@@ -726,63 +835,17 @@ fn jstring_arg(s: &JString) -> String {
         .to_owned()
 }
 
-/// `BleNative.huamiLoginPage()`: Zepp's own web login, to open in the WebView.
+/// `BleNative.huamiStart(filesDir)`: starts listening for Zepp's return and
+/// gives the login URL to open in the browser, or "ERRO: …".
 #[unsafe(no_mangle)]
-pub extern "system" fn Java_org_workspace_band7_app_BleNative_huamiLoginPage<'caller>(
-    mut unowned_env: EnvUnowned<'caller>,
-    _class: JClass<'caller>,
-) -> JString<'caller> {
-    unowned_env
-        .with_env(|env| -> jni::errors::Result<JString<'caller>> {
-            JString::from_str(env, crate::account::LOGIN_PAGE)
-        })
-        .resolve::<jni::errors::ThrowRuntimeExAndDefault>()
-}
-
-/// `BleNative.huamiCookieUrl()`: the URL whose cookies hold the Zepp session.
-#[unsafe(no_mangle)]
-pub extern "system" fn Java_org_workspace_band7_app_BleNative_huamiCookieUrl<'caller>(
-    mut unowned_env: EnvUnowned<'caller>,
-    _class: JClass<'caller>,
-) -> JString<'caller> {
-    unowned_env
-        .with_env(|env| -> jni::errors::Result<JString<'caller>> {
-            JString::from_str(env, crate::account::COOKIE_URL)
-        })
-        .resolve::<jni::errors::ThrowRuntimeExAndDefault>()
-}
-
-/// `BleNative.huamiSignedIn(cookies)`: whether Zepp's login has finished.
-#[unsafe(no_mangle)]
-pub extern "system" fn Java_org_workspace_band7_app_BleNative_huamiSignedIn<'caller>(
-    mut unowned_env: EnvUnowned<'caller>,
-    _class: JClass<'caller>,
-    cookies: JString<'caller>,
-) -> jni::sys::jboolean {
-    unowned_env
-        .with_env(|_env| -> jni::errors::Result<bool> {
-            Ok(crate::account::signed_in(&jstring_arg(&cookies)))
-        })
-        .resolve::<jni::errors::ThrowRuntimeExAndDefault>()
-}
-
-/// `BleNative.huamiExchange(filesDir, cookies)`: blocking HTTPS; call off the UI thread.
-/// Returns a message for the owner, starting with "ERRO:" on failure.
-#[unsafe(no_mangle)]
-pub extern "system" fn Java_org_workspace_band7_app_BleNative_huamiExchange<'caller>(
+pub extern "system" fn Java_org_workspace_band7_app_BleNative_huamiStart<'caller>(
     mut unowned_env: EnvUnowned<'caller>,
     _class: JClass<'caller>,
     files: JString<'caller>,
-    cookies: JString<'caller>,
 ) -> JString<'caller> {
     unowned_env
         .with_env(|env| -> jni::errors::Result<JString<'caller>> {
-            let files = jstring_arg(&files);
-            let cookies = jstring_arg(&cookies);
-            let text = huami_exchange(&files, &cookies).unwrap_or_else(|e| {
-                casca_mcp::log(&format!("huami: falhou: {e}"));
-                format!("ERRO: {e}")
-            });
+            let text = huami_start(jstring_arg(&files)).unwrap_or_else(|e| format!("ERRO: {e}"));
             JString::from_str(env, text)
         })
         .resolve::<jni::errors::ThrowRuntimeExAndDefault>()
