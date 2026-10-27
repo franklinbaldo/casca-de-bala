@@ -171,10 +171,10 @@ RSSI</string>
     <string name="mcp_approve_text">%1$s quer acessar seus dispositivos. Confira o código %2$d. Origem: %3$s.</string>
     <string name="mcp_write_title">Liberar ESCRITA na pulseira?</string>
     <string name="mcp_write_text">%1$s quer enviar comandos (escrever) para seus dispositivos Bluetooth por %2$s. Só permita se foi você quem pediu.</string>
-    <string name="huami_action">Obter chave da pulseira (conta Xiaomi)</string>
-    <string name="huami_title">Login Xiaomi para a chave da pulseira</string>
+    <string name="huami_action">Obter chave da pulseira (conta Zepp)</string>
+    <string name="huami_title">Login Zepp para a chave da pulseira</string>
     <string name="huami_working">Login concluído. Buscando a chave da pulseira na conta…</string>
-    <string name="huami_help">Esta é a página oficial da Xiaomi. Entre com a conta usada no Zepp Life. O Casca recebe só o código de autorização, nunca a sua senha, e guarda a chave da pulseira apenas neste celular.</string>
+    <string name="huami_help">Esta é a página de login do próprio Zepp. Entre como você entra no Zepp Life (Xiaomi, Google, e-mail…). O Casca nunca vê a sua senha: usa só a sessão que o Zepp abre, para buscar a chave da pulseira, e encerra essa sessão em seguida. A chave fica apenas neste celular.</string>
     <string name="mcp_allow">Permitir</string>
     <string name="mcp_deny">Negar</string>
     <string name="mcp_turn_on">Ligar servidor MCP</string>

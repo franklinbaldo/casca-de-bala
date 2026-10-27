@@ -602,7 +602,7 @@ pub extern "system" fn Java_org_workspace_band7_app_BleNative_start<'caller>(
         .resolve::<jni::errors::ThrowRuntimeExAndDefault>()
 }
 
-// ---------- Huami account: auth key via Xiaomi OAuth (see account.rs) ----------
+// ---------- Huami account: auth key via Zepp's web login (see account.rs) ----------
 
 fn files_dir(env: &mut Env, context: &JObject) -> jni::errors::Result<String> {
     let dir = env
@@ -647,48 +647,63 @@ fn store_keys(files: &str, keys: &[(String, String)]) -> Result<(), String> {
     std::fs::rename(temporary, dir.join(KEY_FILE)).map_err(|e| format!("gravar chave: {e}"))
 }
 
-fn body(response: &mut ureq::http::Response<ureq::Body>) -> Result<Value, String> {
+/// JSON body of a reply; a non-2xx status keeps the server's own message.
+fn body(step: &str, response: &mut ureq::http::Response<ureq::Body>) -> Result<Value, String> {
+    let status = response.status().as_u16();
     let text = response
         .body_mut()
         .read_to_string()
-        .map_err(|e| format!("resposta: {e}"))?;
-    serde_json::from_str(&text).map_err(|_| "resposta não é JSON".to_owned())
+        .map_err(|e| format!("{step}: resposta: {e}"))?;
+    if !(200..300).contains(&status) {
+        let detail: String = text.chars().filter(|c| !c.is_control()).take(200).collect();
+        return Err(format!("{step}: HTTP {status} {detail}"));
+    }
+    serde_json::from_str(&text).map_err(|_| format!("{step}: resposta não é JSON"))
 }
 
-/// Exchanges the OAuth code for the account's device keys and stores them.
-fn huami_exchange(files: &str, code: &str) -> Result<String, String> {
+/// Uses the session Zepp's web login left in the cookies to fetch the
+/// account's device keys, stores them, and signs that session out.
+fn huami_exchange(files: &str, cookies: &str) -> Result<String, String> {
+    let session = crate::account::session(cookies).ok_or("o login do Zepp não terminou")?;
     let agent: ureq::Agent = ureq::Agent::config_builder()
         .timeout_global(Some(Duration::from_secs(20)))
+        .http_status_as_error(false)
         .build()
         .into();
-    let mut seed = [0u8; 3];
+    let mut seed = [0u8; 8];
     std::fs::File::open("/dev/urandom")
         .and_then(|mut f| std::io::Read::read_exact(&mut f, &mut seed))
         .map_err(|e| format!("aleatório: {e}"))?;
-    let device_id = format!("02:00:00:{:02x}:{:02x}:{:02x}", seed[0], seed[1], seed[2]);
-    let form = crate::account::login_form(code, &device_id);
-    let mut login = agent
-        .post(crate::account::LOGIN)
-        .send_form(form.iter().map(|(k, v)| (*k, v.as_str())))
-        .map_err(|e| format!("login na Huami: {e}"))?;
-    let session = crate::account::session(&body(&mut login)?)?;
+    let nonce = u64::from_le_bytes(seed).to_string();
     let url = crate::account::DEVICES.replace("{user_id}", &session.user_id);
-    let mut devices = agent
+    let mut request = agent
         .get(&url)
-        .query("enableMultiDevice", "true")
+        .query_pairs(
+            crate::account::devices_query(&session.user_id, &nonce)
+                .iter()
+                .map(|(k, v)| (*k, v.as_str())),
+        )
         .header("apptoken", &session.app_token)
+        .header("x-request-id", &nonce);
+    for (name, value) in crate::account::DEVICES_HEADERS {
+        request = request.header(name, value);
+    }
+    let result = request
         .call()
-        .map_err(|e| format!("lista de dispositivos: {e}"))?;
-    let devices = body(&mut devices)?;
+        .map_err(|e| format!("lista de dispositivos: {e}"))
+        .and_then(|mut reply| body("lista de dispositivos", &mut reply));
+    // Best effort, even on failure: do not leave the web session open on Zepp's side.
+    if let Some(token) = &session.login_token {
+        let _ = agent
+            .post(crate::account::LOGOUT)
+            .send_form([("login_token", token.as_str()), ("os_verison", "vnull")]);
+    }
+    let devices = result?;
     let total = devices
         .get("items")
         .and_then(Value::as_array)
         .map_or(0, Vec::len);
     let keys = crate::account::keys(&devices)?;
-    // Best effort: do not leave the session open on Huami's side.
-    let _ = agent
-        .post(crate::account::LOGOUT)
-        .send_form([("login_token", session.login_token.as_str())]);
     store_keys(files, &keys)?;
     let ids: Vec<String> = keys.iter().map(|(mac, _)| opaque(mac)).collect();
     casca_mcp::log(&format!(
@@ -705,57 +720,66 @@ fn huami_exchange(files: &str, code: &str) -> Result<String, String> {
 fn jstring_arg(s: &JString) -> String {
     s.to_string()
         .chars()
-        .take(4096)
+        .take(16384)
         .collect::<String>()
         .trim()
         .to_owned()
 }
 
-/// `BleNative.huamiAuthorize()`: the official Xiaomi OAuth page to open.
+/// `BleNative.huamiLoginPage()`: Zepp's own web login, to open in the WebView.
 #[unsafe(no_mangle)]
-pub extern "system" fn Java_org_workspace_band7_app_BleNative_huamiAuthorize<'caller>(
+pub extern "system" fn Java_org_workspace_band7_app_BleNative_huamiLoginPage<'caller>(
     mut unowned_env: EnvUnowned<'caller>,
     _class: JClass<'caller>,
 ) -> JString<'caller> {
     unowned_env
         .with_env(|env| -> jni::errors::Result<JString<'caller>> {
-            JString::from_str(env, crate::account::AUTHORIZE)
+            JString::from_str(env, crate::account::LOGIN_PAGE)
         })
         .resolve::<jni::errors::ThrowRuntimeExAndDefault>()
 }
 
-/// `BleNative.huamiCode(url)`: the OAuth code when `url` is the redirect, else null.
+/// `BleNative.huamiCookieUrl()`: the URL whose cookies hold the Zepp session.
 #[unsafe(no_mangle)]
-pub extern "system" fn Java_org_workspace_band7_app_BleNative_huamiCode<'caller>(
+pub extern "system" fn Java_org_workspace_band7_app_BleNative_huamiCookieUrl<'caller>(
     mut unowned_env: EnvUnowned<'caller>,
     _class: JClass<'caller>,
-    url: JString<'caller>,
 ) -> JString<'caller> {
     unowned_env
         .with_env(|env| -> jni::errors::Result<JString<'caller>> {
-            let url = jstring_arg(&url);
-            match crate::account::code_from_redirect(&url) {
-                Some(code) => JString::from_str(env, code),
-                None => Ok(JString::default()),
-            }
+            JString::from_str(env, crate::account::COOKIE_URL)
         })
         .resolve::<jni::errors::ThrowRuntimeExAndDefault>()
 }
 
-/// `BleNative.huamiExchange(filesDir, code)`: blocking HTTPS; call off the UI thread.
+/// `BleNative.huamiSignedIn(cookies)`: whether Zepp's login has finished.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_org_workspace_band7_app_BleNative_huamiSignedIn<'caller>(
+    mut unowned_env: EnvUnowned<'caller>,
+    _class: JClass<'caller>,
+    cookies: JString<'caller>,
+) -> jni::sys::jboolean {
+    unowned_env
+        .with_env(|_env| -> jni::errors::Result<bool> {
+            Ok(crate::account::signed_in(&jstring_arg(&cookies)))
+        })
+        .resolve::<jni::errors::ThrowRuntimeExAndDefault>()
+}
+
+/// `BleNative.huamiExchange(filesDir, cookies)`: blocking HTTPS; call off the UI thread.
 /// Returns a message for the owner, starting with "ERRO:" on failure.
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_org_workspace_band7_app_BleNative_huamiExchange<'caller>(
     mut unowned_env: EnvUnowned<'caller>,
     _class: JClass<'caller>,
     files: JString<'caller>,
-    code: JString<'caller>,
+    cookies: JString<'caller>,
 ) -> JString<'caller> {
     unowned_env
         .with_env(|env| -> jni::errors::Result<JString<'caller>> {
             let files = jstring_arg(&files);
-            let code = jstring_arg(&code);
-            let text = huami_exchange(&files, &code).unwrap_or_else(|e| {
+            let cookies = jstring_arg(&cookies);
+            let text = huami_exchange(&files, &cookies).unwrap_or_else(|e| {
                 casca_mcp::log(&format!("huami: falhou: {e}"));
                 format!("ERRO: {e}")
             });
