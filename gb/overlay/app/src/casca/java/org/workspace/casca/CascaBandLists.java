@@ -1,6 +1,8 @@
 package org.workspace.casca;
 
+import java.util.ArrayList;
 import java.util.List;
+import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.database.DBHelper;
 import nodomain.freeyourgadget.gadgetbridge.entities.Alarm;
 import nodomain.freeyourgadget.gadgetbridge.entities.Reminder;
@@ -40,5 +42,53 @@ final class CascaBandLists {
         return new JSONObject().put("device",CascaMcpService.deviceId(device.getAddress()))
             .put("kind",kind).put("items",items).put("source","Banco local do Gadgetbridge")
             .put("note","Dados armazenados no celular; não confirma o estado atual no pulso.");
+    }
+
+
+    /** Update one existing, used alarm. Never creates, deletes or changes other alarm fields. */
+    static JSONObject setAlarm(GBDevice device,JSONObject args)throws JSONException{
+        if(!device.isInitialized())return new JSONObject().put("error","Pulseira não inicializada.");
+        if(!McpNative.op("status").optBoolean("write_allowed",false))
+            return new JSONObject().put("error","Escrita não autorizada no celular.");
+        if(!"alarms".equals(args.optString("kind"))||!"set".equals(args.optString("action")))
+            return new JSONObject().put("error","Operação não permitida.");
+        final int slot=args.optInt("slot",-1);
+        final int total=device.getDeviceCoordinator().getAlarmSlotCount(device);
+        if(slot<0||slot>=total)return new JSONObject().put("error","Slot de alarme fora da capacidade do aparelho.");
+        final boolean hasEnabled=args.has("enabled"), hasHour=args.has("hour"), hasMinute=args.has("minute");
+        if(!hasEnabled&&!hasHour&&!hasMinute)return new JSONObject().put("error","Nenhum campo solicitado.");
+        if(hasEnabled&&!(args.opt("enabled") instanceof Boolean))
+            return new JSONObject().put("error","enabled deve ser booleano.");
+        final int hour=hasHour?args.optInt("hour",-1):-1;
+        final int minute=hasMinute?args.optInt("minute",-1):-1;
+        if((hasHour&&(hour<0||hour>23))||(hasMinute&&(minute<0||minute>59)))
+            return new JSONObject().put("error","Horário inválido.");
+        Alarm target=null;
+        for(Alarm alarm:DBHelper.getAlarms(device)){
+            if(alarm.getPosition()==slot){target=alarm;break;}
+        }
+        if(target==null||target.getUnused())
+            return new JSONObject().put("error","Slot vazio; criação de alarmes ainda não liberada.");
+        if(hasEnabled)target.setEnabled(args.getBoolean("enabled"));
+        if(hasHour)target.setHour(hour);
+        if(hasMinute)target.setMinute(minute);
+        // Check again immediately before any database or device mutation.
+        if(!McpNative.op("status").optBoolean("write_allowed",false))
+            return new JSONObject().put("error","Janela de escrita expirada.");
+        DBHelper.store(target);
+        Alarm persisted=null;
+        for(Alarm alarm:DBHelper.getAlarms(device)){
+            if(alarm.getPosition()==slot){persisted=alarm;break;}
+        }
+        if(persisted==null||persisted.getEnabled()!=target.getEnabled()
+                ||persisted.getHour()!=target.getHour()||persisted.getMinute()!=target.getMinute())
+            return new JSONObject().put("error","Falha ao confirmar a gravação no banco local.");
+        // Match Gadgetbridge's native alarm UI: deliver the full list, including unused slots.
+        final ArrayList<Alarm> full=new ArrayList<>(DBHelper.getAlarmsWithDefaults(device));
+        GBApplication.deviceService(device).onSetAlarms(full);
+        return new JSONObject().put("device",CascaMcpService.deviceId(device.getAddress()))
+            .put("kind","alarms").put("slot",slot).put("requested",true)
+            .put("confirmed",false).put("source","Banco local do Gadgetbridge")
+            .put("note","Atualização persistida e enviada ao Gadgetbridge; pulso não confirmou recebimento.");
     }
 }

@@ -250,7 +250,7 @@ fn pairing_tools_and_restart() {
     // Jobs: a simulated Android service takes each job once and answers it.
     let service = thread::spawn(|| {
         let mut answered = 0;
-        while answered < 12 {
+        while answered < 13 {
             for job in ctl(json!({"op": "jobs", "prefixes": ["band."]}))["jobs"].as_array().unwrap() {
                 let result = match (
                     job["kind"].as_str().unwrap(),
@@ -260,6 +260,14 @@ fn pairing_tools_and_restart() {
                         json!({"devices": [{"id": "a1b2c3d4e5f6", "name": "Xiaomi Smart Band 7"}]})
                     }
                     ("band.capabilities", Some("a1b2c3d4e5f6")) => json!({"device":"a1b2c3d4e5f6","service_endpoints":null,"configured_keys":[]}),
+                    ("band.lists", Some("a1b2c3d4e5f6")) if job["args"]["action"] == "set" => {
+                        assert_eq!(job["args"]["kind"], "alarms");
+                        assert_eq!(job["args"]["slot"], 0);
+                        assert_eq!(job["args"]["enabled"], false);
+                        assert_eq!(job["args"]["hour"], 7);
+                        assert_eq!(job["args"]["minute"], 20);
+                        json!({"kind":"alarms","requested":true,"confirmed":false})
+                    }
                     ("band.lists", Some("a1b2c3d4e5f6")) if job["args"]["kind"] == "alarms" => {
                         assert_eq!(job["args"]["action"], "get");
                         json!({"kind":"alarms","items":[{"slot":0,"enabled":true}]})
@@ -330,6 +338,23 @@ fn pairing_tools_and_restart() {
         json!({"action":"get", "kind":"contacts"}),
         json!({"action":"get", "kind":"alarms", "extra":1}),
         json!({"action":"get", "kind":"alarms", "device":13}),
+    ] {
+        assert_eq!(call_with("band_lists", bad)["error"]["code"], -32602);
+    }
+    let write_alarm = json!({"action":"set","kind":"alarms","device":"a1b2c3d4e5f6",
+        "slot":0,"enabled":false,"hour":7,"minute":20});
+    assert_eq!(call_with("band_lists", write_alarm.clone())["result"]["isError"], true);
+    for bad in [
+        json!({"action":"get","kind":"alarms","slot":0}),
+        json!({"action":"set","kind":"reminders","slot":0,"enabled":true}),
+        json!({"action":"set","kind":"alarms","slot":0}),
+        json!({"action":"set","kind":"alarms","enabled":true}),
+        json!({"action":"set","kind":"alarms","slot":-1,"enabled":true}),
+        json!({"action":"set","kind":"alarms","slot":32,"enabled":true}),
+        json!({"action":"set","kind":"alarms","slot":0,"enabled":"true"}),
+        json!({"action":"set","kind":"alarms","slot":0,"hour":24}),
+        json!({"action":"set","kind":"alarms","slot":0,"minute":60}),
+        json!({"action":"set","kind":"alarms","slot":0,"hour":null}),
     ] {
         assert_eq!(call_with("band_lists", bad)["error"]["code"], -32602);
     }
@@ -472,6 +497,10 @@ fn pairing_tools_and_restart() {
         thread::sleep(Duration::from_millis(10));
     }
     assert_eq!(ctl(json!({"op":"status"}))["write_allowed"], true);
+    let accepted_alarm = call_with("band_lists", write_alarm);
+    assert_eq!(accepted_alarm["result"]["isError"], false);
+    assert!(accepted_alarm["result"]["content"][0]["text"]
+        .as_str().unwrap().contains("confirmed"));
     let accepted = call_with("band_settings", write_setting);
     assert_eq!(accepted["result"]["isError"], false);
     assert!(accepted["result"]["content"][0]["text"]

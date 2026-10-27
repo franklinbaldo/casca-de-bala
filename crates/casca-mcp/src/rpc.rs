@@ -101,18 +101,22 @@ fn tools() -> Value {
         {
             "name": "band_lists",
             "title": "Listas da pulseira",
-            "description": "Consulta os alarmes ou lembretes existentes no banco do Gadgetbridge. Nesta etapa, somente action=get; alterações entrarão depois, sob aprovação do celular.",
+            "description": "Consulta alarmes/lembretes ou edita somente um alarme já existente (action=set, kind=alarms, slot e pelo menos um campo). Escrita exige autorização do dono no celular.",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "action": {"type": "string", "enum": ["get"]},
+                    "action": {"type": "string", "enum": ["get", "set"]},
                     "kind": {"type": "string", "enum": ["alarms", "reminders"]},
-                    "device": {"type": "string", "pattern": "^[0-9a-f]{12}$"}
+                    "device": {"type": "string", "pattern": "^[0-9a-f]{12}$"},
+                    "slot": {"type": "integer", "minimum": 0, "maximum": 31, "description": "somente set de alarme existente"},
+                    "enabled": {"type": "boolean"},
+                    "hour": {"type": "integer", "minimum": 0, "maximum": 23},
+                    "minute": {"type": "integer", "minimum": 0, "maximum": 59}
                 },
                 "required": ["action", "kind"],
                 "additionalProperties": false
             },
-            "annotations": {"readOnlyHint": true, "openWorldHint": false},
+            "annotations": {"readOnlyHint": false, "destructiveHint": false, "openWorldHint": false},
         },
         {
             "name": "band_settings",
@@ -378,17 +382,22 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
     }
 }
 
-/// Database-backed list reads; never clear or mutate an existing list.
+/// Reads existing lists or updates an existing alarm slot with explicit phone approval.
+/// Alarm creation, deletion and reminder writes are intentionally not exposed.
 fn band_lists(id: Value, arguments: &Value) -> Value {
     let Some(args) = arguments.as_object() else {
         return error(id, -32602, "band_lists expects an object");
     };
-    if args.keys().any(|k| !["action", "kind", "device"].contains(&k.as_str())) {
+    if args
+        .keys()
+        .any(|k| !["action", "kind", "device", "slot", "enabled", "hour", "minute"].contains(&k.as_str()))
+    {
         return error(id, -32602, "unknown band_lists argument");
     }
-    if args.get("action").and_then(Value::as_str) != Some("get") {
-        return error(id, -32602, "only action=get is available");
-    }
+    let action = match args.get("action").and_then(Value::as_str) {
+        Some(a @ ("get" | "set")) => a,
+        _ => return error(id, -32602, "action must be get or set"),
+    };
     let kind = match args.get("kind").and_then(Value::as_str) {
         Some(k @ ("alarms" | "reminders")) => k,
         _ => return error(id, -32602, "kind must be alarms or reminders"),
@@ -403,7 +412,60 @@ fn band_lists(id: Value, arguments: &Value) -> Value {
         }
         _ => return error(id, -32602, "device must be a 12-character opaque id"),
     };
-    on_phone(id, "band.lists", json!({"kind": kind, "action": "get", "device": device}), Duration::from_secs(20))
+    if action == "get" {
+        if ["slot", "enabled", "hour", "minute"].iter().any(|k| args.contains_key(*k)) {
+            return error(id, -32602, "get does not accept alarm update fields");
+        }
+        return on_phone(
+            id,
+            "band.lists",
+            json!({"kind": kind, "action": "get", "device": device}),
+            Duration::from_secs(20),
+        );
+    }
+    if kind != "alarms" {
+        return error(id, -32602, "set is available only for existing alarms");
+    }
+    let slot = match args.get("slot").and_then(Value::as_u64) {
+        Some(n @ 0..=31) => n,
+        _ => return error(id, -32602, "slot must be an integer between 0 and 31"),
+    };
+    let enabled = match args.get("enabled") {
+        None => None,
+        Some(Value::Bool(b)) => Some(*b),
+        _ => return error(id, -32602, "enabled must be boolean"),
+    };
+    let hour = match args.get("hour") {
+        None => None,
+        Some(v) => match v.as_u64() {
+            Some(n @ 0..=23) => Some(n),
+            _ => return error(id, -32602, "hour must be an integer between 0 and 23"),
+        },
+    };
+    let minute = match args.get("minute") {
+        None => None,
+        Some(v) => match v.as_u64() {
+            Some(n @ 0..=59) => Some(n),
+            _ => return error(id, -32602, "minute must be an integer between 0 and 59"),
+        },
+    };
+    if enabled.is_none() && hour.is_none() && minute.is_none() {
+        return error(id, -32602, "set needs enabled, hour or minute");
+    }
+    if !hub::write_allowed() {
+        return failure(id, "Escrita bloqueada. Solicite band_unlock_write e aguarde a aprovação no celular.");
+    }
+    let mut job = json!({"kind": "alarms", "action": "set", "device": device, "slot": slot});
+    if let Some(v) = enabled {
+        job["enabled"] = json!(v);
+    }
+    if let Some(v) = hour {
+        job["hour"] = json!(v);
+    }
+    if let Some(v) = minute {
+        job["minute"] = json!(v);
+    }
+    on_phone(id, "band.lists", job, Duration::from_secs(20))
 }
 
 /// Validate the entire settings request before enqueueing a phone job.
