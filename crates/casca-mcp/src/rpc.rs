@@ -426,8 +426,10 @@ fn band_settings(id: Value, arguments: &Value) -> Value {
         if args.len() != 1 {
             return error(id, -32602, "status accepts only action");
         }
-        return text(id, pretty(&json!({"write_allowed": hub::write_allowed(),
-            "note": "A aprovação pode expirar; cada escrita é validada novamente no celular."})));
+        return text(id, pretty(&json!({
+            "write_allowed": hub::write_allowed(),
+            "note": "A aprovação pode expirar; cada escrita é validada novamente no celular."
+        })));
     }
     let device = match args.get("device") {
         None => Value::Null,

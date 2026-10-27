@@ -93,7 +93,9 @@ public final class CascaMcpService extends Service {
             JSONObject args=job.optJSONObject("args");if(args==null)args=new JSONObject();
             String kind=job.getString("kind");
             // Database reads stay off the main thread.
-            if("band.read".equals(kind)){JSONObject a=args;reads.execute(()->complete(id,kind,a));continue;}
+            if("band.read".equals(kind)||"band.lists".equals(kind)){
+                JSONObject a=args;reads.execute(()->complete(id,kind,a));continue;
+            }
             complete(id,kind,args);
         }
     }
@@ -113,6 +115,10 @@ public final class CascaMcpService extends Service {
                 JSONArray list=new JSONArray();
                 for(GBDevice device:devices())list.put(describe(device));
                 return new JSONObject().put("source","Gadgetbridge").put("devices",list);
+            }
+            case "band.lists":{
+                GBDevice device=pick(args);if(device==null)return pickError(args);
+                return CascaBandLists.read(device,args.optString("kind",""));
             }
             case "band.settings":{
                 GBDevice device=pick(args);if(device==null)return pickError(args);

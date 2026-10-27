@@ -196,6 +196,7 @@ fn pairing_tools_and_restart() {
         [
             "casca_capabilities",
             "band_devices",
+            "band_lists",
             "band_settings",
             "band_unlock_write",
             "band_capabilities",
@@ -249,7 +250,7 @@ fn pairing_tools_and_restart() {
     // Jobs: a simulated Android service takes each job once and answers it.
     let service = thread::spawn(|| {
         let mut answered = 0;
-        while answered < 10 {
+        while answered < 12 {
             for job in ctl(json!({"op": "jobs", "prefixes": ["band."]}))["jobs"].as_array().unwrap() {
                 let result = match (
                     job["kind"].as_str().unwrap(),
@@ -259,6 +260,13 @@ fn pairing_tools_and_restart() {
                         json!({"devices": [{"id": "a1b2c3d4e5f6", "name": "Xiaomi Smart Band 7"}]})
                     }
                     ("band.capabilities", Some("a1b2c3d4e5f6")) => json!({"device":"a1b2c3d4e5f6","service_endpoints":null,"configured_keys":[]}),
+                    ("band.lists", Some("a1b2c3d4e5f6")) if job["args"]["kind"] == "alarms" => {
+                        assert_eq!(job["args"]["action"], "get");
+                        json!({"kind":"alarms","items":[{"slot":0,"enabled":true}]})
+                    }
+                    ("band.lists", Some("a1b2c3d4e5f6")) if job["args"]["kind"] == "reminders" => {
+                        json!({"kind":"reminders","items":[{"message":"consulta"}]})
+                    }
                     ("band.settings", Some("a1b2c3d4e5f6")) if job["args"]["action"] == "get" => {
                         assert_eq!(job["args"]["key"], "screen_auto_brightness");
                         json!({"settings": {"screen_auto_brightness": {"observed": true, "value": false}}})
@@ -311,6 +319,20 @@ fn pairing_tools_and_restart() {
     assert!(caps["result"]["content"][0]["text"].as_str().unwrap().contains("service_endpoints"));
     assert_eq!(call_with("band_capabilities", json!({"device":"AA:BB:CC:DD:EE:FF"}))["error"]["code"], -32602);
     assert_eq!(call_with("band_capabilities", json!({"extra":1}))["error"]["code"], -32602);
+    let alarms = call_with("band_lists", json!({"action":"get","kind":"alarms","device":"a1b2c3d4e5f6"}));
+    assert!(alarms["result"]["content"][0]["text"].as_str().unwrap().contains("slot"));
+    let reminders = call_with("band_lists", json!({"action":"get","kind":"reminders","device":"a1b2c3d4e5f6"}));
+    assert!(reminders["result"]["content"][0]["text"].as_str().unwrap().contains("consulta"));
+    for bad in [
+        json!({"action":"get"}),
+        json!({"kind":"alarms"}),
+        json!({"action":"set", "kind":"alarms"}),
+        json!({"action":"get", "kind":"contacts"}),
+        json!({"action":"get", "kind":"alarms", "extra":1}),
+        json!({"action":"get", "kind":"alarms", "device":13}),
+    ] {
+        assert_eq!(call_with("band_lists", bad)["error"]["code"], -32602);
+    }
     let setting = json!({"action": "get", "device": "a1b2c3d4e5f6", "key": "screen_auto_brightness"});
     assert!(call_with("band_settings", setting)["result"]["content"][0]["text"]
         .as_str().unwrap().contains("observed"));
