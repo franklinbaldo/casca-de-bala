@@ -29,30 +29,67 @@ pub(crate) const LOGIN_HEADERS: [(&str, &str); 4] = [
     ("referer", "https://user.zepp.com/"),
 ];
 
-/// Form that turns the access token from a sign-in into app tokens.
+/// Form that turns a code from a sign-in into app tokens.
 pub(crate) fn login_form(
-    access: &str,
+    code: &str,
     country: &str,
     device_id: &str,
+    attempt: &Attempt,
 ) -> Vec<(&'static str, String)> {
     let (country_code, state) = country.split_once('-').unwrap_or((country, ""));
     [
-        ("code", access),
+        ("code", code),
         ("device_id", device_id),
         ("device_model", "web"),
         ("app_version", "4.3.0"),
         ("dn", "api-mifit.zepp.com,api-user.zepp.com,api-watch.zepp.com,app-analytics.zepp.com,auth.zepp.com,api-analytics.zepp.com"),
-        ("third_name", "huami"),
+        ("third_name", attempt.third_name.as_str()),
         ("app_name", "com.huami.webapp"),
         ("country_code", country_code),
         ("countryState", state),
-        ("grant_type", "access_token"),
+        ("grant_type", attempt.grant_type),
         ("allow_registration", "false"),
         ("lang", "en"),
     ]
     .into_iter()
     .map(|(k, v)| (k, v.to_owned()))
     .collect()
+}
+
+/// One way of exchanging a sign-in code at LOGIN.
+#[derive(Debug, PartialEq)]
+pub(crate) struct Attempt {
+    pub third_name: String,
+    pub grant_type: &'static str,
+}
+
+/// Exchanges to try, in order. An access token goes as the web app sends it.
+/// `huami_auth_code` is undocumented: Zepp's callback returns it with `name`
+/// (the provider). Probing LOGIN with a fake code: `authorization_code` is a
+/// known grant (0104 bad code; an unknown grant gives 0100), `request_token`
+/// takes `huami` or a provider such as `google` (0106), and `google-zepp` is
+/// not a valid third_name (9527080). Each failure is logged with the answer.
+pub(crate) fn attempts(ret: &Return) -> Vec<Attempt> {
+    let attempt = |third_name: &str, grant_type| Attempt {
+        third_name: third_name.to_owned(),
+        grant_type,
+    };
+    match ret {
+        Return::Access { .. } => vec![attempt("huami", "access_token")],
+        Return::AuthCode { name, .. } => {
+            let mut list = vec![
+                attempt("huami", "authorization_code"),
+                attempt("huami", "request_token"),
+            ];
+            if name != "huami" {
+                list.push(attempt(name, "request_token"));
+                list.push(attempt(name, "authorization_code"));
+            }
+            list.push(attempt("huami", "access_token"));
+            list
+        }
+        _ => Vec::new(),
+    }
 }
 
 /// Query of the device list, as the Zepp app sends it.
@@ -104,6 +141,12 @@ pub(crate) struct Session {
 pub(crate) enum Return {
     /// An access token still to be exchanged at LOGIN.
     Access { access: String, country: String },
+    /// Zepp's code after a social sign-in (Google, Xiaomi…), with the provider.
+    AuthCode {
+        code: String,
+        name: String,
+        country: String,
+    },
     /// A finished session.
     Session(Session),
     /// Neither: the parameter names (never values), to log.
@@ -132,6 +175,15 @@ pub(crate) fn classify(params: &HashMap<String, String>) -> Return {
             user_id,
             login_token: None,
         });
+    }
+    if let Some(code) = get("huami_auth_code") {
+        let name = get("name").unwrap_or_else(|| "huami".into());
+        let country = get("country_code").unwrap_or_else(|| "US".into());
+        return Return::AuthCode {
+            code,
+            name,
+            country,
+        };
     }
     if let Some(access) = get("access").or_else(|| get("access_token")) {
         let country = get("country_code")
@@ -248,7 +300,21 @@ mod tests {
         );
         let q = query("/casca/n?error=0106&appname=x");
         assert!(matches!(classify(&q), Return::Other(n) if n == ["appname", "error"]));
-        let form = login_form("T", "BR-RO", "d");
+        let q = query(
+            "/casca/n?appname=com.huami.webapp&huami_auth_code=C1&name=google-zepp&platform_app=x",
+        );
+        let ret = classify(&q);
+        assert!(
+            matches!(&ret, Return::AuthCode { code, name, .. } if code == "C1" && name == "google-zepp")
+        );
+        let tried = attempts(&ret);
+        assert_eq!(
+            (tried[0].third_name.as_str(), tried[0].grant_type),
+            ("huami", "authorization_code")
+        );
+        assert_eq!(tried.len(), 5);
+        let form = login_form("T", "BR-RO", "d", &tried[0]);
+        assert!(form.contains(&("grant_type", "authorization_code".to_owned())));
         assert!(
             form.contains(&("country_code", "BR".to_owned()))
                 && form.contains(&("countryState", "RO".to_owned()))

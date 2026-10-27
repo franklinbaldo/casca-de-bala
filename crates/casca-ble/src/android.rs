@@ -726,25 +726,64 @@ fn huami_return(files: &str, target: &str) -> Result<String, String> {
         .http_status_as_error(false)
         .build()
         .into();
-    let session = match crate::account::classify(&crate::account::query(target)) {
-        Return::Session(session) => session,
-        Return::Access { access, country } => {
-            let device_id = format!("{:016x}", random_u64()?);
-            let form = crate::account::login_form(&access, &country, &device_id);
-            let mut request = agent.post(crate::account::LOGIN);
-            for (name, value) in crate::account::LOGIN_HEADERS {
-                request = request.header(name, value);
-            }
-            let mut reply = request
-                .send_form(form.iter().map(|(k, v)| (*k, v.as_str())))
-                .map_err(|e| format!("login no Zepp: {e}"))?;
-            crate::account::session(&body("login no Zepp", &mut reply)?)?
+    let ret = crate::account::classify(&crate::account::query(target));
+    let (code, country) = match &ret {
+        Return::Session(_) => (String::new(), String::new()),
+        Return::Access { access, country } => (access.clone(), country.clone()),
+        Return::AuthCode {
+            code,
+            name,
+            country,
+        } => {
+            casca_mcp::log(&format!(
+                "huami: retorno com huami_auth_code (name={name}, country={country})"
+            ));
+            (code.clone(), country.clone())
         }
         Return::Other(names) => {
             return Err(format!(
                 "o Zepp voltou sem token (parâmetros: {})",
                 names.join(", ")
             ))
+        }
+    };
+    let session = match ret {
+        Return::Session(session) => session,
+        ret => {
+            let device_id = format!("{:016x}", random_u64()?);
+            let mut failures = Vec::new();
+            let mut found = None;
+            for attempt in crate::account::attempts(&ret) {
+                let form = crate::account::login_form(&code, &country, &device_id, &attempt);
+                let mut request = agent.post(crate::account::LOGIN);
+                for (name, value) in crate::account::LOGIN_HEADERS {
+                    request = request.header(name, value);
+                }
+                let outcome = request
+                    .send_form(form.iter().map(|(k, v)| (*k, v.as_str())))
+                    .map_err(|e| format!("login no Zepp: {e}"))
+                    .and_then(|mut reply| body("login no Zepp", &mut reply))
+                    .and_then(|reply| crate::account::session(&reply));
+                match outcome {
+                    Ok(session) => {
+                        casca_mcp::log(&format!(
+                            "huami: login aceito com grant_type={} third_name={}",
+                            attempt.grant_type, attempt.third_name
+                        ));
+                        found = Some(session);
+                        break;
+                    }
+                    Err(e) => {
+                        let line = format!(
+                            "grant_type={} third_name={}: {e}",
+                            attempt.grant_type, attempt.third_name
+                        );
+                        casca_mcp::log(&format!("huami: tentativa recusada, {line}"));
+                        failures.push(line);
+                    }
+                }
+            }
+            found.ok_or_else(|| format!("nenhuma troca aceita ({})", failures.join(" | ")))?
         }
     };
     huami_fetch(&agent, files, &session)
