@@ -85,7 +85,7 @@ public final class MainActivity extends Activity {
         time=text(root,R.string.waiting,15);details=button(root,R.string.technical);details.setOnClickListener(v->showDetails());
         diagnostic=button(root,R.string.snapshot_action);diagnostic.setOnClickListener(v->showSnapshot());
         space(root,16);mcpInfo=text(root,R.string.mcp_off_help,16);mcpInfo.setTextIsSelectable(true);mcpToggle=button(root,R.string.mcp_turn_on);mcpToggle.setOnClickListener(v->toggleMcp());
-        button(root,R.string.huami_action).setOnClickListener(v->startActivity(new Intent(this,HuamiLoginActivity.class)));
+        button(root,R.string.huami_action).setOnClickListener(v->huamiLogin());
         space(root,16);text(root,R.string.version,14).setText(getString(R.string.version,versionName()));
         Button license=button(root,R.string.license_action);license.setOnClickListener(v->showLicense());setContentView(scroll);
         discovery=new BleDiscovery(this,new DiscoverySession.Observer(){
@@ -262,6 +262,18 @@ public final class MainActivity extends Activity {
             if(!"cached_snapshot".equals(result.getString("delivery")))throw new JSONException("Unexpected delivery");
             showText(R.string.snapshot_title,getString(R.string.snapshot_explanation)+"\n\n"+reply.toString(2));
         }catch(JSONException|RuntimeException|LinkageError failure){showText(R.string.snapshot_title,getString(R.string.snapshot_error));}
+    }
+    /** Zepp sign-in in the browser; Rust listens on 127.0.0.1 for the return and fetches the band key. */
+    private void huamiLogin(){
+        String url=BleNative.huamiStart(getFilesDir().getPath());
+        if(url==null||url.startsWith("ERRO")){new AlertDialog.Builder(this).setTitle(R.string.huami_title).setMessage(url).setPositiveButton(R.string.close,null).show();return;}
+        new AlertDialog.Builder(this).setTitle(R.string.huami_title).setMessage(R.string.huami_help)
+            .setPositiveButton(R.string.huami_open,(d,w)->{try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(url)));}catch(ActivityNotFoundException none){copyHuami(url);}})
+            .setNeutralButton(R.string.huami_copy,(d,w)->copyHuami(url)).setNegativeButton(R.string.cancel,null).show();
+    }
+    private void copyHuami(String url){
+        ((ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText("Zepp",url));
+        Toast.makeText(this,R.string.huami_copied,Toast.LENGTH_LONG).show();
     }
     private void showLicense(){
         String text=getString(R.string.license_explanation);

@@ -9,12 +9,6 @@ final class BleNative {
     private BleNative() {}
     /** "ok", "já iniciado" or "ERRO: …". */
     static native String start(Context context);
-    /** Zepp's own web login (any method it offers, Xiaomi included). */
-    static native String huamiLoginPage();
-    /** URL whose cookies hold the Zepp session once signed in. */
-    static native String huamiCookieUrl();
-    /** Whether those cookies already hold a signed-in session. */
-    static native boolean huamiSignedIn(String cookies);
-    /** Blocking HTTPS: session cookies -> band keys stored in filesDir. Message for the owner; "ERRO: …" on failure. */
-    static native String huamiExchange(String filesDir,String cookies);
+    /** Listens on 127.0.0.1 for Zepp's return (15 min) and gives the login URL to open in the browser; "ERRO: …" on failure. */
+    static native String huamiStart(String filesDir);
 }
