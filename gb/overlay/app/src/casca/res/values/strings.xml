@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-flavor strings Gadgetbridge expects (as in src/mainline and src/banglejs).
+     The Pebble provider authority differs from the official app's, so both install side by side. -->
+<resources>
+    <string translatable="false" name="pebble_content_provider">com.getpebble.android.nopebble.casca.provider</string>
+    <string translatable="false" name="app_name">Casca</string>
+    <string translatable="false" name="title_activity_controlcenter">Casca</string>
+    <string translatable="false" name="about_activity_title">@string/about_activity_title_generic</string>
+    <string translatable="false" name="about_description">@string/about_description_generic</string>
+    <string translatable="false" name="gadgetbridge_running">@string/gadgetbridge_running_generic</string>
+</resources>
