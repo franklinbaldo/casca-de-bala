@@ -1,6 +1,6 @@
 --- a/app/build.gradle
 +++ b/app/build.gradle
-@@ -184,6 +184,23 @@
+@@ -184,6 +184,26 @@
              buildConfigField "boolean", "INTERNET_ACCESS", "true"
              // Note: app/src/banglejs/AndroidManifest.xml contains some extra permissions
          }
@@ -10,6 +10,9 @@
 +            // published as the existing Casca app: same package, version from its CI.
 +            dimension "device_type"
 +            applicationId "org.workspace.band7.basicreader"
++            // Android 12+, as the earlier Casca: the release is signed with APK
++            // Signature Scheme v2/v3 only, which needs minSdk 24 or newer.
++            minSdk = 31
 +            def cascaCode = providers.gradleProperty("cascaVersionCode").orElse("1").get()
 +            if (!(cascaCode ==~ /[1-9][0-9]*/) || cascaCode.toBigInteger() > 2100000000)
 +                throw new GradleException("Invalid cascaVersionCode")

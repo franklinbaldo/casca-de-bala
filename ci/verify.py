@@ -23,7 +23,7 @@ def verify(apk, signed=False):
     assert "name='org.workspace.band7.basicreader'" in badging
     assert f"versionCode='{expected['versionCode']}'" in badging
     assert f"versionName='{expected['versionName']}'" in badging
-    assert "sdkVersion:'23'" in badging  # Gadgetbridge's minSdk
+    assert "sdkVersion:'31'" in badging  # v2/v3-only signing needs 24+; Casca keeps 31
     assert "native-code: 'arm64-v8a'" in badging
     # Gadgetbridge asks for many permissions; the reviewed list lives in
     # gb/permissions.txt, so any change shows up in the pull request diff.

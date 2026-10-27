@@ -19,7 +19,7 @@ repositório, fora do APK publicado.
 
 Cada push na `main` publica um APK ARM64 assinado como prerelease
 `ci-v<versionCode>-<commit>` nas [Releases](https://github.com/franklinbaldo/casca-de-bala/releases).
-Android 6+ (minSdk do Gadgetbridge), ARM64. Duas formas de receber atualizações automáticas:
+Android 12+, ARM64. Duas formas de receber atualizações automáticas:
 
 - **Obtainium:** adicione `https://github.com/franklinbaldo/casca-de-bala` e
   ative "Include prereleases".
