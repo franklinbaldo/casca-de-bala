@@ -177,6 +177,7 @@ RSSI</string>
     <string name="huami_open">Abrir no navegador</string>
     <string name="huami_copy">Copiar link</string>
     <string name="huami_copied">Link copiado. Cole no Chrome deste celular.</string>
+    <string name="band_channel">Mensagens para a pulseira</string>
     <string name="mcp_allow">Permitir</string>
     <string name="mcp_deny">Negar</string>
     <string name="mcp_turn_on">Ligar servidor MCP</string>

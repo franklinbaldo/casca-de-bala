@@ -36,9 +36,29 @@ reinícios.
 | `band_devices` | Pulseiras vinculadas ao celular (só LE/dual), com id opaco: os 12 primeiros hex do SHA-256 do endereço. |
 | `band_read` | Conecta e lê bateria, revisões e PnP agora, com o app fechado. `device` opcional: sem ele, usa a última lida ou a única vinculada. |
 | `band_snapshot` | Última leitura feita (pelo app ou por `band_read`), sem conectar. |
+| `band_notify` | Mensagem no pulso: `title` (até 64) e `body` (até 512). Vira uma notificação no celular, que o app que conduz a pulseira leva ao pulso com vibração. |
 
-Tudo é somente leitura: nenhuma ferramenta pareia, escreve na pulseira ou
-expõe endereço Bluetooth.
+Nenhuma dessas ferramentas pareia, escreve na pulseira ou expõe endereço
+Bluetooth. `band_notify` só cria uma notificação no próprio celular, no canal
+"Mensagens para a pulseira". O `lab_log` registra quem a mandou, nunca o texto.
+
+## Pulseira via Gadgetbridge
+
+O Casca não faz a autenticação própria da Band 7 (Huami2021). Quem conduz a
+pulseira é o Gadgetbridge, com a chave obtida na seção abaixo, e ele encaminha
+ao pulso as notificações dos apps permitidos. Preparação, uma vez:
+
+1. Instale o Gadgetbridge (F-Droid), force a parada do Zepp Life e adicione a
+   pulseira no Gadgetbridge com `0x` seguido da chave.
+2. No Gadgetbridge, em Configurações → Notificações, dê acesso às notificações,
+   permita o **Casca de Bala** na lista de apps e envie também com a tela
+   ligada.
+3. Teste: `band_notify {"title": "Casca", "body": "Olá do Casca"}` deve vibrar
+   a pulseira e mostrar o texto.
+
+O Zepp Life também encaminha notificações, mas os dois não conduzem a pulseira
+ao mesmo tempo. Para voltar ao Zepp Life, desconecte no Gadgetbridge; a chave
+não muda.
 
 ## Laboratório (experimental)
 

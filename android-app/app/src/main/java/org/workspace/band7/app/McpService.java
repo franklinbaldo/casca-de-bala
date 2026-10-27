@@ -38,14 +38,14 @@ import org.workspace.band7.McpHub;
  */
 public final class McpService extends Service {
     static final String ACTION_STOP="org.workspace.band7.app.MCP_STOP";
-    static final String CHANNEL_RUNNING="mcp_running",CHANNEL_APPROVAL="mcp_approval";
-    static final int RUNNING_ID=1,APPROVAL_BASE=1000;
+    static final String CHANNEL_RUNNING="mcp_running",CHANNEL_APPROVAL="mcp_approval",CHANNEL_BAND="band_messages";
+    static final int RUNNING_ID=1,APPROVAL_BASE=1000,BAND_BASE=5000;
     static volatile boolean running;static volatile int port;
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final Set<Long> shown=new HashSet<>();
     private final Runnable poll=this::poll;
     private NotificationManager notifications;
-    private BasicGattReader jobReader;private long jobReaderId=-1;
+    private BasicGattReader jobReader;private long jobReaderId=-1;private int bandMessages;
 
     @Override public IBinder onBind(Intent intent){return null;}
 
@@ -97,9 +97,26 @@ public final class McpService extends Service {
             switch(job.getString("kind")){
                 case "band.devices":McpHub.complete(id,bandDevices());break;
                 case "band.read":bandRead(id,args==null||args.isNull("device")?null:args.getString("device"));break;
+                case "band.notify":McpHub.complete(id,bandNotify(args));break;
                 default:McpHub.complete(id,error("Tarefa desconhecida para este app."));
             }
         }
+    }
+
+    /** An ordinary notification on this phone; the app that drives the band
+     * (Gadgetbridge, Zepp Life) forwards it to the wrist with vibration. */
+    private String bandNotify(JSONObject args)throws JSONException{
+        if(args==null)return error("Faltam título e texto.");
+        if(android.os.Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)
+            return error("O Casca não tem permissão de notificações.");
+        if(!notifications.areNotificationsEnabled()||notifications.getNotificationChannel(CHANNEL_BAND).getImportance()==NotificationManager.IMPORTANCE_NONE)
+            return error("As notificações do Casca (ou o canal "+getString(R.string.band_channel)+") estão desligadas nas configurações do Android.");
+        String title=args.getString("title"),body=args.optString("body","");
+        int n=BAND_BASE+(bandMessages++%100);
+        notifications.notify(n,new Notification.Builder(this,CHANNEL_BAND).setSmallIcon(R.drawable.ic_stat_casca)
+            .setContentTitle(title).setContentText(body).setStyle(new Notification.BigTextStyle().bigText(body))
+            .setCategory(Notification.CATEGORY_MESSAGE).setAutoCancel(true).setShowWhen(true).build());
+        return new JSONObject().put("posted",true).put("notification",n).toString();
     }
 
     private static String error(String message){return "{\"error\":"+JSONObject.quote(message)+"}";}
@@ -162,6 +179,7 @@ public final class McpService extends Service {
     private void channels(){
         notifications.createNotificationChannel(new NotificationChannel(CHANNEL_RUNNING,getString(R.string.mcp_channel_running),NotificationManager.IMPORTANCE_LOW));
         notifications.createNotificationChannel(new NotificationChannel(CHANNEL_APPROVAL,getString(R.string.mcp_channel_approval),NotificationManager.IMPORTANCE_HIGH));
+        notifications.createNotificationChannel(new NotificationChannel(CHANNEL_BAND,getString(R.string.band_channel),NotificationManager.IMPORTANCE_HIGH));
     }
 
     private Notification ongoing(String text){

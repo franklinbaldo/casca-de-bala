@@ -197,6 +197,7 @@ fn pairing_tools_and_restart() {
             "casca_capabilities",
             "band_devices",
             "band_read",
+            "band_notify",
             "band_snapshot",
             "lab_info",
             "lab_log",
@@ -243,7 +244,7 @@ fn pairing_tools_and_restart() {
     // Jobs: a simulated Android service takes each job once and answers it.
     let service = thread::spawn(|| {
         let mut answered = 0;
-        while answered < 3 {
+        while answered < 4 {
             for job in ctl(json!({"op": "jobs"}))["jobs"].as_array().unwrap() {
                 let result = match (
                     job["kind"].as_str().unwrap(),
@@ -256,6 +257,13 @@ fn pairing_tools_and_restart() {
                         json!({"device": {"id": "a1b2c3"}, "reading": {"battery": 61}})
                     }
                     ("band.read", _) => json!({"error": "Escolha uma pulseira com band_devices."}),
+                    ("band.notify", _) => {
+                        assert_eq!(
+                            job["args"],
+                            json!({"title": "Casca", "body": "Olá do Casca"})
+                        );
+                        json!({"posted": true, "notification": 5000})
+                    }
                     _ => unreachable!(),
                 };
                 assert_eq!(
@@ -292,6 +300,26 @@ fn pairing_tools_and_restart() {
         call_with("band_devices", json!({"x": 1}))["error"]["code"],
         -32602
     );
+    let note = call_with(
+        "band_notify",
+        json!({"title": " Casca ", "body": "Olá do Casca"}),
+    );
+    assert_eq!(note["result"]["isError"], false);
+    assert!(note["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("posted"));
+    for bad in [
+        json!({}),
+        json!({"body": "sem título"}),
+        json!({"title": "   "}),
+        json!({"title": "x".repeat(65)}),
+        json!({"title": "t", "body": "y".repeat(513)}),
+        json!({"title": "t", "extra": 1}),
+        json!({"title": 5}),
+    ] {
+        assert_eq!(call_with("band_notify", bad)["error"]["code"], -32602);
+    }
     service.join().unwrap();
 
     // Lab: the log records pairing; writes stay blocked until the owner
