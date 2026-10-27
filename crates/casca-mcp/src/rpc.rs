@@ -89,6 +89,21 @@ fn tools() -> Value {
             "annotations": read_only,
         },
         {
+            "name": "band_notify",
+            "title": "Mensagem no pulso",
+            "description": "Mostra uma notificação no celular, que o app que conduz a pulseira (Gadgetbridge ou Zepp Life) leva ao pulso com vibração. Precisa que esse app tenha o Casca de Bala liberado na lista de notificações.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string", "maxLength": 64, "description": "título curto"},
+                    "body": {"type": "string", "maxLength": 512, "description": "texto da mensagem"},
+                },
+                "required": ["title"],
+                "additionalProperties": false,
+            },
+            "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false},
+        },
+        {
             "name": "band_snapshot",
             "title": "Última leitura da pulseira",
             "description": "Última leitura já feita (pelo app ou por band_read), com o horário, sem conectar na pulseira.",
@@ -136,6 +151,9 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
     {
         return reply;
     }
+    if params["name"].as_str() == Some("band_notify") {
+        return band_notify(id, arguments, client);
+    }
     let no_arguments = arguments.is_null() || arguments.as_object().is_some_and(|a| a.is_empty());
     match params["name"].as_str() {
         Some("band_read") => {
@@ -167,9 +185,9 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
                 "devices": [{
                     "id": "band",
                     "model": "Xiaomi Smart Band 7",
-                    "access": "leitura sob demanda pelo celular (band_read) e última leitura em cache (band_snapshot)",
+                    "access": "leitura sob demanda pelo celular (band_read), última leitura em cache (band_snapshot) e mensagens no pulso (band_notify, via o app que conduz a pulseira)",
                     "last_reading_unix_ms": snapshot_at,
-                    "tools": ["band_devices", "band_read", "band_snapshot"],
+                    "tools": ["band_devices", "band_read", "band_snapshot", "band_notify"],
                 }],
             });
             text(id, pretty(&body))
@@ -186,4 +204,43 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
         },
         _ => error(id, -32602, "unknown tool"),
     }
+}
+
+/// Text that fits a notification: present, trimmed, within `max` characters.
+fn short_text(value: Option<&Value>, max: usize, required: bool) -> Result<String, ()> {
+    match value {
+        None | Some(Value::Null) if !required => Ok(String::new()),
+        Some(Value::String(s)) if !s.trim().is_empty() && s.chars().count() <= max => {
+            Ok(s.trim().to_owned())
+        }
+        Some(Value::String(s)) if s.is_empty() && !required => Ok(String::new()),
+        _ => Err(()),
+    }
+}
+
+fn band_notify(id: Value, arguments: &Value, client: &str) -> Value {
+    let Some(args) = arguments.as_object() else {
+        return error(id, -32602, "band_notify takes title and body");
+    };
+    if args.keys().any(|k| k != "title" && k != "body") {
+        return error(id, -32602, "band_notify takes only title and body");
+    }
+    let (Ok(title), Ok(body)) = (
+        short_text(args.get("title"), 64, true),
+        short_text(args.get("body"), 512, false),
+    ) else {
+        return error(
+            id,
+            -32602,
+            "title (1-64 characters) and body (up to 512) must be text",
+        );
+    };
+    // Who sent it, never what: the text may be private.
+    hub::log(&format!("band_notify por {client}"));
+    on_phone(
+        id,
+        "band.notify",
+        json!({"title": title, "body": body}),
+        Duration::from_secs(10),
+    )
 }
