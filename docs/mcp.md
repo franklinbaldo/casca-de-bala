@@ -67,10 +67,12 @@ exige a aprovação no celular, que vale pelo tempo pedido.
 Recursos além do GATT padrão (vibração e texto controlados, tela, imagem,
 miniapps) exigem a chave de 16 bytes que os servidores da Huami associam ao
 pareamento da Band com a conta. No app, **Obter chave da pulseira (conta
-Xiaomi)** abre a página oficial de login da Xiaomi; o Casca captura só o código
-de autorização do redirect, o Rust troca o código na Huami, lê a chave da Band
-e a guarda no armazenamento privado do app. A senha fica na página da Xiaomi; a
-chave nunca sai pelo MCP (`lab_info` mostra apenas `huami_keys`, os ids que têm
+Zepp)** abre o login web do próprio Zepp (`user.zepp.com`), onde o dono entra
+como entra no Zepp Life, com Xiaomi, Google, e-mail ou outro método. Quando a
+página grava a sessão (`apptoken` e `userid`) nos cookies, o Rust lista os
+dispositivos da conta, guarda a chave da Band no armazenamento privado do app e
+encerra essa sessão. A senha fica na página do Zepp ou do provedor; a chave
+nunca sai pelo MCP (`lab_info` mostra apenas `huami_keys`, os ids que têm
 chave). Não resete a Band: o reset invalida a chave no servidor.
 
 ## Fila de tarefas
