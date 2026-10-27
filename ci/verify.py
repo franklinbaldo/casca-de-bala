@@ -23,20 +23,21 @@ def verify(apk, signed=False):
     assert "name='org.workspace.band7.basicreader'" in badging
     assert f"versionCode='{expected['versionCode']}'" in badging
     assert f"versionName='{expected['versionName']}'" in badging
-    assert "sdkVersion:'31'" in badging
+    assert "sdkVersion:'23'" in badging  # Gadgetbridge's minSdk
     assert "native-code: 'arm64-v8a'" in badging
+    # Gadgetbridge asks for many permissions; the reviewed list lives in
+    # gb/permissions.txt, so any change shows up in the pull request diff.
     permissions = set(re.findall(r"uses-permission: name='([^']+)'", badging))
-    assert permissions == {'android.permission.BLUETOOTH_CONNECT',
-                           'android.permission.BLUETOOTH_SCAN',
-                           'android.permission.INTERNET',
-                           'android.permission.POST_NOTIFICATIONS',
-                           'android.permission.FOREGROUND_SERVICE',
-                           'android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE'}
+    reviewed = Path(__file__).resolve().parent.parent / 'gb/permissions.txt'
+    expected_permissions = {line for line in reviewed.read_text().split('\n')
+                            if line and not line.startswith('#')}
+    assert permissions == expected_permissions, sorted(permissions ^ expected_permissions)
     xml = run(tools / 'aapt', 'dump', 'xmltree', apk, 'AndroidManifest.xml')
     assert not re.search(r'android:(debuggable|testOnly).*0xffffffff', xml)
     with zipfile.ZipFile(apk) as z:
         assert z.testzip() is None
         assert {n.split('/')[1] for n in z.namelist() if n.startswith('lib/')} == {'arm64-v8a'}
+        assert 'lib/arm64-v8a/libcasca_mcp.so' in z.namelist()
         assert all(not n.startswith('META-INF/') or not n.endswith(('.RSA', '.SF'))
                    for n in z.namelist())
     if signed:

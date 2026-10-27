@@ -16,7 +16,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    # The APK is now the Casca flavor of Gadgetbridge (gb/build.sh), a larger build.
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:

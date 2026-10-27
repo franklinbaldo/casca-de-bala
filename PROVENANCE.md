@@ -5,6 +5,15 @@ A escolha não converte bibliotecas externas permissivas ou ferramentas GPL em
 código autoral do projeto. Seus avisos/condições permanecem aplicáveis.
 Não há afirmação de clean-room ou de autoria própria sobre derivações externas.
 
+## O app publicado é um flavor do Gadgetbridge
+
+O APK publicado é o Gadgetbridge (https://codeberg.org/Freeyourgadget/Gadgetbridge,
+AGPL-3.0-or-later, Copyright (C) os contribuidores do Gadgetbridge), no commit
+fixado em gb/UPSTREAM, com o patch gb/patches/0001-casca-flavor.patch (flavor
+`casca`) e os arquivos de gb/overlay (servidor MCP, autoria do projeto). A fonte
+completa do APK é o upstream nesse commit mais o conteúdo de gb/ e crates/;
+gb/build.sh reproduz a montagem.
+
 ## Código com origem/referência externa declarada
 
 Referência Gadgetbridge:

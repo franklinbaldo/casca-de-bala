@@ -1,23 +1,25 @@
-# Casca de Bala · laboratório0.5
+# Casca de Bala
 
 Repositório: https://github.com/franklinbaldo/casca-de-bala .
-A versão 0.4 permanece preservada. Esta versão 0.5 acrescenta busca contínua e feedback visual de RSSI.
-O packageId org.workspace.band7.basicreader e os contratos permanecem iguais.
 
-Instalador separado: **casca-de-bala-0.5-lab-arm64.apk**, Android12+ ARM64.
-Fonte correspondente: **band7-basic-reader-0.5-lab-source.tar.gz** (não instalador).
-O APK0.3 anterior permanece uma alternativa estável sem radar.
+O app **Casca** é o [Gadgetbridge](https://gadgetbridge.org) com um **hub MCP**: as
+pulseiras e relógios que o Gadgetbridge suporta (Xiaomi Smart Band 7 incluída)
+ficam acessíveis às suas IAs pelo celular, com aprovação do dono para cada uma.
+O Gadgetbridge entra como upstream fixado ([gb/](gb/)): um patch mínimo cria o
+flavor `casca`, e o overlay traz o servidor MCP e o atalho "Casca MCP". O núcleo
+MCP é Rust ([crates/casca-mcp](crates/casca-mcp)). Pacote
+`org.workspace.band7.basicreader`, o mesmo das versões anteriores: atualiza no lugar.
 
-Aplicativo Android pessoal para **Xiaomi Smart Band 7 comum**, com núcleo Rust e
-console local. Licença do projeto: **AGPL-3.0-or-later**, com avisos de terceiros
-preservados em [PROVENANCE.md](PROVENANCE.md) e [third_party](third_party/).
-Este pacote contém a fonte correspondente ao APK0.5; não inclui APK, SDK, chaves ou dados pessoais.
+Licença: **AGPL-3.0-or-later**, a mesma do Gadgetbridge, com avisos de terceiros
+em [PROVENANCE.md](PROVENANCE.md) e [third_party](third_party/). O app de
+laboratório anterior (leitor/radar BLE próprio, `android-app/`) continua no
+repositório, fora do APK publicado.
 
 ## Instalar
 
 Cada push na `main` publica um APK ARM64 assinado como prerelease
 `ci-v<versionCode>-<commit>` nas [Releases](https://github.com/franklinbaldo/casca-de-bala/releases).
-Android 12+. Duas formas de receber atualizações automáticas:
+Android 6+ (minSdk do Gadgetbridge), ARM64. Duas formas de receber atualizações automáticas:
 
 - **Obtainium:** adicione `https://github.com/franklinbaldo/casca-de-bala` e
   ative "Include prereleases".

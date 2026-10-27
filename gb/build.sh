@@ -4,6 +4,7 @@
 # sources), plus libcasca_mcp.so from crates/casca-mcp-jni.
 #   ANDROID_HOME / ANDROID_NDK_HOME: SDK and NDK 27.0.12077973
 #   GB_TASK: Gradle task (default assembleCascaDebug)
+#   GB_GRADLE_ARGS: extra Gradle arguments (CI passes -PcascaVersionCode/-PcascaVersionName)
 set -eu
 GB=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(dirname "$GB")
@@ -27,6 +28,13 @@ git -C "$WORK" clean -qfd -e build -e .gradle -e local.properties
 # 2. Minimal upstream edits, then the flavor's own sources.
 for patch in "$GB"/patches/*.patch; do git -C "$WORK" apply --whitespace=nowarn "$patch"; done
 cp -R "$GB/overlay/." "$WORK/"
+# Legal texts from their single source in this repository, as the Casca app shipped them.
+LEGAL="$WORK/app/src/casca/assets"
+mkdir -p "$LEGAL"
+cp "$ROOT/NOTICE" "$LEGAL/NOTICE.txt"
+cp "$ROOT/PROVENANCE.md" "$LEGAL/PROVENANCE.txt"
+cp -R "$ROOT/docs/licenses/." "$LEGAL/"
+cp -R "$ROOT/third_party/." "$LEGAL/"
 
 # 3. The MCP hub, without the BLE lab: casca-mcp through its JNI entry.
 TOOLS="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -44,5 +52,6 @@ cp "$CARGO_TARGET_DIR/aarch64-linux-android/release/libcasca_mcp.so" "$JNI/"
 
 # 4. Gadgetbridge's own build.
 cd "$WORK"
-./gradlew --no-daemon --max-workers="${GB_WORKERS:-2}" "${GB_TASK:-assembleCascaDebug}"
+# shellcheck disable=SC2086 # GB_GRADLE_ARGS is a word list on purpose
+./gradlew --no-daemon --max-workers="${GB_WORKERS:-2}" ${GB_GRADLE_ARGS:-} "${GB_TASK:-assembleCascaDebug}"
 ls -la app/build/outputs/apk/casca/*/
