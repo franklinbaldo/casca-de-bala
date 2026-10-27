@@ -1,0 +1,61 @@
+name: Casca on Gadgetbridge
+
+# The Casca flavor of Gadgetbridge (gb/): upstream at gb/UPSTREAM plus
+# gb/patches, gb/overlay and the MCP hub from crates/casca-mcp-jni.
+on:
+  pull_request:
+    paths:
+      - 'gb/**'
+      - 'crates/casca-mcp/**'
+      - 'crates/casca-mcp-jni/**'
+      - 'Cargo.lock'
+      - '.github/workflows/gadgetbridge.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'gb/**'
+      - 'crates/casca-mcp/**'
+      - 'crates/casca-mcp-jni/**'
+      - 'Cargo.lock'
+      - '.github/workflows/gadgetbridge.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gadgetbridge-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Official pinned toolchains
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install
+          sh ci/setup-android.sh
+      - name: MCP hub without the BLE lab
+        run: |
+          cargo test --locked -p casca-mcp --no-default-features
+          cargo clippy --locked -p casca-mcp -p casca-mcp-jni --no-default-features -- -D warnings
+      - name: Casca flavor (debug APK)
+        run: |
+          export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.0.12077973"
+          sh gb/build.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: casca-gadgetbridge-${{ github.sha }}
+          path: gb/work/app/build/outputs/apk/casca/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0

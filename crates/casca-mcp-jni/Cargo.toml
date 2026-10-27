@@ -1,0 +1,16 @@
+[package]
+name = "casca-mcp-jni"
+description = "JNI entry to the MCP hub for the Gadgetbridge flavor (gb/): no BLE, no C shim"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lib]
+# libcasca_mcp.so, loaded by org.workspace.casca.McpNative.
+name = "casca_mcp"
+crate-type = ["cdylib"]
+
+[dependencies]
+casca-mcp = { path = "../casca-mcp", default-features = false }
+jni = "=0.22.4"

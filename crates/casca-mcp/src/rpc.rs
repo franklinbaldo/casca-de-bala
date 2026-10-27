@@ -50,7 +50,9 @@ pub(crate) fn dispatch(message: &Value, client: &str) -> Option<Value> {
         }
         "ping" => ok(id, json!({})),
         "tools/list" => {
+            #[allow(unused_mut)] // extended only with the lab feature
             let mut list = tools().as_array().cloned().unwrap_or_default();
+            #[cfg(feature = "lab")]
             list.extend(crate::lab::tools());
             ok(id, json!({"tools": list}))
         }
@@ -104,6 +106,31 @@ fn tools() -> Value {
             "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false},
         },
         {
+            "name": "band_find",
+            "title": "Fazer a pulseira vibrar",
+            "description": "Aciona \"encontrar dispositivo\": a pulseira vibra por alguns segundos. Precisa de um app que conduza a pulseira com autenticação (o Casca sobre o Gadgetbridge).",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "device": {"type": "string", "description": "id vindo de band_devices"},
+                    "seconds": {"type": "integer", "minimum": 1, "maximum": 30, "description": "duração (padrão 5)"},
+                },
+                "additionalProperties": false,
+            },
+            "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false},
+        },
+        {
+            "name": "band_sync",
+            "title": "Sincronizar dados da pulseira",
+            "description": "Pede ao app que conduz a pulseira para buscar os dados gravados nela (atividade, frequência cardíaca, sono, SpO2…). Responde quando o pedido foi aceito; a sincronização segue em segundo plano.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {"device": {"type": "string", "description": "id vindo de band_devices"}},
+                "additionalProperties": false,
+            },
+            "annotations": {"readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false},
+        },
+        {
             "name": "band_snapshot",
             "title": "Última leitura da pulseira",
             "description": "Última leitura já feita (pelo app ou por band_read), com o horário, sem conectar na pulseira.",
@@ -145,14 +172,18 @@ pub(crate) fn on_phone(id: Value, kind: &'static str, args: Value, wait: Duratio
 
 fn call(id: Value, params: &Value, client: &str) -> Value {
     let arguments = &params["arguments"];
+    #[cfg(feature = "lab")]
     if let Some(reply) = params["name"]
         .as_str()
         .and_then(|name| crate::lab::call(id.clone(), name, arguments, client))
     {
         return reply;
     }
-    if params["name"].as_str() == Some("band_notify") {
-        return band_notify(id, arguments, client);
+    match params["name"].as_str() {
+        Some("band_notify") => return band_notify(id, arguments, client),
+        Some("band_find") => return band_find(id, arguments, client),
+        Some("band_sync") => return band_sync(id, arguments, client),
+        _ => {}
     }
     let no_arguments = arguments.is_null() || arguments.as_object().is_some_and(|a| a.is_empty());
     match params["name"].as_str() {
@@ -187,7 +218,7 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
                     "model": "Xiaomi Smart Band 7",
                     "access": "leitura sob demanda pelo celular (band_read), última leitura em cache (band_snapshot) e mensagens no pulso (band_notify, via o app que conduz a pulseira)",
                     "last_reading_unix_ms": snapshot_at,
-                    "tools": ["band_devices", "band_read", "band_snapshot", "band_notify"],
+                    "tools": ["band_devices", "band_read", "band_snapshot", "band_notify", "band_find", "band_sync"],
                 }],
             });
             text(id, pretty(&body))
@@ -242,5 +273,75 @@ fn band_notify(id: Value, arguments: &Value, client: &str) -> Value {
         "band.notify",
         json!({"title": title, "body": body}),
         Duration::from_secs(10),
+    )
+}
+
+/// `device` (optional id from band_devices) plus only the keys in `extra`.
+fn device_args(id: &Value, arguments: &Value, tool: &str, extra: &[&str]) -> Result<Value, Value> {
+    let empty = serde_json::Map::new();
+    let args = match arguments {
+        Value::Null => &empty,
+        Value::Object(args) => args,
+        _ => {
+            return Err(error(
+                id.clone(),
+                -32602,
+                &format!("{tool} takes an object"),
+            ))
+        }
+    };
+    if args
+        .keys()
+        .any(|k| k != "device" && !extra.contains(&k.as_str()))
+    {
+        return Err(error(
+            id.clone(),
+            -32602,
+            &format!("{tool}: unknown argument"),
+        ));
+    }
+    match args.get("device") {
+        None | Some(Value::Null) => Ok(Value::Null),
+        Some(Value::String(d)) if !d.is_empty() && d.len() <= 64 => Ok(Value::String(d.clone())),
+        _ => Err(error(
+            id.clone(),
+            -32602,
+            "device must be an id from band_devices",
+        )),
+    }
+}
+
+fn band_find(id: Value, arguments: &Value, client: &str) -> Value {
+    let device = match device_args(&id, arguments, "band_find", &["seconds"]) {
+        Ok(device) => device,
+        Err(reply) => return reply,
+    };
+    let seconds = match arguments.get("seconds") {
+        None | Some(Value::Null) => 5,
+        Some(v) => match v.as_u64() {
+            Some(s @ 1..=30) => s,
+            _ => return error(id, -32602, "seconds must be 1-30"),
+        },
+    };
+    hub::log(&format!("band_find por {client}: {seconds} s"));
+    on_phone(
+        id,
+        "band.find",
+        json!({"device": device, "seconds": seconds}),
+        Duration::from_secs(15),
+    )
+}
+
+fn band_sync(id: Value, arguments: &Value, client: &str) -> Value {
+    let device = match device_args(&id, arguments, "band_sync", &[]) {
+        Ok(device) => device,
+        Err(reply) => return reply,
+    };
+    hub::log(&format!("band_sync por {client}"));
+    on_phone(
+        id,
+        "band.sync",
+        json!({"device": device}),
+        Duration::from_secs(15),
     )
 }
