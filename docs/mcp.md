@@ -172,6 +172,11 @@ Termux do mesmo celular, apontando para `localhost:8765`. Antes de abrir o
 Funnel, o servidor precisa falar OAuth (descoberta, registro dinâmico,
 `/authorize` com aprovação no celular, `/token` com PKCE): é a próxima etapa.
 
+## Gateway universal (experimental)
+
+`gb_devices`, `gb_discover`, `gb_inspect` e `gb_invoke` introduzem o catálogo comum do Gadgetbridge. A reflexão enumera métodos públicos de consulta do coordinator como **descoberta somente**, não os executa livremente. O registro inicial de execução autoriza `device.sync` em dispositivos inicializados; chamadas não registradas são recusadas. O retorno `requested=true` não significa ACK do hardware. A expansão de operações exige conversores tipados e política explícita de autorização.
+
+
 ## Desenvolvimento sem celular
 
 ```sh

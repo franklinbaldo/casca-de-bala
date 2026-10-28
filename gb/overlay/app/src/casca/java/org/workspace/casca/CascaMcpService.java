@@ -111,6 +111,14 @@ public final class CascaMcpService extends Service {
 
     private JSONObject handle(String kind,JSONObject args)throws JSONException{
         switch(kind){
+            case "gb.devices":{
+                JSONArray list=new JSONArray();
+                for(GBDevice device:devices())list.put(describe(device));
+                return new JSONObject().put("devices",list).put("provider","Gadgetbridge");
+            }
+            case "gb.discover":case "gb.inspect":case "gb.invoke":{
+                return CascaGateway.handle(kind,args,devices());
+            }
             case "band.devices":{
                 JSONArray list=new JSONArray();
                 for(GBDevice device:devices())list.put(describe(device));

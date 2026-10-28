@@ -99,6 +99,34 @@ fn tools() -> Value {
             "annotations": read_only,
         },
         {
+            "name": "gb_devices",
+            "title": "Dispositivos do gateway",
+            "description": "Lista dispositivos conhecidos pelo Gadgetbridge, sem expor endereços Bluetooth.",
+            "inputSchema": empty,
+            "annotations": read_only,
+        },
+        {
+            "name": "gb_discover",
+            "title": "Operações disponíveis",
+            "description": "Catálogo tipado de operações do Gadgetbridge; descoberta não concede execução.",
+            "inputSchema": {"type":"object","properties":{"device":{"type":"string","pattern":"^[0-9a-f]{12}$"}},"additionalProperties":false},
+            "annotations": read_only,
+        },
+        {
+            "name": "gb_inspect",
+            "title": "Inspecionar operação",
+            "description": "Esquema e política de uma operação do gateway.",
+            "inputSchema": {"type":"object","properties":{"operation":{"type":"string"}},"required":["operation"],"additionalProperties":false},
+            "annotations": read_only,
+        },
+        {
+            "name": "gb_invoke",
+            "title": "Executar operação Gadgetbridge",
+            "description": "Despacho tipado para operações registradas; escritas exigem aprovação no celular.",
+            "inputSchema": {"type":"object","properties":{"operation":{"type":"string"},"args":{"type":"object"}},"required":["operation"],"additionalProperties":false},
+            "annotations": {"readOnlyHint":false,"openWorldHint":false},
+        },
+        {
             "name": "band_lists",
             "title": "Listas da pulseira",
             "description": "Consulta alarmes/lembretes ou edita somente um alarme já existente (action=set, kind=alarms, slot e pelo menos um campo). Escrita exige autorização do dono no celular.",
@@ -255,6 +283,32 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
         return reply;
     }
     match params["name"].as_str() {
+        Some("gb_devices") => {
+            if !arguments.is_null() && !arguments.as_object().is_some_and(|a| a.is_empty()) {
+                return error(id, -32602, "gb_devices takes no arguments");
+            }
+            return on_phone(id, "gb.devices", json!({}), Duration::from_secs(10));
+        }
+        Some("gb_discover" | "gb_inspect" | "gb_invoke") => {
+            let name = params["name"].as_str().unwrap_or_default();
+            let Some(args) = arguments.as_object() else { return error(id,-32602,"object required"); };
+            let keys: &[&str] = match name {
+                "gb_discover" => &["device"],
+                "gb_inspect" => &["operation"],
+                _ => &["operation", "args"],
+            };
+            if args.keys().any(|k| !keys.contains(&k.as_str())) {
+                return error(id,-32602,"unknown gateway argument");
+            }
+            if name != "gb_discover" && !args.get("operation").and_then(Value::as_str).is_some_and(|v| !v.is_empty() && v.len() <= 80) {
+                return error(id,-32602,"operation required");
+            }
+            if name == "gb_invoke" && args.get("args").is_some_and(|v| !v.is_object()) {
+                return error(id,-32602,"args must be an object");
+            }
+            let kind = match name {"gb_discover"=>"gb.discover","gb_inspect"=>"gb.inspect",_=>"gb.invoke"};
+            return on_phone(id,kind,arguments.clone(),Duration::from_secs(15));
+        }
         Some("band_lists") => return band_lists(id, arguments),
         Some("band_settings") => return band_settings(id, arguments),
         Some("band_unlock_write") => {
