@@ -592,7 +592,10 @@ fn pairing_tools_and_restart() {
             "id":"123e4567-e89b-12d3-a456-426614174000","message":"consulta editada"}),
     );
     assert_eq!(reminder["result"]["isError"], false);
-    assert!(reminder["result"]["content"][0]["text"].as_str().unwrap().contains("confirmed"));
+    assert!(reminder["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("confirmed"));
     service.join().unwrap();
 
     let phone = thread::spawn(|| {
