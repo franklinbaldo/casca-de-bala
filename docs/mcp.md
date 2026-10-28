@@ -165,6 +165,10 @@ o carro, entra como mais um tipo de tarefa.
   navegadores, e isso fecha o ataque de DNS rebinding contra `localhost`.
 - O servidor só existe enquanto o serviço está ligado, com notificação fixa.
 
+### Inventário Bluetooth Android
+
+`gb_bluetooth` (etapa inicial): `status` consulta estado do adaptador e `paired` lista dispositivos pareados usando IDs opacos. `scan` e `pair` retornam erro explícito até existir coletor de descoberta e confirmação Android; não anunciam operação concluída. Não expõe MAC na resposta.
+
 ## Acesso de fora da tailnet
 
 IAs na nuvem (Claude.ai, ChatGPT) chegam pelo Tailscale Funnel rodando no
