@@ -12,11 +12,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 rust = (ROOT / "crates/casca-mcp/src/rpc.rs").read_text()
 java = (ROOT / "gb/overlay/app/src/casca/java/org/workspace/casca/CascaMcpService.java").read_text()
-jobs = set(re.findall(r'on_phone\(\s*id(?:\.clone\(\))?\s*,\s*"(band\.[^"]+)"', rust))
-cases = set(re.findall(r'case\s+"(band\.[^"]+)":', java))
+jobs = set(re.findall(r'on_phone\(\s*id(?:\.clone\(\))?\s*,\s*"((?:band|gb)\.[^"]+)"', rust))
+cases = set(re.findall(r'case\s+"((?:band|gb)\.[^"]+)":', java))
 assert jobs, "No Rust phone jobs found; update extraction to match Rust implementation"
+assert 'new JSONArray().put("band.").put("gb.")' in java, "Android poller omits gb.* jobs"
 missing = jobs - cases
 assert not missing, f"Unimplemented Android MCP jobs: {sorted(missing)}"
 assert "CascaBandLists.read(device" in java
 assert "CascaBandLists.setAlarm(device" in java
-print(f"PASS: {len(jobs)} Rust phone routes have Java cases; band.lists read/set linked")
+print(f"PASS: {len(jobs)} Rust phone routes have Java cases; band/gb jobs polled")

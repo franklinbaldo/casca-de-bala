@@ -199,8 +199,30 @@ Edição de lembretes existentes: `band_lists {"action":"set","kind":"reminders"
 
 Após um build completo que produziu `gb/work/app/src/casca/jniLibs/arm64-v8a/libcasca_mcp.so`, execute `GB_SKIP_RUST=1 GB_TASK=compileCascaDebugJavaWithJavac sh gb/build.sh` para verificar apenas Java sem reconstruir Rust. O script falha se a biblioteca JNI não existir. **Não use `GB_SKIP_RUST=1` para certificar um APK de release**: a biblioteca reaproveitada pode não corresponder ao Rust atual. A validação final exige build completo, testes Rust e verificação do APK.
 
-## Assistente Termux (inicial)
+## Termux pelo MCP (experimental)
 
-A tela Casca MCP inclui **Preparar Termux**. Detecta o pacote `com.termux`; se ausente, abre a página oficial do F-Droid para instalação confirmada pelo usuário. Se presente, abre o Termux e orienta sobre `allow-external-apps=true`. Esta etapa **não** concede permissão de execução, não instala silenciosamente e não disponibiliza ainda shell MCP; a ponte RUN_COMMAND e retorno estruturado ficam para a próxima etapa.
+A tela Casca MCP inclui **Preparar Termux**. Se o aplicativo não estiver
+instalado, abre sua página oficial do F-Droid; se estiver, oferece solicitar
+`com.termux.permission.RUN_COMMAND` ao Android ou abrir as configurações de
+permissões do Casca. No Termux, o usuário ainda precisa configurar
+`allow-external-apps = true` em `~/.termux/termux.properties` e reiniciar
+Termux. Não há instalação silenciosa nem contorno de permissão.
 
-`gb_shell {"command":"..."}` (experimental) solicita execução no Termux via `com.termux.RUN_COMMAND`, usando bash `-lc`. Exige Termux instalado, `allow-external-apps=true`, permissão Android `com.termux.permission.RUN_COMMAND` e janela de escrita aprovada no Casca. Retorna apenas `requested=true, confirmed=false`: **não captura stdout, stderr ou exit code** nesta etapa. Não confundir envio com execução confirmada.
+`gb_shell {"command":"pwd"}` envia um comando `bash -lc` pelo `RUN_COMMAND`
+oficial, após janela de escrita aprovada no celular, e responde com `job_id`,
+`status=submitted` e `confirmed=false`. Em seguida,
+`gb_shell_result {"job_id":"..."}` devolve `running` ou `finished`
+com `stdout`, `stderr`, `exit_code` e indicação de truncamento. Os resultados
+estão vinculados ao mesmo cliente MCP, limitados a quatro execuções
+simultâneas, 32 resultados e 8192 caracteres por fluxo. São **voláteis**:
+reiniciar o processo Casca descarta jobs, e comandos acima de uma hora podem
+expirar. Ainda não há terminal interativo/PTTY, cancelamento ou persistência.
+O retorno `submitted` nunca é uma confirmação de execução no Android.
+
+
+O `gb/build.sh` só recria a árvore Gadgetbridge quando mudam o commit
+upstream, patches, overlays ou textos legais. Se for preciso reconstituir o
+upstream mesmo sem mudança nos insumos, use `GB_FORCE_PREPARE=1`.
+O cache JNI do modo `GB_SKIP_RUST=1` é validado pelo hash dos insumos Rust
+(Cargo, fontes e toolchain), falhando quando é desatualizado. Builds de
+release devem continuar executando o caminho completo, sem `GB_SKIP_RUST=1`.

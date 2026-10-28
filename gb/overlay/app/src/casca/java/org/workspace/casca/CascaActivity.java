@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.provider.Settings;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -41,20 +42,29 @@ public final class CascaActivity extends Activity {
     @Override protected void onResume(){super.onResume();render();}
     @Override protected void onPause(){handler.removeCallbacks(refresh);super.onPause();}
 
-    /** The owner confirms installation in the official source; no silent APK installation. */
+    /** The owner confirms the official install and Android permission dialogs. */
     private void prepareTermux(){
-        if(getPackageManager().getLaunchIntentForPackage("com.termux")!=null){
-            new android.app.AlertDialog.Builder(this).setTitle("Termux instalado")
-                .setMessage("Abra o Termux e habilite allow-external-apps=true em ~/.termux/termux.properties para futuras integrações. O acesso à shell exige autorização separada.")
-                .setPositiveButton("Abrir Termux",(dialog,which)->startActivity(getPackageManager().getLaunchIntentForPackage("com.termux")))
-                .setNegativeButton("Fechar",null).show();
+        Intent launch=getPackageManager().getLaunchIntentForPackage("com.termux");
+        if(launch==null){
+            new android.app.AlertDialog.Builder(this).setTitle("Instalar Termux")
+                .setMessage("Abra a página oficial do F-Droid para instalar o Termux. O Android exigirá sua confirmação; o Casca não instala outros apps silenciosamente.")
+                .setPositiveButton("Abrir F-Droid",(dialog,which)->startActivity(new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("https://f-droid.org/packages/com.termux/"))))
+                .setNegativeButton("Cancelar",null).show();
             return;
         }
-        new android.app.AlertDialog.Builder(this).setTitle("Instalar Termux")
-            .setMessage("O Termux não está disponível. Abrir a página oficial do F-Droid? A instalação requer sua confirmação no Android.")
-            .setPositiveButton("Abrir F-Droid",(dialog,which)->startActivity(new Intent(Intent.ACTION_VIEW,
-                Uri.parse("https://f-droid.org/packages/com.termux/"))))
-            .setNegativeButton("Cancelar",null).show();
+        String permission="com.termux.permission.RUN_COMMAND";
+        boolean granted=checkSelfPermission(permission)==PackageManager.PERMISSION_GRANTED;
+        new android.app.AlertDialog.Builder(this).setTitle("Preparar Termux")
+            .setMessage("Termux instalado. Nele, configure ~/.termux/termux.properties com a linha allow-external-apps = true e reinicie o Termux. "
+                +(granted?"Permissão Android RUN_COMMAND concedida.":"Falta conceder ao Casca a permissão adicional RUN_COMMAND."))
+            .setPositiveButton(granted?"Abrir Termux":"Solicitar permissão",(dialog,which)->{
+                if(granted)startActivity(launch);
+                else requestPermissions(new String[]{permission},2);
+            })
+            .setNeutralButton("Configurações do Casca",(dialog,which)->startActivity(
+                new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+getPackageName()))))
+            .setNegativeButton("Fechar",null).show();
     }
 
     private void toggle(){
@@ -67,7 +77,17 @@ public final class CascaActivity extends Activity {
 
     @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] results){
         super.onRequestPermissionsResult(code,permissions,results);
-        if(results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED){startForegroundService(new Intent(this,CascaMcpService.class));handler.postDelayed(refresh,700);}
+        if(code==2){
+            boolean granted=results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED;
+            android.widget.Toast.makeText(this,granted?
+                "Permissão concedida. Configure allow-external-apps no Termux.":
+                "Permissão não concedida. Use as configurações do Android.",
+                android.widget.Toast.LENGTH_LONG).show();
+            return;
+        }
+        if(code==1&&results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED){
+            startForegroundService(new Intent(this,CascaMcpService.class));handler.postDelayed(refresh,700);
+        }
     }
 
     private void render(){

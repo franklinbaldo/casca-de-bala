@@ -106,6 +106,13 @@ fn tools() -> Value {
             "annotations": {"readOnlyHint":false,"openWorldHint":true},
         },
         {
+            "name": "gb_shell_result",
+            "title": "Resultado da shell do Termux",
+            "description": "Consulta stdout, stderr e exit code de uma solicitação gb_shell, vinculada ao mesmo cliente MCP.",
+            "inputSchema": {"type":"object","properties":{"job_id":{"type":"string","minLength":36,"maxLength":36}},"required":["job_id"],"additionalProperties":false},
+            "annotations": {"readOnlyHint":true,"openWorldHint":false},
+        },
+        {
             "name": "gb_phone",
             "title": "Celular Android",
             "description": "Telemetria do próprio celular: bateria, armazenamento e informações gerais do Android, sem identificadores pessoais.",
@@ -310,7 +317,14 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
             let Some(command)=a.get("command").and_then(Value::as_str) else {return error(id,-32602,"command required");};
             if command.trim().is_empty() || command.len()>4096 {return error(id,-32602,"command length invalid");}
             if !hub::write_allowed() {return failure(id,"Autorize a janela de escrita no celular antes de executar comandos.");}
-            return on_phone(id,"gb.shell",json!({"command":command}),Duration::from_secs(15));
+            return on_phone(id,"gb.shell",json!({"command":command,"client":client}),Duration::from_secs(15));
+        }
+        Some("gb_shell_result") => {
+            let Some(a)=arguments.as_object() else {return error(id,-32602,"object required");};
+            if a.len()!=1 {return error(id,-32602,"only job_id is accepted");}
+            let Some(job_id)=a.get("job_id").and_then(Value::as_str) else {return error(id,-32602,"job_id required");};
+            if job_id.len()!=36 {return error(id,-32602,"invalid job_id");}
+            return on_phone(id,"gb.shell.result",json!({"job_id":job_id,"client":client}),Duration::from_secs(15));
         }
         Some("gb_phone") => {
             let Some(a)=arguments.as_object() else {return error(id,-32602,"object required");};
@@ -471,6 +485,11 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
                     "access": "estado e dados de saúde guardados pelo celular (band_read), mensagens e vibração no pulso (band_notify, band_find) e sincronização (band_sync)",
                     "last_reading_unix_ms": snapshot_at,
                     "tools": ["band_devices", "band_capabilities", "band_lists", "band_settings", "band_unlock_write", "band_read", "band_snapshot", "band_notify", "band_find", "band_sync"],
+                }, {
+                    "id": "phone",
+                    "model": "Android",
+                    "access": "Estado do celular e Bluetooth; shell Termux somente após permissão e janela de escrita aprovada",
+                    "tools": ["gb_phone", "gb_bluetooth", "gb_devices", "gb_discover", "gb_inspect", "gb_invoke", "gb_shell", "gb_shell_result"],
                 }],
             });
             text(id, pretty(&body))

@@ -87,7 +87,7 @@ public final class CascaMcpService extends Service {
     }
 
     private void runJobs()throws JSONException{
-        JSONArray jobs=McpNative.call(new JSONObject().put("op","jobs").put("prefixes",new JSONArray().put("band."))).getJSONArray("jobs");
+        JSONArray jobs=McpNative.call(new JSONObject().put("op","jobs").put("prefixes",new JSONArray().put("band.").put("gb."))).getJSONArray("jobs");
         for(int i=0;i<jobs.length();i++){
             JSONObject job=jobs.getJSONObject(i);long id=job.getLong("id");
             JSONObject args=job.optJSONObject("args");if(args==null)args=new JSONObject();
@@ -113,6 +113,9 @@ public final class CascaMcpService extends Service {
         switch(kind){
             case "gb.shell":{
                 return CascaTermux.run(this,args);
+            }
+            case "gb.shell.result":{
+                return CascaTermux.result(args);
             }
             case "gb.phone":{
                 return CascaPhone.status(this);
