@@ -112,7 +112,7 @@ fn tools() -> Value {
                     "enabled": {"type": "boolean"},
                     "hour": {"type": "integer", "minimum": 0, "maximum": 23},
                     "minute": {"type": "integer", "minimum": 0, "maximum": 59},
-                    "id": {"type":"integer","minimum":0},
+                    "id": {"type":"string","minLength":1,"maxLength":128,"description":"ID opaco devolvido por band_lists(get,reminders)"},
                     "message": {"type":"string","minLength":1,"maxLength":200}
                 },
                 "required": ["action", "kind"],
@@ -385,7 +385,7 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
 }
 
 /// Reads existing lists or updates an existing alarm slot with explicit phone approval.
-/// Alarm creation, deletion and reminder writes are intentionally not exposed.
+/// Alarm creation/deletion and reminder creation/deletion remain unavailable.
 fn band_lists(id: Value, arguments: &Value) -> Value {
     let Some(args) = arguments.as_object() else {
         return error(id, -32602, "band_lists expects an object");
@@ -429,9 +429,15 @@ fn band_lists(id: Value, arguments: &Value) -> Value {
         if ["slot", "enabled", "hour", "minute"].iter().any(|k| args.contains_key(*k)) {
             return error(id, -32602, "reminders accept only id and message");
         }
-        let Some(reminder_id) = args.get("id").and_then(Value::as_u64) else {
-            return error(id, -32602, "existing reminder id required");
+        let Some(reminder_id) = args.get("id").and_then(Value::as_str) else {
+            return error(id, -32602, "existing reminder id string required");
         };
+        if reminder_id.is_empty()
+            || reminder_id.len() > 128
+            || reminder_id.chars().any(|c| c.is_control())
+        {
+            return error(id, -32602, "invalid opaque reminder id");
+        }
         let Some(message) = args.get("message").and_then(Value::as_str) else {
             return error(id, -32602, "message required");
         };

@@ -98,12 +98,14 @@ final class CascaBandLists {
             return new JSONObject().put("error","Escrita não autorizada.");
         if(!"set".equals(args.optString("action"))||!"reminders".equals(args.optString("kind")))
             return new JSONObject().put("error","Operação inválida.");
-        long id=args.optLong("id",-1);String message=args.optString("message","");
-        if(id<0||message.trim().isEmpty()||message.length()>200)
+        if(!(args.opt("id") instanceof String)||!(args.opt("message") instanceof String))
+            return new JSONObject().put("error","Identificador e mensagem devem ser textos.");
+        String id=args.getString("id");String message=args.getString("message");
+        if(id.trim().isEmpty()||id.length()>128||message.trim().isEmpty()||message.length()>200)
             return new JSONObject().put("error","Identificador ou mensagem inválidos.");
         Reminder target=null;
         for(Reminder item:DBHelper.getReminders(device))
-            if(item.getReminderId()==id){target=item;break;}
+            if(id.equals(item.getReminderId())){target=item;break;}
         if(target==null)return new JSONObject().put("error","Lembrete não encontrado; criação não autorizada.");
         target.setMessage(message);
         if(!McpNative.op("status").optBoolean("write_allowed",false))
@@ -111,7 +113,7 @@ final class CascaBandLists {
         DBHelper.store(target);
         boolean found=false;
         for(Reminder item:DBHelper.getReminders(device))
-            if(item.getReminderId()==id&&message.equals(item.getMessage())){found=true;break;}
+            if(id.equals(item.getReminderId())&&message.equals(item.getMessage())){found=true;break;}
         if(!found)return new JSONObject().put("error","Gravação local não confirmada.");
         GBApplication.deviceService(device).onSetReminders(new ArrayList<>(DBHelper.getReminders(device)));
         return new JSONObject().put("kind","reminders").put("requested",true).put("confirmed",false)
