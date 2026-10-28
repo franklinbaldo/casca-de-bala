@@ -104,16 +104,16 @@ final class CascaHealth {
 
     private static Object stress(TimeSampleProvider<? extends StressSample> provider,long fromMs,long toMs,ZoneId zone)throws JSONException{
         if(provider==null)return JSONObject.NULL;
-        Stats stats=new Stats();
+        CascaHealthStats stats=new CascaHealthStats();
         for(StressSample s:provider.getAllSamples(fromMs,toMs))if(s.getStress()>0)stats.add(s.getStress(),s.getTimestamp());
-        return stats.json(zone);
+        return statsJson(stats,zone);
     }
 
     private static Object spo2(TimeSampleProvider<? extends Spo2Sample> provider,long fromMs,long toMs,ZoneId zone)throws JSONException{
         if(provider==null)return JSONObject.NULL;
-        Stats stats=new Stats();
+        CascaHealthStats stats=new CascaHealthStats();
         for(Spo2Sample s:provider.getAllSamples(fromMs,toMs))if(s.getSpo2()>0&&s.getSpo2()<=100)stats.add(s.getSpo2(),s.getTimestamp());
-        return stats.json(zone);
+        return statsJson(stats,zone);
     }
 
     private static Object sleepScores(TimeSampleProvider<? extends SleepScoreSample> provider,long fromMs,long toMs,ZoneId zone)throws JSONException{
@@ -140,13 +140,10 @@ final class CascaHealth {
         }
     }
 
-    private static final class Stats{
-        int min=Integer.MAX_VALUE,max,count,latest;long sum,latestAt;
-        void add(int v,long at){min=Math.min(min,v);max=Math.max(max,v);sum+=v;count++;if(at>=latestAt){latestAt=at;latest=v;}}
-        Object json(ZoneId zone)throws JSONException{
-            if(count==0)return JSONObject.NULL;
-            return new JSONObject().put("min",min).put("avg",Math.round((double)sum/count)).put("max",max)
-                .put("samples",count).put("latest",latest).put("latest_at",format(latestAt,zone));
-        }
+    private static Object statsJson(CascaHealthStats stats,ZoneId zone)throws JSONException{
+        CascaHealthStats.Snapshot s=stats.snapshot();
+        if(s==null)return JSONObject.NULL;
+        return new JSONObject().put("min",s.min).put("avg",s.average).put("max",s.max)
+            .put("samples",s.count).put("latest",s.latest).put("latest_at",format(s.latestAt,zone));
     }
 }

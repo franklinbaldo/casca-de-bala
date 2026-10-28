@@ -258,6 +258,7 @@ Edição de lembretes existentes: `band_lists {"action":"set","kind":"reminders"
 
 Os testes Java rápidos do flavor Casca ficam em
 `gb/overlay/app/src/testCasca/java/org/workspace/casca/` (JUnit 4):
+`CascaHealthStatsTest` verifica agregações de registros já armazenados;
 `CascaTermuxJobBookTest` cobre isolamento entre clientes, expiração, limitação
 4 em execução/32 registros e callbacks repetidos; `CascaJobDispatchTest`
 garante a afinidade de thread. As regras puras foram extraídas de Android para
