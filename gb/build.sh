@@ -16,38 +16,62 @@ if [ "${GB_SKIP_RUST:-0}" != 1 ]; then
     : "${ANDROID_NDK_HOME:?Set ANDROID_NDK_HOME to NDK 27.0.12077973}"
 fi
 
-# 1. Upstream at the pinned commit, reset to pristine on every run (build caches kept).
+# 1–2. Materialize pinned Gadgetbridge and Casca overlays only when inputs change.
+# A clean source snapshot is essential for reproducible release builds; the
+# stamp is intentionally invalidated by a different upstream HEAD or source.
+prep_hash() {
+    (cd "$ROOT" && find gb/UPSTREAM gb/patches gb/overlay NOTICE PROVENANCE.md \
+        docs/licenses third_party -type f -print0 | LC_ALL=C sort -z | \
+        xargs -0 sha256sum | sha256sum | cut -d' ' -f1)
+}
+PREP_HASH=$(prep_hash)
+STAMP="$WORK/.casca-prepared-sha256"
 if [ ! -d "$WORK/.git" ]; then
     git init -q "$WORK"
     git -C "$WORK" remote add origin https://codeberg.org/Freeyourgadget/Gadgetbridge.git
 fi
-if [ "$(git -C "$WORK" rev-parse -q --verify HEAD 2>/dev/null || true)" != "$UPSTREAM" ]; then
-    git -C "$WORK" fetch -q --depth 1 origin "$UPSTREAM"
-    git -C "$WORK" checkout -q --force "$UPSTREAM"
+CURRENT=$(git -C "$WORK" rev-parse -q --verify HEAD 2>/dev/null || true)
+if [ "${GB_FORCE_PREPARE:-0}" = 1 ] || [ "$CURRENT" != "$UPSTREAM" ] || \
+    [ "$(cat "$STAMP" 2>/dev/null || true)" != "$PREP_HASH" ]; then
+    if [ "$CURRENT" != "$UPSTREAM" ]; then
+        git -C "$WORK" fetch -q --depth 1 origin "$UPSTREAM"
+        git -C "$WORK" checkout -q --force "$UPSTREAM"
+    fi
+    git -C "$WORK" reset -q --hard "$UPSTREAM"
+    git -C "$WORK" clean -qfd -e build -e .gradle -e local.properties
+    for patch in "$GB"/patches/*.patch; do git -C "$WORK" apply --whitespace=nowarn "$patch"; done
+    cp -R "$GB/overlay/." "$WORK/"
+    LEGAL="$WORK/app/src/casca/assets"
+    mkdir -p "$LEGAL"
+    cp "$ROOT/NOTICE" "$LEGAL/NOTICE.txt"
+    cp "$ROOT/PROVENANCE.md" "$LEGAL/PROVENANCE.txt"
+    cp -R "$ROOT/docs/licenses/." "$LEGAL/"
+    cp -R "$ROOT/third_party/." "$LEGAL/"
+    printf '%s\n' "$PREP_HASH" > "$STAMP"
+else
+    echo 'Casca inputs unchanged: reusing prepared Gadgetbridge worktree and Gradle cache.'
 fi
-git -C "$WORK" reset -q --hard "$UPSTREAM"
-git -C "$WORK" clean -qfd -e build -e .gradle -e local.properties
-
-# 2. Minimal upstream edits, then the flavor's own sources.
-for patch in "$GB"/patches/*.patch; do git -C "$WORK" apply --whitespace=nowarn "$patch"; done
-cp -R "$GB/overlay/." "$WORK/"
-# Legal texts from their single source in this repository, as the Casca app shipped them.
-LEGAL="$WORK/app/src/casca/assets"
-mkdir -p "$LEGAL"
-cp "$ROOT/NOTICE" "$LEGAL/NOTICE.txt"
-cp "$ROOT/PROVENANCE.md" "$LEGAL/PROVENANCE.txt"
-cp -R "$ROOT/docs/licenses/." "$LEGAL/"
-cp -R "$ROOT/third_party/." "$LEGAL/"
 
 # 3. The MCP hub, without the BLE lab: casca-mcp through its JNI entry.
+# Source fingerprint prevents Java-only builds from silently using stale Rust JNI.
+rust_hash() {
+    (cd "$ROOT" && find Cargo.toml Cargo.lock rust-toolchain.toml crates \
+        -type f \( -name '*.rs' -o -name 'Cargo.toml' -o -name 'Cargo.lock' \
+                   -o -name 'rust-toolchain.toml' \) -print0 | LC_ALL=C sort -z | \
+        xargs -0 sha256sum | sha256sum | cut -d' ' -f1)
+}
+RUST_HASH=$(rust_hash)
+export CARGO_TARGET_DIR="$ROOT/target/android"
+CACHED_JNI="$CARGO_TARGET_DIR/aarch64-linux-android/release/libcasca_mcp.so"
+RUST_STAMP="$CARGO_TARGET_DIR/.casca-jni-rust-sha256"
 JNI="$WORK/app/src/casca/jniLibs/arm64-v8a"
 mkdir -p "$JNI"
 if [ "${GB_SKIP_RUST:-0}" = 1 ]; then
-    if [ ! -s "$JNI/libcasca_mcp.so" ]; then
-        echo 'GB_SKIP_RUST=1 requires an existing libcasca_mcp.so in gb/work; run a full build first.' >&2
+    if [ ! -s "$CACHED_JNI" ] || [ "$(cat "$RUST_STAMP" 2>/dev/null || true)" != "$RUST_HASH" ]; then
+        echo 'GB_SKIP_RUST=1 requires a previously built JNI matching the current Rust sources.' >&2
         exit 1
     fi
-    echo 'Reusing existing JNI library (Java-only validation; not a complete APK verification).'
+    echo 'Reusing matching JNI library (Java-only check; not release validation).'
 else
     TOOLS="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
     test -x "$TOOLS/aarch64-linux-android31-clang"
@@ -55,11 +79,11 @@ else
     export CC_aarch64_linux_android="$TOOLS/aarch64-linux-android31-clang"
     export AR_aarch64_linux_android="$TOOLS/llvm-ar"
     export CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS='-C link-arg=-Wl,-z,max-page-size=16384'
-    export CARGO_TARGET_DIR="$ROOT/target/android"
     cargo build --locked --release --target aarch64-linux-android --manifest-path "$ROOT/Cargo.toml" -p casca-mcp-jni
-    cp "$CARGO_TARGET_DIR/aarch64-linux-android/release/libcasca_mcp.so" "$JNI/"
-    "$TOOLS/llvm-nm" -D --defined-only "$JNI/libcasca_mcp.so" | grep -q Java_org_workspace_casca_McpNative_control
+    "$TOOLS/llvm-nm" -D --defined-only "$CACHED_JNI" | grep -q Java_org_workspace_casca_McpNative_control
+    printf '%s\n' "$RUST_HASH" > "$RUST_STAMP"
 fi
+cp "$CACHED_JNI" "$JNI/"
 
 # 4. Gadgetbridge's own build.
 cd "$WORK"

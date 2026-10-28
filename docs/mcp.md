@@ -198,3 +198,10 @@ Edição de lembretes existentes: `band_lists {"action":"set","kind":"reminders"
 ## Compilação incremental
 
 Após um build completo que produziu `gb/work/app/src/casca/jniLibs/arm64-v8a/libcasca_mcp.so`, execute `GB_SKIP_RUST=1 GB_TASK=compileCascaDebugJavaWithJavac sh gb/build.sh` para verificar apenas Java sem reconstruir Rust. O script falha se a biblioteca JNI não existir. **Não use `GB_SKIP_RUST=1` para certificar um APK de release**: a biblioteca reaproveitada pode não corresponder ao Rust atual. A validação final exige build completo, testes Rust e verificação do APK.
+
+O `gb/build.sh` só recria a árvore Gadgetbridge quando mudam o commit
+upstream, patches, overlays ou textos legais. Se for preciso reconstituir o
+upstream mesmo sem mudança nos insumos, use `GB_FORCE_PREPARE=1`.
+O cache JNI do modo `GB_SKIP_RUST=1` é validado pelo hash dos insumos Rust
+(Cargo, fontes e toolchain), falhando quando é desatualizado. Builds de
+release devem continuar executando o caminho completo, sem `GB_SKIP_RUST=1`.
