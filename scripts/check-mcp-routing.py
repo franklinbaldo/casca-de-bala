@@ -20,4 +20,5 @@ missing = jobs - cases
 assert not missing, f"Unimplemented Android MCP jobs: {sorted(missing)}"
 assert "CascaBandLists.read(device" in java
 assert "CascaBandLists.setAlarm(device" in java
+assert 'list.put(new JSONObject().put("id","phone")' in java, "Android phone absent from gb_devices"
 print(f"PASS: {len(jobs)} Rust phone routes have Java cases; band/gb jobs polled")
