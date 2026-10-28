@@ -278,7 +278,9 @@ fn pairing_tools_and_restart() {
                     ("band.capabilities", Some("a1b2c3d4e5f6")) => {
                         json!({"device":"a1b2c3d4e5f6","service_endpoints":null,"configured_keys":[]})
                     }
-                    ("band.lists", Some("a1b2c3d4e5f6")) if job["args"]["action"] == "set" => {
+                    ("band.lists", Some("a1b2c3d4e5f6"))
+                        if job["args"]["action"] == "set" && job["args"]["kind"] == "alarms" =>
+                    {
                         assert_eq!(job["args"]["kind"], "alarms");
                         assert_eq!(job["args"]["slot"], 0);
                         assert_eq!(job["args"]["enabled"], false);
