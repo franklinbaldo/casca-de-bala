@@ -111,6 +111,9 @@ public final class CascaMcpService extends Service {
 
     private JSONObject handle(String kind,JSONObject args)throws JSONException{
         switch(kind){
+            case "gb.bluetooth":{
+                return CascaBluetooth.handle(this,args);
+            }
             case "gb.devices":{
                 JSONArray list=new JSONArray();
                 for(GBDevice device:devices())list.put(describe(device));

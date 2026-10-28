@@ -99,6 +99,13 @@ fn tools() -> Value {
             "annotations": read_only,
         },
         {
+            "name": "gb_bluetooth",
+            "title": "Bluetooth do celular",
+            "description": "Inspeciona o adaptador Bluetooth e aparelhos já pareados; solicita descoberta e pareamento pelo Android quando suportado.",
+            "inputSchema": {"type":"object","properties":{"action":{"type":"string","enum":["status","paired","scan","pair"]},"address":{"type":"string","description":"endereço Bluetooth fornecido pelo Android, usado somente no celular"}},"required":["action"],"additionalProperties":false},
+            "annotations": {"readOnlyHint":false,"openWorldHint":false},
+        },
+        {
             "name": "gb_devices",
             "title": "Dispositivos do gateway",
             "description": "Lista dispositivos conhecidos pelo Gadgetbridge, sem expor endereços Bluetooth.",
@@ -283,6 +290,21 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
         return reply;
     }
     match params["name"].as_str() {
+        Some("gb_bluetooth") => {
+            let Some(a)=arguments.as_object() else {return error(id,-32602,"object required");};
+            if a.keys().any(|k| k!="action"&&k!="address") {return error(id,-32602,"unknown argument");}
+            let action=a.get("action").and_then(Value::as_str).unwrap_or("");
+            if !["status","paired","scan","pair"].contains(&action) {return error(id,-32602,"invalid action");}
+            if action!="pair" && a.contains_key("address") {return error(id,-32602,"address only for pair");}
+            if action=="pair" {
+                let Some(addr)=a.get("address").and_then(Value::as_str) else {return error(id,-32602,"address required");};
+                if addr.len()!=17 || !addr.split(':').all(|v|v.len()==2&&v.bytes().all(|c|c.is_ascii_hexdigit())) {
+                    return error(id,-32602,"invalid Bluetooth address");
+                }
+                if !hub::write_allowed() {return failure(id,"Aprovação de escrita necessária para pareamento.");}
+            }
+            return on_phone(id,"gb.bluetooth",arguments.clone(),Duration::from_secs(20));
+        }
         Some("gb_devices") => {
             if !arguments.is_null() && !arguments.as_object().is_some_and(|a| a.is_empty()) {
                 return error(id, -32602, "gb_devices takes no arguments");
