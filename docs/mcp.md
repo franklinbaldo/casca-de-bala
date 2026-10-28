@@ -172,6 +172,11 @@ Termux do mesmo celular, apontando para `localhost:8765`. Antes de abrir o
 Funnel, o servidor precisa falar OAuth (descoberta, registro dinâmico,
 `/authorize` com aprovação no celular, `/token` com PKCE): é a próxima etapa.
 
+## Gateway universal (experimental)
+
+`gb_devices`, `gb_discover`, `gb_inspect` e `gb_invoke` introduzem o catálogo comum do Gadgetbridge. A reflexão enumera métodos públicos de consulta do coordinator como **descoberta somente**, não os executa livremente. O registro inicial de execução autoriza `device.sync` em dispositivos inicializados; chamadas não registradas são recusadas. O retorno `requested=true` não significa ACK do hardware. A expansão de operações exige conversores tipados e política explícita de autorização.
+
+
 ## Desenvolvimento sem celular
 
 ```sh
@@ -187,6 +192,3 @@ assíncrono), exposto ao app pela função `b7_mcp_json` da C ABI.
 
 Edição de lembretes existentes: `band_lists {"action":"set","kind":"reminders","id":"ID_DO_GET","message":"texto"}`. Exige janela de escrita aprovada, limita mensagem a 200 caracteres e preserva data/repetição. Use o `id` textual opaco (UUID) devolvido pela leitura `band_lists` de lembretes; não um inteiro. Não cria ou exclui lembretes. A confirmação é apenas da persistência local e do envio ao Gadgetbridge.
 
-## Gateway universal (experimental)
-
-`gb_devices`, `gb_discover`, `gb_inspect` e `gb_invoke` introduzem o catálogo comum do Gadgetbridge. A reflexão enumera métodos públicos de consulta do coordinator como **descoberta somente**, não os executa livremente. O registro inicial de execução autoriza `device.sync` em dispositivos inicializados; chamadas não registradas são recusadas. O retorno `requested=true` não significa ACK do hardware. A expansão de operações exige conversores tipados e política explícita de autorização.
