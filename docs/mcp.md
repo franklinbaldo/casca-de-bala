@@ -44,7 +44,7 @@ Bluetooth. `band_notify` só cria uma notificação no próprio celular, no cana
 
 ### Provedor Android (`phone`)
 
-`gb_phone {"action":"status"}` apresenta o celular como dispositivo `phone` e consulta bateria, modelo, versão Android e armazenamento por APIs oficiais. Não lê contas, IMEI, serial, localização nem identificadores pessoais. O catálogo `gb_discover` também inclui o provedor Android. Eventos e sensores ficam para extensão posterior.
+`gb_phone {"action":"status"}` apresenta o celular como dispositivo `phone` e consulta bateria, modelo, versão Android e armazenamento por APIs oficiais. Não lê contas, IMEI, serial, localização nem identificadores pessoais. O catálogo `gb_discover` também inclui o provedor Android. Eventos e leituras de sensores ficam para extensão posterior.
 
 ## Pulseira via Gadgetbridge
 
@@ -161,7 +161,7 @@ o carro, entra como mais um tipo de tarefa.
 
 ## Compilação incremental
 
-Após um build completo que produziu `gb/work/app/src/casca/jniLibs/arm64-v8a/libcasca_mcp.so`, execute `GB_SKIP_RUST=1 GB_TASK=compileCascaDebugJavaWithJavac sh gb/build.sh` para verificar apenas Java sem reconstruir Rust. O script falha se a biblioteca JNI não existir. **Não use `GB_SKIP_RUST=1` para certificar um APK de release**: a biblioteca reaproveitada pode não corresponder ao Rust atual. A validação final exige build completo, testes Rust e verificação do APK.
+Após um build completo que produziu `gb/work/app/src/casca/jniLibs/arm64-v8a/libcasca_mcp.so`, execute `GB_SKIP_RUST=1 GB_TASK=compileCascaDebugJavaWithJavac sh gb/build.sh` para verificar apenas Java sem reconstruir Rust. O script falha se a biblioteca JNI não existir ou seu hash de fontes Rust não corresponder ao atual. **Não use `GB_SKIP_RUST=1` para certificar um APK de release**: o modo rápido não substitui os testes e a compilação integral. A validação final exige build completo, testes Rust e verificação do APK.
 
 O `gb/build.sh` só recria a árvore Gadgetbridge quando mudam o commit
 upstream, patches, overlays ou textos legais. Se for preciso reconstituir o
