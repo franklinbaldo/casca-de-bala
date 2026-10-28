@@ -3,6 +3,7 @@ package org.workspace.casca;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,11 +33,29 @@ public final class CascaActivity extends Activity {
         TextView title=new TextView(this);title.setText(R.string.casca_title);title.setTextSize(24);root.addView(title);
         info=new TextView(this);info.setTextSize(16);info.setTextIsSelectable(true);info.setPadding(0,32,0,32);root.addView(info);
         toggle=new Button(this);toggle.setOnClickListener(v->toggle());root.addView(toggle);
+        Button termux=new Button(this);termux.setText("Preparar Termux");
+        termux.setOnClickListener(v->prepareTermux());root.addView(termux);
         ScrollView scroll=new ScrollView(this);scroll.addView(root);setContentView(scroll);
     }
 
     @Override protected void onResume(){super.onResume();render();}
     @Override protected void onPause(){handler.removeCallbacks(refresh);super.onPause();}
+
+    /** The owner confirms installation in the official source; no silent APK installation. */
+    private void prepareTermux(){
+        if(getPackageManager().getLaunchIntentForPackage("com.termux")!=null){
+            new android.app.AlertDialog.Builder(this).setTitle("Termux instalado")
+                .setMessage("Abra o Termux e habilite allow-external-apps=true em ~/.termux/termux.properties para futuras integrações. O acesso à shell exige autorização separada.")
+                .setPositiveButton("Abrir Termux",(dialog,which)->startActivity(getPackageManager().getLaunchIntentForPackage("com.termux")))
+                .setNegativeButton("Fechar",null).show();
+            return;
+        }
+        new android.app.AlertDialog.Builder(this).setTitle("Instalar Termux")
+            .setMessage("O Termux não está disponível. Abrir a página oficial do F-Droid? A instalação requer sua confirmação no Android.")
+            .setPositiveButton("Abrir F-Droid",(dialog,which)->startActivity(new Intent(Intent.ACTION_VIEW,
+                Uri.parse("https://f-droid.org/packages/com.termux/"))))
+            .setNegativeButton("Cancelar",null).show();
+    }
 
     private void toggle(){
         if(CascaMcpService.running){startService(new Intent(this,CascaMcpService.class).setAction(CascaMcpService.ACTION_STOP));}

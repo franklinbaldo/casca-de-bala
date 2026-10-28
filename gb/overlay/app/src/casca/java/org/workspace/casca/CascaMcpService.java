@@ -111,6 +111,9 @@ public final class CascaMcpService extends Service {
 
     private JSONObject handle(String kind,JSONObject args)throws JSONException{
         switch(kind){
+            case "gb.shell":{
+                return CascaTermux.run(this,args);
+            }
             case "gb.phone":{
                 return CascaPhone.status(this);
             }
