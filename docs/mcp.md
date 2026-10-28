@@ -263,7 +263,7 @@ Os testes Java rápidos do flavor Casca ficam em
 4 em execução/32 registros e callbacks repetidos; `CascaJobDispatchTest`
 garante a afinidade de thread. As regras puras foram extraídas de Android para
 `CascaTermuxJobBook` e `CascaJobDispatch`. Use
-`GB_SKIP_RUST=1 GB_TASK=testCascaDebugUnitTest sh gb/build.sh` somente após
+`GB_SKIP_RUST=1 GB_TASK=testCascaDebugUnitTest GB_TEST_FILTER='org.workspace.casca.*' sh gb/build.sh` somente após
 build JNI válido. O polling JNI do serviço usa executor separado do Looper;
 notificações e comandos Gadgetbridge mantêm afinidade de main thread.
 **Não presume testes de aparelho:** `testCascaDebugUnitTest` roda na JVM.
@@ -285,5 +285,10 @@ python3 scripts/test_java_host.py  # execuções seguintes, offline
 
 O primeiro comando baixa JUnit 4 e Hamcrest do Maven Central, conferindo
 SHA-256 fixos; os JARs ficam ignorados em `target/`. Requer JDK 8+; não
-são baixados no build de release. Também são executados pela tarefa
-`testCascaDebugUnitTest` do Gradle, para conferir a integração real.
+são baixados no build de release. Também são executados pela tarefa `testCascaDebugUnitTest` do Gradle
+quando `GB_TEST_FILTER='org.workspace.casca.*'`. Sem filtro a tarefa
+executa toda a suíte upstream do Gadgetbridge, incluindo testes Robolectric
+que podem falhar por configuração de plataforma sem relação com o Casca.
+O profiler sempre aplica esse filtro aos testes, mas registra a compilação
+Java normalmente. A suíte completa upstream é um gate separado, nunca
+interpretado como aprovação dos testes próprios.

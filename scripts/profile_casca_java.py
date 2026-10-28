@@ -26,6 +26,12 @@ TASK_RE = re.compile(r'^> Task (:\S+)(?: (UP-TO-DATE|FROM-CACHE|NO-SOURCE|SKIPPE
 def run_task(task: str, output: Path, number: int) -> dict:
     env = dict(os.environ, GB_SKIP_RUST='1', GB_TASK=task,
                GB_GRADLE_ARGS='--offline --build-cache --profile --console=plain')
+    # Gadgetbridge has a large upstream Robolectric suite; profile only our
+    # JVM unit tests, not unrelated device/provider tests.
+    if task == 'testCascaDebugUnitTest':
+        env['GB_TEST_FILTER'] = 'org.workspace.casca.*'
+    else:
+        env.pop('GB_TEST_FILTER', None)
     command = ['sh', 'gb/build.sh']
     t0 = time.monotonic()
     result = subprocess.run(command, cwd=ROOT, env=env, capture_output=True, text=True)

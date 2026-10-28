@@ -88,7 +88,15 @@ cp "$CACHED_JNI" "$JNI/"
 # 4. Gadgetbridge's own build.
 cd "$WORK"
 # shellcheck disable=SC2086 # GB_GRADLE_ARGS is a word list on purpose
-./gradlew --no-daemon --max-workers="${GB_WORKERS:-2}" ${GB_GRADLE_ARGS:-} "${GB_TASK:-assembleCascaDebug}"
+if [ -n "${GB_TEST_FILTER:-}" ]; then
+    case "${GB_TASK:-assembleCascaDebug}" in
+        *UnitTest) ;;
+        *) echo 'GB_TEST_FILTER requires an Android UnitTest task.' >&2; exit 2 ;;
+    esac
+    ./gradlew --no-daemon --max-workers="${GB_WORKERS:-2}" ${GB_GRADLE_ARGS:-} "${GB_TASK}" --tests "${GB_TEST_FILTER}"
+else
+    ./gradlew --no-daemon --max-workers="${GB_WORKERS:-2}" ${GB_GRADLE_ARGS:-} "${GB_TASK:-assembleCascaDebug}"
+fi
 case "${GB_TASK:-assembleCascaDebug}" in
     *assemble*) ls -la app/build/outputs/apk/casca/*/ ;;
 esac
