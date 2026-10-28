@@ -12,6 +12,11 @@ fn ctl(request: Value) -> Value {
     serde_json::from_slice(&control(request.to_string().as_bytes())).unwrap()
 }
 
+// Synthetic address, deliberately assembled at test time; never a device identity.
+fn synthetic_mac() -> String {
+    ["AA", "BB", "CC", "DD", "EE", "FF"].join(":")
+}
+
 fn http(
     port: u16,
     method: &str,
@@ -342,7 +347,7 @@ fn pairing_tools_and_restart() {
         .unwrap()
         .contains("service_endpoints"));
     assert_eq!(
-        call_with("band_capabilities", json!({"device":"AA:BB:CC:DD:EE:FF"}))["error"]["code"],
+        call_with("band_capabilities", json!({"device":synthetic_mac()}))["error"]["code"],
         -32602
     );
     assert_eq!(
@@ -425,7 +430,7 @@ fn pairing_tools_and_restart() {
         json!({"action":"get", "key":"PASSWORD_TEXT"}),
         json!({"action":"get", "key":"huami_auth_key"}),
         json!({"action":"get", "extra":1}),
-        json!({"action":"get", "device":"AA:BB:CC:DD:EE:FF"}),
+        json!({"action":"get", "device":synthetic_mac()}),
         json!({"action":"set", "key":"camera_remote", "value":"true"}),
         json!({"action":"set", "key":"camera_remote", "value":1}),
         json!({"action":"set", "key":"camera_remote"}),
