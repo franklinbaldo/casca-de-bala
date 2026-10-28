@@ -99,6 +99,13 @@ fn tools() -> Value {
             "annotations": read_only,
         },
         {
+            "name": "gb_phone",
+            "title": "Celular Android",
+            "description": "Telemetria do próprio celular: bateria, armazenamento e informações gerais do Android, sem identificadores pessoais.",
+            "inputSchema": {"type":"object","properties":{"action":{"type":"string","enum":["status"]}},"required":["action"],"additionalProperties":false},
+            "annotations": read_only,
+        },
+        {
             "name": "gb_bluetooth",
             "title": "Bluetooth do celular",
             "description": "Inspeciona o adaptador Bluetooth e aparelhos já pareados; solicita descoberta e pareamento pelo Android quando suportado.",
@@ -290,6 +297,13 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
         return reply;
     }
     match params["name"].as_str() {
+        Some("gb_phone") => {
+            let Some(a)=arguments.as_object() else {return error(id,-32602,"object required");};
+            if a.len()!=1 || a.get("action").and_then(Value::as_str)!=Some("status") {
+                return error(id,-32602,"gb_phone accepts only action=status");
+            }
+            return on_phone(id,"gb.phone",arguments.clone(),Duration::from_secs(10));
+        }
         Some("gb_bluetooth") => {
             let Some(a)=arguments.as_object() else {return error(id,-32602,"object required");};
             if a.keys().any(|k| k!="action"&&k!="address") {return error(id,-32602,"unknown argument");}

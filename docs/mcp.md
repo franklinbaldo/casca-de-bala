@@ -42,6 +42,10 @@ Nenhuma dessas ferramentas pareia, escreve na pulseira ou expõe endereço
 Bluetooth. `band_notify` só cria uma notificação no próprio celular, no canal
 "Mensagens para a pulseira". O `lab_log` registra quem a mandou, nunca o texto.
 
+### Provedor Android (`phone`)
+
+`gb_phone {"action":"status"}` apresenta o celular como dispositivo `phone` e consulta bateria, modelo, versão Android e armazenamento por APIs oficiais. Não lê contas, IMEI, serial, localização nem identificadores pessoais. O catálogo `gb_discover` também inclui o provedor Android. Eventos e leituras de sensores ficam para extensão posterior.
+
 ## Pulseira via Gadgetbridge
 
 O app Casca é o Gadgetbridge com este servidor MCP (veja `gb/`). Quem conduz a

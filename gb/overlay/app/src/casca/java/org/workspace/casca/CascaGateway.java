@@ -38,6 +38,8 @@ final class CascaGateway {
                 found.put(new JSONObject().put("device",CascaMcpService.deviceId(device.getAddress()))
                     .put("coordinator_methods",methods).put("operations",new JSONArray(OPERATIONS)));
             }
+            found.put(new JSONObject().put("device","phone").put("type","android")
+                .put("operations",new JSONArray().put("phone.status")));
             return new JSONObject().put("devices",found)
                 .put("note","Métodos descobertos não são automaticamente invocáveis.");
         }
