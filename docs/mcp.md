@@ -253,3 +253,36 @@ assíncrono), exposto ao app pela função `b7_mcp_json` da C ABI.
 `band_settings {"action":"status"}` consulta, sem selecionar dispositivo, se a janela de escrita aprovada está ativa. A confirmação é provisória: todo `set` verifica novamente a permissão no hub e no celular.
 
 Edição de lembretes existentes: `band_lists {"action":"set","kind":"reminders","id":"ID_DO_GET","message":"texto"}`. Exige janela de escrita aprovada, limita mensagem a 200 caracteres e preserva data/repetição. Use o `id` textual opaco (UUID) devolvido pela leitura `band_lists` de lembretes; não um inteiro. Não cria ou exclui lembretes. A confirmação é apenas da persistência local e do envio ao Gadgetbridge.
+
+### Loop Java isolado e concorrência MCP
+
+Os testes Java rápidos do flavor Casca ficam em
+`gb/overlay/app/src/testCasca/java/org/workspace/casca/` (JUnit 4):
+`CascaTermuxJobBookTest` cobre isolamento entre clientes, expiração, limitação
+4 em execução/32 registros e callbacks repetidos; `CascaJobDispatchTest`
+garante a afinidade de thread. As regras puras foram extraídas de Android para
+`CascaTermuxJobBook` e `CascaJobDispatch`. Use
+`GB_SKIP_RUST=1 GB_TASK=testCascaDebugUnitTest sh gb/build.sh` somente após
+build JNI válido. O polling JNI do serviço usa executor separado do Looper;
+notificações e comandos Gadgetbridge mantêm afinidade de main thread.
+**Não presume testes de aparelho:** `testCascaDebugUnitTest` roda na JVM.
+
+O profiler `scripts/profile_casca_java.py --output /tmp/casca-profile` mede
+repetições das tarefas Java e JUnit com cache aquecido, registra status
+UP-TO-DATE/FROM-CACHE em JSON e logs, e ativa `--profile` (HTML do Gradle).
+Exige `ANDROID_HOME`, cache JNI correspondente e Gradle previamente preparado;
+não faz assinatura nem build de release. Compare baseline e revisão no mesmo
+executor/cache equivalente. O build completo, sem `GB_SKIP_RUST`, continua
+sendo gate de release.
+
+Para rodar **somente** os testes Java puros, sem SDK nem Gradle:
+
+```sh
+python3 scripts/test_java_host.py --prepare-network
+python3 scripts/test_java_host.py  # execuções seguintes, offline
+```
+
+O primeiro comando baixa JUnit 4 e Hamcrest do Maven Central, conferindo
+SHA-256 fixos; os JARs ficam ignorados em `target/`. Requer JDK 8+; não
+são baixados no build de release. Também são executados pela tarefa
+`testCascaDebugUnitTest` do Gradle, para conferir a integração real.
