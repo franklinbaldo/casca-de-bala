@@ -194,3 +194,7 @@ Edição de lembretes existentes: `band_lists {"action":"set","kind":"reminders"
 `gb_bluetooth` (etapa inicial): `status` consulta estado do adaptador e `paired` lista dispositivos pareados usando IDs opacos. `scan` e `pair` retornam erro explícito até existir coletor de descoberta e confirmação Android; não anunciam operação concluída. Não expõe MAC na resposta.
 
 `gb_phone {"action":"status"}` apresenta o celular como dispositivo `phone` e consulta bateria, modelo, versão Android e armazenamento por APIs oficiais. Não lê contas, IMEI, serial, localização nem identificadores pessoais. O catálogo `gb_discover` também inclui o provedor Android. Eventos e sensores ficam para extensão posterior.
+
+## Compilação incremental
+
+Após um build completo que produziu `gb/work/app/src/casca/jniLibs/arm64-v8a/libcasca_mcp.so`, execute `GB_SKIP_RUST=1 GB_TASK=compileCascaDebugJavaWithJavac sh gb/build.sh` para verificar apenas Java sem reconstruir Rust. O script falha se a biblioteca JNI não existir. **Não use `GB_SKIP_RUST=1` para certificar um APK de release**: a biblioteca reaproveitada pode não corresponder ao Rust atual. A validação final exige build completo, testes Rust e verificação do APK.

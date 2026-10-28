@@ -11,7 +11,10 @@ ROOT=$(dirname "$GB")
 WORK="$GB/work"
 UPSTREAM=$(cat "$GB/UPSTREAM")
 : "${ANDROID_HOME:?Set ANDROID_HOME}"
-: "${ANDROID_NDK_HOME:?Set ANDROID_NDK_HOME to NDK 27.0.12077973}"
+# Java-only checks may reuse an already built JNI library.
+if [ "${GB_SKIP_RUST:-0}" != 1 ]; then
+    : "${ANDROID_NDK_HOME:?Set ANDROID_NDK_HOME to NDK 27.0.12077973}"
+fi
 
 # 1. Upstream at the pinned commit, reset to pristine on every run (build caches kept).
 if [ ! -d "$WORK/.git" ]; then
@@ -37,21 +40,31 @@ cp -R "$ROOT/docs/licenses/." "$LEGAL/"
 cp -R "$ROOT/third_party/." "$LEGAL/"
 
 # 3. The MCP hub, without the BLE lab: casca-mcp through its JNI entry.
-TOOLS="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
-test -x "$TOOLS/aarch64-linux-android31-clang"
-export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$TOOLS/aarch64-linux-android31-clang"
-export CC_aarch64_linux_android="$TOOLS/aarch64-linux-android31-clang"
-export AR_aarch64_linux_android="$TOOLS/llvm-ar"
-export CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS='-C link-arg=-Wl,-z,max-page-size=16384'
-export CARGO_TARGET_DIR="$ROOT/target/android"
-cargo build --locked --release --target aarch64-linux-android --manifest-path "$ROOT/Cargo.toml" -p casca-mcp-jni
 JNI="$WORK/app/src/casca/jniLibs/arm64-v8a"
 mkdir -p "$JNI"
-cp "$CARGO_TARGET_DIR/aarch64-linux-android/release/libcasca_mcp.so" "$JNI/"
-"$TOOLS/llvm-nm" -D --defined-only "$JNI/libcasca_mcp.so" | grep -q Java_org_workspace_casca_McpNative_control
+if [ "${GB_SKIP_RUST:-0}" = 1 ]; then
+    if [ ! -s "$JNI/libcasca_mcp.so" ]; then
+        echo 'GB_SKIP_RUST=1 requires an existing libcasca_mcp.so in gb/work; run a full build first.' >&2
+        exit 1
+    fi
+    echo 'Reusing existing JNI library (Java-only validation; not a complete APK verification).'
+else
+    TOOLS="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+    test -x "$TOOLS/aarch64-linux-android31-clang"
+    export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$TOOLS/aarch64-linux-android31-clang"
+    export CC_aarch64_linux_android="$TOOLS/aarch64-linux-android31-clang"
+    export AR_aarch64_linux_android="$TOOLS/llvm-ar"
+    export CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS='-C link-arg=-Wl,-z,max-page-size=16384'
+    export CARGO_TARGET_DIR="$ROOT/target/android"
+    cargo build --locked --release --target aarch64-linux-android --manifest-path "$ROOT/Cargo.toml" -p casca-mcp-jni
+    cp "$CARGO_TARGET_DIR/aarch64-linux-android/release/libcasca_mcp.so" "$JNI/"
+    "$TOOLS/llvm-nm" -D --defined-only "$JNI/libcasca_mcp.so" | grep -q Java_org_workspace_casca_McpNative_control
+fi
 
 # 4. Gadgetbridge's own build.
 cd "$WORK"
 # shellcheck disable=SC2086 # GB_GRADLE_ARGS is a word list on purpose
 ./gradlew --no-daemon --max-workers="${GB_WORKERS:-2}" ${GB_GRADLE_ARGS:-} "${GB_TASK:-assembleCascaDebug}"
-ls -la app/build/outputs/apk/casca/*/
+case "${GB_TASK:-assembleCascaDebug}" in
+    *assemble*) ls -la app/build/outputs/apk/casca/*/ ;;
+esac
