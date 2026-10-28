@@ -111,6 +111,9 @@ public final class CascaMcpService extends Service {
 
     private JSONObject handle(String kind,JSONObject args)throws JSONException{
         switch(kind){
+            case "gb.phone":{
+                return CascaPhone.status(this);
+            }
             case "gb.bluetooth":{
                 return CascaBluetooth.handle(this,args);
             }
