@@ -127,3 +127,6 @@ pub fn decode_spo2_v2(
     }
     Ok(Availability::Available(rows))
 }
+
+#[cfg(test)]
+mod tests;

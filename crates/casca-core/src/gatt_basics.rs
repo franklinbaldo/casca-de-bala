@@ -215,3 +215,6 @@ pub fn interpret(kind: Kind, reader: Reader, outcome: ReadOutcome<'_>) -> ReadSt
 pub fn device_source(_pnp: &Pnp) -> Availability<u16> {
     Availability::Unknown
 }
+
+#[cfg(test)]
+mod tests;

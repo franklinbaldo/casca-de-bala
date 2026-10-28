@@ -4,7 +4,7 @@ use std::io::Write;
 use std::process::{Command, Stdio};
 fn fixture() -> Value {
     serde_json::from_str(include_str!(
-        "../../../fixtures/basic-snapshot-synthetic.json"
+        "../../../../fixtures/basic-snapshot-synthetic.json"
     ))
     .unwrap()
 }
