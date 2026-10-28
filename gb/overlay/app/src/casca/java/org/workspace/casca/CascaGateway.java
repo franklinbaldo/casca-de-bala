@@ -39,7 +39,9 @@ final class CascaGateway {
                     .put("coordinator_methods",methods).put("operations",new JSONArray(OPERATIONS)));
             }
             found.put(new JSONObject().put("device","phone").put("type","android")
-                .put("operations",new JSONArray().put("phone.status")));
+                .put("operations",new JSONArray())
+                .put("tools",new JSONArray().put("gb_phone").put("gb_shell")
+                    .put("gb_shell_result").put("gb_bluetooth")));
             return new JSONObject().put("devices",found)
                 .put("note","Métodos descobertos não são automaticamente invocáveis.");
         }

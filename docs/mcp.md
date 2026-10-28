@@ -150,6 +150,30 @@ escrita (`lab_unlock_write`):
 
 Nada disso vai para o `lab_log`, que registra só quem importou e o quê.
 
+## Termux pelo MCP (experimental)
+
+A tela Casca MCP inclui **Preparar Termux**. Se o aplicativo não estiver
+instalado, abre sua página oficial do F-Droid; se estiver, oferece solicitar
+`com.termux.permission.RUN_COMMAND` ao Android ou abrir as configurações de
+permissões do Casca. No Termux, o usuário ainda precisa configurar
+`allow-external-apps = true` em `~/.termux/termux.properties` e reiniciar
+Termux. Não há instalação silenciosa nem contorno de permissão.
+
+`gb_shell {"command":"pwd"}` envia um comando `bash -lc` pelo `RUN_COMMAND`
+oficial, após janela de escrita aprovada no celular, e responde com `job_id`,
+`status=submitted` e `confirmed=false`. Em seguida,
+`gb_shell_result {"job_id":"..."}` devolve `running` ou `finished`
+com `stdout`, `stderr`, `exit_code` e indicação de truncamento. Os resultados
+estão vinculados ao mesmo cliente MCP, limitados a quatro execuções
+simultâneas, 32 resultados e 8192 caracteres por fluxo. São **voláteis**:
+reiniciar o processo Casca descarta jobs, e comandos acima de uma hora podem
+expirar. Ainda não há terminal interativo/PTTY, cancelamento ou persistência.
+O retorno `submitted` nunca é uma confirmação de execução no Android.
+
+## Sensores e rede do celular (somente leitura)
+
+`gb_phone {"action":"status"}` inclui transportes de rede (Wi-Fi, celular, VPN, Ethernet e validação), sem SSID, IP ou contas. `gb_phone {"action":"sensors"}` lista nomes e tipos disponíveis; não recolhe medições nem localização. A coleta real de amostras permanece fora do escopo desta versão.
+
 ## Fila de tarefas
 
 O servidor roda em Rust, mas só o app fala Bluetooth. Uma ferramenta que

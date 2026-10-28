@@ -99,10 +99,24 @@ fn tools() -> Value {
             "annotations": read_only,
         },
         {
+            "name": "gb_shell",
+            "title": "Shell do Termux",
+            "description": "Executa um comando no Termux instalado e autorizado, mediante janela de escrita aprovada no celular.",
+            "inputSchema": {"type":"object","properties":{"command":{"type":"string","minLength":1,"maxLength":4096}},"required":["command"],"additionalProperties":false},
+            "annotations": {"readOnlyHint":false,"openWorldHint":true},
+        },
+        {
+            "name": "gb_shell_result",
+            "title": "Resultado da shell do Termux",
+            "description": "Consulta stdout, stderr e exit code de uma solicitação gb_shell, vinculada ao mesmo cliente MCP.",
+            "inputSchema": {"type":"object","properties":{"job_id":{"type":"string","minLength":36,"maxLength":36}},"required":["job_id"],"additionalProperties":false},
+            "annotations": {"readOnlyHint":true,"openWorldHint":false},
+        },
+        {
             "name": "gb_phone",
             "title": "Celular Android",
             "description": "Telemetria do próprio celular: bateria, armazenamento e informações gerais do Android, sem identificadores pessoais.",
-            "inputSchema": {"type":"object","properties":{"action":{"type":"string","enum":["status"]}},"required":["action"],"additionalProperties":false},
+            "inputSchema": {"type":"object","properties":{"action":{"type":"string","enum":["status","sensors"]}},"required":["action"],"additionalProperties":false},
             "annotations": read_only,
         },
         {
@@ -297,27 +311,97 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
         return reply;
     }
     match params["name"].as_str() {
-        Some("gb_phone") => {
-            let Some(a)=arguments.as_object() else {return error(id,-32602,"object required");};
-            if a.len()!=1 || a.get("action").and_then(Value::as_str)!=Some("status") {
-                return error(id,-32602,"gb_phone accepts only action=status");
+        Some("gb_shell") => {
+            let Some(a) = arguments.as_object() else {
+                return error(id, -32602, "object required");
+            };
+            if a.len() != 1 {
+                return error(id, -32602, "only command is accepted");
             }
-            return on_phone(id,"gb.phone",arguments.clone(),Duration::from_secs(10));
+            let Some(command) = a.get("command").and_then(Value::as_str) else {
+                return error(id, -32602, "command required");
+            };
+            if command.trim().is_empty() || command.len() > 4096 {
+                return error(id, -32602, "command length invalid");
+            }
+            if !hub::write_allowed() {
+                return failure(
+                    id,
+                    "Autorize a janela de escrita no celular antes de executar comandos.",
+                );
+            }
+            return on_phone(
+                id,
+                "gb.shell",
+                json!({"command":command,"client":client}),
+                Duration::from_secs(15),
+            );
+        }
+        Some("gb_shell_result") => {
+            let Some(a) = arguments.as_object() else {
+                return error(id, -32602, "object required");
+            };
+            if a.len() != 1 {
+                return error(id, -32602, "only job_id is accepted");
+            }
+            let Some(job_id) = a.get("job_id").and_then(Value::as_str) else {
+                return error(id, -32602, "job_id required");
+            };
+            if job_id.len() != 36 {
+                return error(id, -32602, "invalid job_id");
+            }
+            return on_phone(
+                id,
+                "gb.shell.result",
+                json!({"job_id":job_id,"client":client}),
+                Duration::from_secs(15),
+            );
+        }
+        Some("gb_phone") => {
+            let Some(a) = arguments.as_object() else {
+                return error(id, -32602, "object required");
+            };
+            let action = a.get("action").and_then(Value::as_str);
+            if a.len() != 1 || !matches!(action, Some("status" | "sensors")) {
+                return error(id, -32602, "gb_phone action must be status or sensors");
+            }
+            return on_phone(id, "gb.phone", arguments.clone(), Duration::from_secs(10));
         }
         Some("gb_bluetooth") => {
-            let Some(a)=arguments.as_object() else {return error(id,-32602,"object required");};
-            if a.keys().any(|k| k!="action"&&k!="address") {return error(id,-32602,"unknown argument");}
-            let action=a.get("action").and_then(Value::as_str).unwrap_or("");
-            if !["status","paired","scan","pair"].contains(&action) {return error(id,-32602,"invalid action");}
-            if action!="pair" && a.contains_key("address") {return error(id,-32602,"address only for pair");}
-            if action=="pair" {
-                let Some(addr)=a.get("address").and_then(Value::as_str) else {return error(id,-32602,"address required");};
-                if addr.len()!=17 || !addr.split(':').all(|v|v.len()==2&&v.bytes().all(|c|c.is_ascii_hexdigit())) {
-                    return error(id,-32602,"invalid Bluetooth address");
-                }
-                if !hub::write_allowed() {return failure(id,"Aprovação de escrita necessária para pareamento.");}
+            let Some(a) = arguments.as_object() else {
+                return error(id, -32602, "object required");
+            };
+            if a.keys().any(|k| k != "action" && k != "address") {
+                return error(id, -32602, "unknown argument");
             }
-            return on_phone(id,"gb.bluetooth",arguments.clone(),Duration::from_secs(20));
+            let action = a.get("action").and_then(Value::as_str).unwrap_or("");
+            if !["status", "paired", "scan", "pair"].contains(&action) {
+                return error(id, -32602, "invalid action");
+            }
+            if action != "pair" && a.contains_key("address") {
+                return error(id, -32602, "address only for pair");
+            }
+            if action == "pair" {
+                let Some(addr) = a.get("address").and_then(Value::as_str) else {
+                    return error(id, -32602, "address required");
+                };
+                if addr.len() != 17
+                    || !addr
+                        .split(':')
+                        .all(|v| v.len() == 2 && v.bytes().all(|c| c.is_ascii_hexdigit()))
+                {
+                    return error(id, -32602, "invalid Bluetooth address");
+                }
+                if !hub::write_allowed() {
+                    return failure(id, "Aprovação de escrita necessária para pareamento.");
+                }
+            }
+            return on_phone(
+                id,
+                "gb.bluetooth",
+                arguments.clone(),
+                Duration::from_secs(20),
+            );
         }
         Some("gb_devices") => {
             if !arguments.is_null() && !arguments.as_object().is_some_and(|a| a.is_empty()) {
@@ -327,23 +411,34 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
         }
         Some("gb_discover" | "gb_inspect" | "gb_invoke") => {
             let name = params["name"].as_str().unwrap_or_default();
-            let Some(args) = arguments.as_object() else { return error(id,-32602,"object required"); };
+            let Some(args) = arguments.as_object() else {
+                return error(id, -32602, "object required");
+            };
             let keys: &[&str] = match name {
                 "gb_discover" => &["device"],
                 "gb_inspect" => &["operation"],
                 _ => &["operation", "args"],
             };
             if args.keys().any(|k| !keys.contains(&k.as_str())) {
-                return error(id,-32602,"unknown gateway argument");
+                return error(id, -32602, "unknown gateway argument");
             }
-            if name != "gb_discover" && !args.get("operation").and_then(Value::as_str).is_some_and(|v| !v.is_empty() && v.len() <= 80) {
-                return error(id,-32602,"operation required");
+            if name != "gb_discover"
+                && !args
+                    .get("operation")
+                    .and_then(Value::as_str)
+                    .is_some_and(|v| !v.is_empty() && v.len() <= 80)
+            {
+                return error(id, -32602, "operation required");
             }
             if name == "gb_invoke" && args.get("args").is_some_and(|v| !v.is_object()) {
-                return error(id,-32602,"args must be an object");
+                return error(id, -32602, "args must be an object");
             }
-            let kind = match name {"gb_discover"=>"gb.discover","gb_inspect"=>"gb.inspect",_=>"gb.invoke"};
-            return on_phone(id,kind,arguments.clone(),Duration::from_secs(15));
+            let kind = match name {
+                "gb_discover" => "gb.discover",
+                "gb_inspect" => "gb.inspect",
+                _ => "gb.invoke",
+            };
+            return on_phone(id, kind, arguments.clone(), Duration::from_secs(15));
         }
         Some("band_lists") => return band_lists(id, arguments),
         Some("band_settings") => return band_settings(id, arguments),
@@ -351,7 +446,10 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
             if !arguments.is_null() && !arguments.is_object() {
                 return error(id, -32602, "expected object");
             }
-            if arguments.as_object().is_some_and(|a| a.keys().any(|k| k != "minutes")) {
+            if arguments
+                .as_object()
+                .is_some_and(|a| a.keys().any(|k| k != "minutes"))
+            {
                 return error(id, -32602, "only minutes is accepted");
             }
             let minutes = match arguments.get("minutes") {
@@ -361,18 +459,26 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
                     _ => return error(id, -32602, "minutes must be an integer between 1 and 60"),
                 },
             };
-            let request = match hub::request_approval(client, 0, &format!("{minutes} min"), "write_unlock") {
-                Ok(id) => id,
-                Err(_) => return failure(id, "Há solicitações de aprovação demais no celular."),
-            };
+            let request =
+                match hub::request_approval(client, 0, &format!("{minutes} min"), "write_unlock") {
+                    Ok(id) => id,
+                    Err(_) => {
+                        return failure(id, "Há solicitações de aprovação demais no celular.")
+                    }
+                };
             let who = client.to_owned();
-            std::thread::spawn(move || match hub::wait_decision(request, Duration::from_secs(600)) {
-                Some(hub::Decision::Approve) => {
-                    hub::lock().write_until = Some(Instant::now() + Duration::from_secs(minutes * 60));
-                    hub::log(&format!("janela de escrita aprovada para {who}"));
+            std::thread::spawn(move || {
+                match hub::wait_decision(request, Duration::from_secs(600)) {
+                    Some(hub::Decision::Approve) => {
+                        hub::lock().write_until =
+                            Some(Instant::now() + Duration::from_secs(minutes * 60));
+                        hub::log(&format!("janela de escrita aprovada para {who}"));
+                    }
+                    Some(hub::Decision::Deny) => {
+                        hub::log(&format!("janela de escrita negada para {who}"))
+                    }
+                    None => hub::log(&format!("solicitação de escrita expirou para {who}")),
                 }
-                Some(hub::Decision::Deny) => hub::log(&format!("janela de escrita negada para {who}")),
-                None => hub::log(&format!("solicitação de escrita expirou para {who}")),
             });
             return text(id, format!("Solicitação enviada ao celular. Após a aprovação, a escrita ficará liberada por {minutes} minutos."));
         }
@@ -456,6 +562,11 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
                     "access": "estado e dados de saúde guardados pelo celular (band_read), mensagens e vibração no pulso (band_notify, band_find) e sincronização (band_sync)",
                     "last_reading_unix_ms": snapshot_at,
                     "tools": ["band_devices", "band_capabilities", "band_lists", "band_settings", "band_unlock_write", "band_read", "band_snapshot", "band_notify", "band_find", "band_sync"],
+                }, {
+                    "id": "phone",
+                    "model": "Android",
+                    "access": "Estado do celular e Bluetooth; shell Termux somente após permissão e janela de escrita aprovada",
+                    "tools": ["gb_phone", "gb_bluetooth", "gb_devices", "gb_discover", "gb_inspect", "gb_invoke", "gb_shell", "gb_shell_result"],
                 }],
             });
             text(id, pretty(&body))
@@ -480,10 +591,12 @@ fn band_lists(id: Value, arguments: &Value) -> Value {
     let Some(args) = arguments.as_object() else {
         return error(id, -32602, "band_lists expects an object");
     };
-    if args
-        .keys()
-        .any(|k| !["action", "kind", "device", "slot", "enabled", "hour", "minute", "id", "message"].contains(&k.as_str()))
-    {
+    if args.keys().any(|k| {
+        ![
+            "action", "kind", "device", "slot", "enabled", "hour", "minute", "id", "message",
+        ]
+        .contains(&k.as_str())
+    }) {
         return error(id, -32602, "unknown band_lists argument");
     }
     let action = match args.get("action").and_then(Value::as_str) {
@@ -498,14 +611,18 @@ fn band_lists(id: Value, arguments: &Value) -> Value {
         None => Value::Null,
         Some(Value::String(d))
             if d.len() == 12
-                && d.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()) =>
+                && d.bytes()
+                    .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()) =>
         {
             Value::String(d.clone())
         }
         _ => return error(id, -32602, "device must be a 12-character opaque id"),
     };
     if action == "get" {
-        if ["slot", "enabled", "hour", "minute", "id", "message"].iter().any(|k| args.contains_key(*k)) {
+        if ["slot", "enabled", "hour", "minute", "id", "message"]
+            .iter()
+            .any(|k| args.contains_key(*k))
+        {
             return error(id, -32602, "get does not accept alarm update fields");
         }
         return on_phone(
@@ -516,7 +633,10 @@ fn band_lists(id: Value, arguments: &Value) -> Value {
         );
     }
     if kind == "reminders" {
-        if ["slot", "enabled", "hour", "minute"].iter().any(|k| args.contains_key(*k)) {
+        if ["slot", "enabled", "hour", "minute"]
+            .iter()
+            .any(|k| args.contains_key(*k))
+        {
             return error(id, -32602, "reminders accept only id and message");
         }
         let Some(reminder_id) = args.get("id").and_then(Value::as_str) else {
@@ -535,9 +655,17 @@ fn band_lists(id: Value, arguments: &Value) -> Value {
             return error(id, -32602, "message must have 1-200 characters");
         }
         if !hub::write_allowed() {
-            return failure(id, "Escrita bloqueada. Solicite band_unlock_write e aguarde aprovação.");
+            return failure(
+                id,
+                "Escrita bloqueada. Solicite band_unlock_write e aguarde aprovação.",
+            );
         }
-        return on_phone(id, "band.lists", json!({"action":"set","kind":"reminders","device":device,"id":reminder_id,"message":message}), Duration::from_secs(20));
+        return on_phone(
+            id,
+            "band.lists",
+            json!({"action":"set","kind":"reminders","device":device,"id":reminder_id,"message":message}),
+            Duration::from_secs(20),
+        );
     }
     if args.contains_key("id") || args.contains_key("message") {
         return error(id, -32602, "alarms do not accept reminder fields");
@@ -569,7 +697,10 @@ fn band_lists(id: Value, arguments: &Value) -> Value {
         return error(id, -32602, "set needs enabled, hour or minute");
     }
     if !hub::write_allowed() {
-        return failure(id, "Escrita bloqueada. Solicite band_unlock_write e aguarde a aprovação no celular.");
+        return failure(
+            id,
+            "Escrita bloqueada. Solicite band_unlock_write e aguarde a aprovação no celular.",
+        );
     }
     let mut job = json!({"kind": "alarms", "action": "set", "device": device, "slot": slot});
     if let Some(v) = enabled {
@@ -604,16 +735,20 @@ fn band_settings(id: Value, arguments: &Value) -> Value {
         if args.len() != 1 {
             return error(id, -32602, "status accepts only action");
         }
-        return text(id, pretty(&json!({
-            "write_allowed": hub::write_allowed(),
-            "note": "A aprovação pode expirar; cada escrita é validada novamente no celular."
-        })));
+        return text(
+            id,
+            pretty(&json!({
+                "write_allowed": hub::write_allowed(),
+                "note": "A aprovação pode expirar; cada escrita é validada novamente no celular."
+            })),
+        );
     }
     let device = match args.get("device") {
         None => Value::Null,
         Some(Value::String(d))
             if d.len() == 12
-                && d.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()) =>
+                && d.bytes()
+                    .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()) =>
         {
             Value::String(d.clone())
         }
@@ -621,22 +756,37 @@ fn band_settings(id: Value, arguments: &Value) -> Value {
     };
     let key = match args.get("key") {
         None if action == "get" => Value::Null,
-        Some(Value::String(k)) if BOOLEAN_SETTINGS.contains(&k.as_str()) => Value::String(k.clone()),
+        Some(Value::String(k)) if BOOLEAN_SETTINGS.contains(&k.as_str()) => {
+            Value::String(k.clone())
+        }
         _ => return error(id, -32602, "key must be an allowed boolean setting"),
     };
     if action == "get" {
         if args.contains_key("value") {
             return error(id, -32602, "value is not allowed for get");
         }
-        return on_phone(id, "band.settings", json!({"action": action, "device": device, "key": key}), Duration::from_secs(10));
+        return on_phone(
+            id,
+            "band.settings",
+            json!({"action": action, "device": device, "key": key}),
+            Duration::from_secs(10),
+        );
     }
     let Some(value) = args.get("value").and_then(Value::as_bool) else {
         return error(id, -32602, "set requires a boolean value");
     };
     if !hub::write_allowed() {
-        return failure(id, "Escrita bloqueada. Solicite band_unlock_write e aguarde a aprovação no celular.");
+        return failure(
+            id,
+            "Escrita bloqueada. Solicite band_unlock_write e aguarde a aprovação no celular.",
+        );
     }
-    on_phone(id, "band.settings", json!({"action": action, "device": device, "key": key, "value": value}), Duration::from_secs(10))
+    on_phone(
+        id,
+        "band.settings",
+        json!({"action": action, "device": device, "key": key, "value": value}),
+        Duration::from_secs(10),
+    )
 }
 
 /// Text that fits a notification: present, trimmed, within `max` characters.

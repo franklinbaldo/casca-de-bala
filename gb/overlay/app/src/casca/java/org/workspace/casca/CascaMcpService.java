@@ -87,7 +87,7 @@ public final class CascaMcpService extends Service {
     }
 
     private void runJobs()throws JSONException{
-        JSONArray jobs=McpNative.call(new JSONObject().put("op","jobs").put("prefixes",new JSONArray().put("band."))).getJSONArray("jobs");
+        JSONArray jobs=McpNative.call(new JSONObject().put("op","jobs").put("prefixes",new JSONArray().put("band.").put("gb."))).getJSONArray("jobs");
         for(int i=0;i<jobs.length();i++){
             JSONObject job=jobs.getJSONObject(i);long id=job.getLong("id");
             JSONObject args=job.optJSONObject("args");if(args==null)args=new JSONObject();
@@ -111,8 +111,15 @@ public final class CascaMcpService extends Service {
 
     private JSONObject handle(String kind,JSONObject args)throws JSONException{
         switch(kind){
+            case "gb.shell":{
+                return CascaTermux.run(this,args);
+            }
+            case "gb.shell.result":{
+                return CascaTermux.result(args);
+            }
             case "gb.phone":{
-                return CascaPhone.status(this);
+                return "sensors".equals(args.optString("action"))
+                    ?CascaPhone.sensors(this):CascaPhone.status(this);
             }
             case "gb.bluetooth":{
                 return CascaBluetooth.handle(this,args);
@@ -120,7 +127,12 @@ public final class CascaMcpService extends Service {
             case "gb.devices":{
                 JSONArray list=new JSONArray();
                 for(GBDevice device:devices())list.put(describe(device));
-                return new JSONObject().put("devices",list).put("provider","Gadgetbridge");
+                list.put(new JSONObject().put("id","phone")
+                    .put("type","android").put("model",android.os.Build.MODEL)
+                    .put("provider","Android").put("operations",new JSONArray()
+                        .put("gb_phone").put("gb_bluetooth").put("gb_shell").put("gb_shell_result")));
+                return new JSONObject().put("devices",list)
+                    .put("providers",new JSONArray().put("Gadgetbridge").put("Android"));
             }
             case "gb.discover":case "gb.inspect":case "gb.invoke":{
                 return CascaGateway.handle(kind,args,devices());
