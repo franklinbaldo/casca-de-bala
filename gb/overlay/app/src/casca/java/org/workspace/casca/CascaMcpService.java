@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
@@ -42,7 +44,13 @@ public final class CascaMcpService extends Service {
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final Set<Long> shown=new HashSet<>();
     private final Runnable poll=this::poll;
+    // JNI polling and JSON parsing never run on Android's main looper.
+    // Distinct serial executor keeps long database reads from delaying approvals.
+    private final ExecutorService poller=Executors.newSingleThreadExecutor();
     private final ExecutorService reads=Executors.newSingleThreadExecutor();
+    private final AtomicBoolean polling=new AtomicBoolean();
+    private volatile boolean active;
+
     private NotificationManager notifications;
 
     @Override public IBinder onBind(Intent intent){return null;}
@@ -60,53 +68,88 @@ public final class CascaMcpService extends Service {
             port=reply.optInt("port",McpNative.DEFAULT_PORT);
         }catch(JSONException|RuntimeException|LinkageError failure){stopSelf();return START_NOT_STICKY;}
         McpNative.log("app: servidor ligado na porta "+port+" (Gadgetbridge)");
-        running=true;notifications.notify(RUNNING_ID,ongoing(getString(R.string.casca_running,port)));handler.post(poll);
+        active=true;running=true;notifications.notify(RUNNING_ID,ongoing(getString(R.string.casca_running,port)));handler.post(poll);
         return START_NOT_STICKY;
     }
 
     @Override public void onDestroy(){
-        handler.removeCallbacksAndMessages(null);reads.shutdownNow();
-        if(running){try{McpNative.op("stop");}catch(JSONException|RuntimeException|LinkageError ignored){}}
-        running=false;
+        boolean wasRunning=running;
+        active=false;running=false;handler.removeCallbacksAndMessages(null);poller.shutdownNow();reads.shutdownNow();
+        if(wasRunning){try{McpNative.op("stop");}catch(JSONException|RuntimeException|LinkageError ignored){}}
         if(notifications!=null)for(long id:shown)notifications.cancel(APPROVAL_BASE+(int)id);
         shown.clear();super.onDestroy();
     }
 
-    /** One approve/deny notification per pending request; answered ones are cleared. */
+    /** Poll JNI off the UI thread. Never stack poll requests if the native hub is busy. */
     private void poll(){
+        if(!active)return;
+        if(polling.compareAndSet(false,true)){
+            try{poller.execute(()->{
+                try{
+                    JSONArray pending=McpNative.op("status").getJSONArray("pending");
+                    if(!active)return;
+                    handler.post(()->showApprovals(pending));
+                    runJobs();
+                }catch(JSONException|RuntimeException|LinkageError ignored){}
+                finally{polling.set(false);}
+            });}
+            catch(RejectedExecutionException rejected){polling.set(false);}
+        }
+        if(active)handler.postDelayed(poll,500);
+    }
+
+    /** Only notification state is touched on the main looper. */
+    private void showApprovals(JSONArray pending){
+        if(!active)return;
         try{
-            JSONArray pending=McpNative.op("status").getJSONArray("pending");Set<Long> now=new HashSet<>();
+            Set<Long> now=new HashSet<>();
             for(int i=0;i<pending.length();i++){
                 JSONObject p=pending.getJSONObject(i);long id=p.getLong("id");now.add(id);
                 if(shown.add(id))notifications.notify(APPROVAL_BASE+(int)id,approval(id,p.optString("purpose","pairing"),p.getString("client"),p.getInt("code"),p.getString("peer")));
             }
             for(long id:new HashSet<>(shown))if(!now.contains(id)){shown.remove(id);notifications.cancel(APPROVAL_BASE+(int)id);}
-        }catch(JSONException|RuntimeException|LinkageError ignored){}
-        try{runJobs();}catch(JSONException|RuntimeException|LinkageError ignored){}
-        handler.postDelayed(poll,500);
+        }catch(JSONException|RuntimeException ignored){}
     }
 
+    /** Gadgetbridge device access stays on the UI thread; DB/Termux are queued
+     * on a background executor. Each executor is FIFO; cross-executor completion
+     * order is unspecified (jobs are identified by their native IDs). */
     private void runJobs()throws JSONException{
+        if(!active)return;
         JSONArray jobs=McpNative.call(new JSONObject().put("op","jobs").put("prefixes",new JSONArray().put("band.").put("gb."))).getJSONArray("jobs");
-        for(int i=0;i<jobs.length();i++){
+        for(int i=0;i<jobs.length()&&active;i++){
             JSONObject job=jobs.getJSONObject(i);long id=job.getLong("id");
             JSONObject args=job.optJSONObject("args");if(args==null)args=new JSONObject();
             String kind=job.getString("kind");
-            // Database reads stay off the main thread.
-            if("band.read".equals(kind)||"band.lists".equals(kind)){
-                JSONObject a=args;reads.execute(()->complete(id,kind,a));continue;
+            JSONObject finalArgs=args;
+            if(CascaJobDispatch.mainThreadRequired(kind,args.optString("action",""))){
+                handler.post(()->{
+                    if(!active)return;
+                    JSONObject result=compute(kind,finalArgs);
+                    try{reads.execute(()->sendResult(id,result));}
+                    catch(RejectedExecutionException ignored){}
+                });
+            }else{
+                try{reads.execute(()->complete(id,kind,finalArgs));}
+                catch(RejectedExecutionException ignored){}
             }
-            complete(id,kind,args);
         }
     }
 
+    private JSONObject compute(String kind,JSONObject args){
+        try{return handle(kind,args);}
+        catch(JSONException|RuntimeException failed){
+            try{return error("Falha ao atender o pedido: "+failed.getClass().getSimpleName());}
+            catch(JSONException impossible){throw new IllegalStateException(impossible);}
+        }
+    }
     private void complete(long id,String kind,JSONObject args){
-        try{
-            JSONObject result;
-            try{result=handle(kind,args);}
-            catch(JSONException|RuntimeException failed){result=error("Falha ao atender o pedido: "+failed.getClass().getSimpleName());}
-            McpNative.call(new JSONObject().put("op","complete").put("id",id).put("result",result));
-        }catch(JSONException|RuntimeException|LinkageError ignored){}
+        if(active)sendResult(id,compute(kind,args));
+    }
+    private void sendResult(long id,JSONObject result){
+        if(!active)return;
+        try{McpNative.call(new JSONObject().put("op","complete").put("id",id).put("result",result));}
+        catch(JSONException|RuntimeException|LinkageError ignored){}
     }
 
     private JSONObject handle(String kind,JSONObject args)throws JSONException{

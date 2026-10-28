@@ -12,6 +12,13 @@ NAME=$(python3 -c 'import json;print(json.load(open("artifacts/ci/version.json")
 if test "${CI_PREPARE_NETWORK:-0}" = 1; then
     cargo fetch --locked
 fi
+# Fast, pure-JVM JUnit contract checks: independent of Gradle/SDK and APK.
+# Network prep is explicit and JAR bytes are SHA-256 pinned.
+if test "${CI_PREPARE_NETWORK:-0}" = 1; then
+    python3 scripts/test_java_host.py --prepare-network
+else
+    python3 scripts/test_java_host.py
+fi
 python3 scripts/rust-licenses.py --check
 cargo test --locked --offline
 cargo fmt --all -- --check
