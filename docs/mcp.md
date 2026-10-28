@@ -44,7 +44,7 @@ Bluetooth. `band_notify` só cria uma notificação no próprio celular, no cana
 
 ### Provedor Android (`phone`)
 
-`gb_phone {"action":"status"}` apresenta o celular como dispositivo `phone` e consulta bateria, modelo, versão Android e armazenamento por APIs oficiais. Não lê contas, IMEI, serial, localização nem identificadores pessoais. O catálogo `gb_discover` também inclui o provedor Android. Eventos e sensores ficam para extensão posterior.
+`gb_phone {"action":"status"}` apresenta o celular como dispositivo `phone` e consulta bateria, modelo, versão Android e armazenamento por APIs oficiais. Não lê contas, IMEI, serial, localização nem identificadores pessoais. O catálogo `gb_discover` também inclui o provedor Android. Eventos e leituras de sensores ficam para extensão posterior.
 
 ## Pulseira via Gadgetbridge
 
