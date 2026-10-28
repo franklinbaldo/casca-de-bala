@@ -111,7 +111,9 @@ fn tools() -> Value {
                     "slot": {"type": "integer", "minimum": 0, "maximum": 31, "description": "somente set de alarme existente"},
                     "enabled": {"type": "boolean"},
                     "hour": {"type": "integer", "minimum": 0, "maximum": 23},
-                    "minute": {"type": "integer", "minimum": 0, "maximum": 59}
+                    "minute": {"type": "integer", "minimum": 0, "maximum": 59},
+                    "id": {"type":"string","minLength":1,"maxLength":128,"description":"ID opaco devolvido por band_lists(get,reminders)"},
+                    "message": {"type":"string","minLength":1,"maxLength":200}
                 },
                 "required": ["action", "kind"],
                 "additionalProperties": false
@@ -383,14 +385,14 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
 }
 
 /// Reads existing lists or updates an existing alarm slot with explicit phone approval.
-/// Alarm creation, deletion and reminder writes are intentionally not exposed.
+/// Alarm creation/deletion and reminder creation/deletion remain unavailable.
 fn band_lists(id: Value, arguments: &Value) -> Value {
     let Some(args) = arguments.as_object() else {
         return error(id, -32602, "band_lists expects an object");
     };
     if args
         .keys()
-        .any(|k| !["action", "kind", "device", "slot", "enabled", "hour", "minute"].contains(&k.as_str()))
+        .any(|k| !["action", "kind", "device", "slot", "enabled", "hour", "minute", "id", "message"].contains(&k.as_str()))
     {
         return error(id, -32602, "unknown band_lists argument");
     }
@@ -413,7 +415,7 @@ fn band_lists(id: Value, arguments: &Value) -> Value {
         _ => return error(id, -32602, "device must be a 12-character opaque id"),
     };
     if action == "get" {
-        if ["slot", "enabled", "hour", "minute"].iter().any(|k| args.contains_key(*k)) {
+        if ["slot", "enabled", "hour", "minute", "id", "message"].iter().any(|k| args.contains_key(*k)) {
             return error(id, -32602, "get does not accept alarm update fields");
         }
         return on_phone(
@@ -423,8 +425,32 @@ fn band_lists(id: Value, arguments: &Value) -> Value {
             Duration::from_secs(20),
         );
     }
-    if kind != "alarms" {
-        return error(id, -32602, "set is available only for existing alarms");
+    if kind == "reminders" {
+        if ["slot", "enabled", "hour", "minute"].iter().any(|k| args.contains_key(*k)) {
+            return error(id, -32602, "reminders accept only id and message");
+        }
+        let Some(reminder_id) = args.get("id").and_then(Value::as_str) else {
+            return error(id, -32602, "existing reminder id string required");
+        };
+        if reminder_id.is_empty()
+            || reminder_id.len() > 128
+            || reminder_id.chars().any(|c| c.is_control())
+        {
+            return error(id, -32602, "invalid opaque reminder id");
+        }
+        let Some(message) = args.get("message").and_then(Value::as_str) else {
+            return error(id, -32602, "message required");
+        };
+        if message.trim().is_empty() || message.chars().count() > 200 {
+            return error(id, -32602, "message must have 1-200 characters");
+        }
+        if !hub::write_allowed() {
+            return failure(id, "Escrita bloqueada. Solicite band_unlock_write e aguarde aprovação.");
+        }
+        return on_phone(id, "band.lists", json!({"action":"set","kind":"reminders","device":device,"id":reminder_id,"message":message}), Duration::from_secs(20));
+    }
+    if args.contains_key("id") || args.contains_key("message") {
+        return error(id, -32602, "alarms do not accept reminder fields");
     }
     let slot = match args.get("slot").and_then(Value::as_u64) {
         Some(n @ 0..=31) => n,

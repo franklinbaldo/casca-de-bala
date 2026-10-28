@@ -91,4 +91,33 @@ final class CascaBandLists {
             .put("confirmed",false).put("source","Banco local do Gadgetbridge")
             .put("note","Atualização persistida e enviada ao Gadgetbridge; pulso não confirmou recebimento.");
     }
+    /** Only edits the text of an existing reminder; no implicit creation/deletion. */
+    static JSONObject setReminder(GBDevice device,JSONObject args)throws JSONException{
+        if(!device.isInitialized())return new JSONObject().put("error","Pulseira não inicializada.");
+        if(!McpNative.op("status").optBoolean("write_allowed",false))
+            return new JSONObject().put("error","Escrita não autorizada.");
+        if(!"set".equals(args.optString("action"))||!"reminders".equals(args.optString("kind")))
+            return new JSONObject().put("error","Operação inválida.");
+        if(!(args.opt("id") instanceof String)||!(args.opt("message") instanceof String))
+            return new JSONObject().put("error","Identificador e mensagem devem ser textos.");
+        String id=args.getString("id");String message=args.getString("message");
+        if(id.trim().isEmpty()||id.length()>128||message.trim().isEmpty()||message.length()>200)
+            return new JSONObject().put("error","Identificador ou mensagem inválidos.");
+        Reminder target=null;
+        for(Reminder item:DBHelper.getReminders(device))
+            if(id.equals(item.getReminderId())){target=item;break;}
+        if(target==null)return new JSONObject().put("error","Lembrete não encontrado; criação não autorizada.");
+        target.setMessage(message);
+        if(!McpNative.op("status").optBoolean("write_allowed",false))
+            return new JSONObject().put("error","Autorização expirada.");
+        DBHelper.store(target);
+        boolean found=false;
+        for(Reminder item:DBHelper.getReminders(device))
+            if(id.equals(item.getReminderId())&&message.equals(item.getMessage())){found=true;break;}
+        if(!found)return new JSONObject().put("error","Gravação local não confirmada.");
+        GBApplication.deviceService(device).onSetReminders(new ArrayList<>(DBHelper.getReminders(device)));
+        return new JSONObject().put("kind","reminders").put("requested",true).put("confirmed",false)
+            .put("note","Gravado no banco e enviado ao Gadgetbridge; sem ACK da pulseira.");
+    }
+
 }
