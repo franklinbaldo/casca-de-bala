@@ -16,8 +16,10 @@ fn hex(value: &str) -> Vec<u8> {
 }
 #[test]
 fn sanitized_user_reads_are_not_our_app_reads() {
-    let fixture: serde_json::Value =
-        serde_json::from_str(include_str!("../../../../fixtures/user-gatt-sanitized.json")).unwrap();
+    let fixture: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../../fixtures/user-gatt-sanitized.json"
+    ))
+    .unwrap();
     let kinds = [
         Kind::HardwareRevision,
         Kind::SoftwareRevision,

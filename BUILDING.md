@@ -155,3 +155,6 @@ cargo test --locked
 Os relatórios ficam em `target/cargo-timings/`. O `cargo build` sozinho não
 mede a linkedição dos executáveis de teste; para isso use `test --no-run`.
 Resultados de cache quente não são comparáveis diretamente aos de cache frio.
+
+O `ci/test_rust_test_layout.py` garante no CI no máximo um alvo de
+integração por crate; novos cenários devem entrar nos módulos existentes.
