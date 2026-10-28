@@ -44,7 +44,7 @@ Bluetooth. `band_notify` só cria uma notificação no próprio celular, no cana
 
 ### Provedor Android (`phone`)
 
-`gb_phone {"action":"status"}` apresenta o celular como dispositivo `phone` e consulta bateria, modelo, versão Android, armazenamento e transportes de rede (sem SSID, IP ou conta pessoal) por APIs oficiais. `gb_phone {"action":"sensors"}` lista tipos de sensores disponíveis, sem coletar leituras. Não lê contas, IMEI, serial, localização nem identificadores pessoais. O catálogo `gb_discover` também inclui o provedor Android. Eventos e sensores ficam para extensão posterior.
+`gb_phone {"action":"status"}` apresenta o celular como dispositivo `phone` e consulta bateria, modelo, versão Android e armazenamento por APIs oficiais. Não lê contas, IMEI, serial, localização nem identificadores pessoais. O catálogo `gb_discover` também inclui o provedor Android. Eventos e leituras de sensores ficam para extensão posterior.
 
 ## Pulseira via Gadgetbridge
 
@@ -169,6 +169,10 @@ simultâneas, 32 resultados e 8192 caracteres por fluxo. São **voláteis**:
 reiniciar o processo Casca descarta jobs, e comandos acima de uma hora podem
 expirar. Ainda não há terminal interativo/PTTY, cancelamento ou persistência.
 O retorno `submitted` nunca é uma confirmação de execução no Android.
+
+## Sensores e rede do celular (somente leitura)
+
+`gb_phone {"action":"status"}` inclui transportes de rede (Wi-Fi, celular, VPN, Ethernet e validação), sem SSID, IP ou contas. `gb_phone {"action":"sensors"}` lista nomes e tipos disponíveis; não recolhe medições nem localização. A coleta real de amostras permanece fora do escopo desta versão.
 
 ## Fila de tarefas
 
