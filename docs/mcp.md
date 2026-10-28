@@ -51,10 +51,32 @@ dele; os jobs `band.*` usam as APIs internas:
 | Ferramenta | No Gadgetbridge |
 | --- | --- |
 | `band_devices` | aparelhos do Gadgetbridge: estado, bateria, firmware (id opaco) |
+| `band_unlock_write` | Solicita aprovação no celular para abrir janela de escrita por 1 a 60 minutos (padrão 30); não escreve sozinho. |
+| `band_capabilities` | capacidades **efetivamente declaradas** pelo protocolo Zepp OS: grupos de configuração, IDs de serviços, chaves de configuração reconhecidas e versão da API de configuração; campos ainda não instrumentados aparecem como `null` |
+| `band_settings` | `action=get` (todos ou uma `key`) e `action=set` (`key`, `value` booleano); somente opções permitidas e declaradas pelo Gadgetbridge. Gravações exigem a aprovação prévia via `band_unlock_write` e pulseira inicializada. |
+| `band_lists` | `action=get`, `kind=alarms` ou `kind=reminders`, `device` opcional; lê o banco local do Gadgetbridge fora da thread principal. Nesta primeira etapa, listas não são editáveis. |
 | `band_read` | estado do aparelho e o que o banco do Gadgetbridge guardou nas últimas `hours` (1-168, padrão 24): passos, FC (mín/méd/máx), sono por estágio, estresse, SpO2, FC de repouso e nota do sono; série por hora até 48 h, por dia acima. Só lê o banco; `band_sync` traz o mais recente |
 | `band_notify` | `onNotification`: texto e vibração no pulso |
 | `band_find` | `onFindDevice`: a pulseira vibra por `seconds` (1-30, padrão 5) |
 | `band_sync` | `onFetchRecordedData`: atividade, FC, sono, SpO2… |
+
+`band_lists` mostra alarmes armazenados (slot, uso, habilitação, horário,
+título) e lembretes (identificador próprio, mensagem, data, repetição). O
+resultado é um retrato do banco local, não uma confirmação de que a pulseira
+está sincronizada; a leitura não preenche slots vazios nem escreve dados. A
+edição seguirá em outra PR, sempre com aprovação explícita do celular.
+
+`band_settings` retorna `observed=false` para chaves ainda desconhecidas. As únicas
+chaves graváveis inicialmente são 14 preferências booleanas públicas do serviço
+Zepp OS (tela, vibração, monitoramento e avisos, câmera), reconhecidas pelo
+`ConfigArg`. A operação `set` exige `band_unlock_write {"minutes": 30}` e
+aprovação na notificação do celular. A resposta `requested=true` é **pedido
+enfileirado**, não ACK da pulseira (`confirmed=false`). Configurações de
+senha, firmware, bloqueio, autenticação e parâmetros de tipos complexos ficam
+fora da lista de escrita. Toda gravação é verificada de novo no Java, no
+momento do envio.
+
+`band_capabilities` é somente leitura e aceita `device` opcional (id opaco de 12 hex). A captura acontece quando o Gadgetbridge recebe as respostas da pulseira. Após instalar uma versão nova, abra o Casca, reconecte e sincronize para atualizar as declarações. `null` significa **não observado**, não prova de ausência. Não retorna valores de preferências, MAC, senha ou chaves de autenticação.
 
 Preparação, uma vez:
 
@@ -154,3 +176,5 @@ Os pedidos de pareamento aparecem no terminal; responda `y <id>` ou `n <id>`.
 As tarefas de dispositivo recebem respostas sintéticas no lugar do app.
 O código é o mesmo do APK: crate `casca-mcp` (std + serde_json, sem runtime
 assíncrono), exposto ao app pela função `b7_mcp_json` da C ABI.
+
+`band_settings {"action":"status"}` consulta, sem selecionar dispositivo, se a janela de escrita aprovada está ativa. A confirmação é provisória: todo `set` verifica novamente a permissão no hub e no celular.

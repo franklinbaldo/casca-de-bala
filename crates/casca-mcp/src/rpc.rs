@@ -1,10 +1,29 @@
 use crate::hub;
 use serde_json::{json, Value};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 /// Newest first; an unknown requested version gets the default.
 const VERSIONS: [&str; 4] = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 const DEFAULT_VERSION: &str = "2025-06-18";
+
+// An explicit allowlist of boolean Zepp OS ConfigArg preference keys. No secrets,
+// firmware, lock screen, unknown enum values or unrestricted preference writes.
+const BOOLEAN_SETTINGS: &[&str] = &[
+    "screen_auto_brightness",
+    "screen_on_on_notifications",
+    "workout_keep_screen_on",
+    "always_on_display_follow_watchface",
+    "cover_to_mute",
+    "vibrate_for_alert",
+    "heartrate_activity_monitoring",
+    "heartrate_sleep_detection",
+    "heartrate_stress_monitoring",
+    "spo2_all_day_monitoring_enabled",
+    "inactivity_warnings_enable",
+    "inactivity_warnings_dnd",
+    "fitness_goal_notification",
+    "camera_remote",
+];
 
 pub(crate) fn error(id: Value, code: i64, message: &str) -> Value {
     json!({"jsonrpc": "2.0", "id": id, "error": {"code": code, "message": message}})
@@ -77,6 +96,53 @@ fn tools() -> Value {
             "title": "Pulseiras vinculadas",
             "description": "Lista as pulseiras já vinculadas ao Bluetooth do celular, com um id opaco para band_read. Não busca dispositivos novos nem expõe endereços Bluetooth.",
             "inputSchema": empty,
+            "annotations": read_only,
+        },
+        {
+            "name": "band_lists",
+            "title": "Listas da pulseira",
+            "description": "Consulta os alarmes ou lembretes existentes no banco do Gadgetbridge. Nesta etapa, somente action=get; alterações entrarão depois, sob aprovação do celular.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "action": {"type": "string", "enum": ["get"]},
+                    "kind": {"type": "string", "enum": ["alarms", "reminders"]},
+                    "device": {"type": "string", "pattern": "^[0-9a-f]{12}$"}
+                },
+                "required": ["action", "kind"],
+                "additionalProperties": false
+            },
+            "annotations": {"readOnlyHint": true, "openWorldHint": false},
+        },
+        {
+            "name": "band_settings",
+            "title": "Configurações da pulseira",
+            "description": "Consulta status de autorização, lê opções booleanas conhecidas pelo Gadgetbridge ou solicita sua alteração. Para set, exige aprovação prévia do dono no celular via band_unlock_write. Nunca altera firmware, senha ou pareamento.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "action": {"type": "string", "enum": ["get", "set", "status"]},
+                    "device": {"type": "string", "pattern": "^[0-9a-f]{12}$", "description": "id opaco de band_devices"},
+                    "key": {"type": "string", "enum": BOOLEAN_SETTINGS},
+                    "value": {"type": "boolean", "description": "obrigatório somente para set"}
+                },
+                "required": ["action"],
+                "additionalProperties": false
+            },
+            "annotations": {"readOnlyHint": false, "destructiveHint": false, "openWorldHint": false},
+        },
+        {
+            "name": "band_unlock_write",
+            "title": "Pedir autorização para configurar pulseira",
+            "description": "Solicita aprovação no celular para abrir uma janela temporária de escrita. Não grava nenhuma configuração sozinho.",
+            "inputSchema": {"type":"object","properties":{"minutes":{"type":"integer","minimum":1,"maximum":60}},"additionalProperties":false},
+            "annotations": {"readOnlyHint":false,"destructiveHint":false,"openWorldHint":false},
+        },
+        {
+            "name": "band_capabilities",
+            "title": "Capacidades registradas da pulseira",
+            "description": "Inventário conservador do que o Gadgetbridge registrou localmente. Uma capacidade não registrada aparece como desconhecida, não como ausente. Nunca expõe MAC, autenticação ou senhas.",
+            "inputSchema": {"type": "object", "properties": {"device": {"type": "string", "description": "id de band_devices"}}, "additionalProperties": false},
             "annotations": read_only,
         },
         {
@@ -183,6 +249,71 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
         return reply;
     }
     match params["name"].as_str() {
+        Some("band_lists") => return band_lists(id, arguments),
+        Some("band_settings") => return band_settings(id, arguments),
+        Some("band_unlock_write") => {
+            if !arguments.is_null() && !arguments.is_object() {
+                return error(id, -32602, "expected object");
+            }
+            if arguments.as_object().is_some_and(|a| a.keys().any(|k| k != "minutes")) {
+                return error(id, -32602, "only minutes is accepted");
+            }
+            let minutes = match arguments.get("minutes") {
+                None => 30,
+                Some(v) => match v.as_u64() {
+                    Some(n @ 1..=60) => n,
+                    _ => return error(id, -32602, "minutes must be an integer between 1 and 60"),
+                },
+            };
+            let request = match hub::request_approval(client, 0, &format!("{minutes} min"), "write_unlock") {
+                Ok(id) => id,
+                Err(_) => return failure(id, "Há solicitações de aprovação demais no celular."),
+            };
+            let who = client.to_owned();
+            std::thread::spawn(move || match hub::wait_decision(request, Duration::from_secs(600)) {
+                Some(hub::Decision::Approve) => {
+                    hub::lock().write_until = Some(Instant::now() + Duration::from_secs(minutes * 60));
+                    hub::log(&format!("janela de escrita aprovada para {who}"));
+                }
+                Some(hub::Decision::Deny) => hub::log(&format!("janela de escrita negada para {who}")),
+                None => hub::log(&format!("solicitação de escrita expirou para {who}")),
+            });
+            return text(id, format!("Solicitação enviada ao celular. Após a aprovação, a escrita ficará liberada por {minutes} minutos."));
+        }
+        Some("band_capabilities") => {
+            if arguments.is_null() {
+                return on_phone(id, "band.capabilities", json!({}), Duration::from_secs(10));
+            }
+            let Some(args) = arguments.as_object() else {
+                return error(id, -32602, "band_capabilities expects an object");
+            };
+            if args.keys().any(|k| k != "device") {
+                return error(id, -32602, "band_capabilities accepts only device");
+            }
+            let device = match args.get("device") {
+                None => Value::Null,
+                Some(Value::String(d))
+                    if d.len() == 12
+                        && d.bytes()
+                            .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()) =>
+                {
+                    Value::String(d.clone())
+                }
+                _ => {
+                    return error(
+                        id,
+                        -32602,
+                        "device must be a 12-character opaque id from band_devices",
+                    );
+                }
+            };
+            return on_phone(
+                id,
+                "band.capabilities",
+                json!({"device": device}),
+                Duration::from_secs(10),
+            );
+        }
         Some("band_notify") => return band_notify(id, arguments, client),
         Some("band_find") => return band_find(id, arguments, client),
         Some("band_sync") => return band_sync(id, arguments, client),
@@ -228,7 +359,7 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
                     "model": "Xiaomi Smart Band 7",
                     "access": "estado e dados de saúde guardados pelo celular (band_read), mensagens e vibração no pulso (band_notify, band_find) e sincronização (band_sync)",
                     "last_reading_unix_ms": snapshot_at,
-                    "tools": ["band_devices", "band_read", "band_snapshot", "band_notify", "band_find", "band_sync"],
+                    "tools": ["band_devices", "band_capabilities", "band_lists", "band_settings", "band_unlock_write", "band_read", "band_snapshot", "band_notify", "band_find", "band_sync"],
                 }],
             });
             text(id, pretty(&body))
@@ -245,6 +376,89 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
         },
         _ => error(id, -32602, "unknown tool"),
     }
+}
+
+/// Database-backed list reads; never clear or mutate an existing list.
+fn band_lists(id: Value, arguments: &Value) -> Value {
+    let Some(args) = arguments.as_object() else {
+        return error(id, -32602, "band_lists expects an object");
+    };
+    if args.keys().any(|k| !["action", "kind", "device"].contains(&k.as_str())) {
+        return error(id, -32602, "unknown band_lists argument");
+    }
+    if args.get("action").and_then(Value::as_str) != Some("get") {
+        return error(id, -32602, "only action=get is available");
+    }
+    let kind = match args.get("kind").and_then(Value::as_str) {
+        Some(k @ ("alarms" | "reminders")) => k,
+        _ => return error(id, -32602, "kind must be alarms or reminders"),
+    };
+    let device = match args.get("device") {
+        None => Value::Null,
+        Some(Value::String(d))
+            if d.len() == 12
+                && d.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()) =>
+        {
+            Value::String(d.clone())
+        }
+        _ => return error(id, -32602, "device must be a 12-character opaque id"),
+    };
+    on_phone(id, "band.lists", json!({"kind": kind, "action": "get", "device": device}), Duration::from_secs(20))
+}
+
+/// Validate the entire settings request before enqueueing a phone job.
+/// Supported keys are intentionally limited to ConfigArg.BOOL preferences.
+fn band_settings(id: Value, arguments: &Value) -> Value {
+    let Some(args) = arguments.as_object() else {
+        return error(id, -32602, "band_settings expects an object");
+    };
+    if args
+        .keys()
+        .any(|k| !["action", "device", "key", "value"].contains(&k.as_str()))
+    {
+        return error(id, -32602, "unknown band_settings argument");
+    }
+    let action = match args.get("action").and_then(Value::as_str) {
+        Some(a @ ("get" | "set" | "status")) => a,
+        _ => return error(id, -32602, "action must be get, set or status"),
+    };
+    if action == "status" {
+        if args.len() != 1 {
+            return error(id, -32602, "status accepts only action");
+        }
+        return text(id, pretty(&json!({
+            "write_allowed": hub::write_allowed(),
+            "note": "A aprovação pode expirar; cada escrita é validada novamente no celular."
+        })));
+    }
+    let device = match args.get("device") {
+        None => Value::Null,
+        Some(Value::String(d))
+            if d.len() == 12
+                && d.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()) =>
+        {
+            Value::String(d.clone())
+        }
+        _ => return error(id, -32602, "device must be a 12-character opaque id"),
+    };
+    let key = match args.get("key") {
+        None if action == "get" => Value::Null,
+        Some(Value::String(k)) if BOOLEAN_SETTINGS.contains(&k.as_str()) => Value::String(k.clone()),
+        _ => return error(id, -32602, "key must be an allowed boolean setting"),
+    };
+    if action == "get" {
+        if args.contains_key("value") {
+            return error(id, -32602, "value is not allowed for get");
+        }
+        return on_phone(id, "band.settings", json!({"action": action, "device": device, "key": key}), Duration::from_secs(10));
+    }
+    let Some(value) = args.get("value").and_then(Value::as_bool) else {
+        return error(id, -32602, "set requires a boolean value");
+    };
+    if !hub::write_allowed() {
+        return failure(id, "Escrita bloqueada. Solicite band_unlock_write e aguarde a aprovação no celular.");
+    }
+    on_phone(id, "band.settings", json!({"action": action, "device": device, "key": key, "value": value}), Duration::from_secs(10))
 }
 
 /// Text that fits a notification: present, trimmed, within `max` characters.
