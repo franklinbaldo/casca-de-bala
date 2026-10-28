@@ -190,9 +190,28 @@ Após um build completo que produziu `gb/work/app/src/casca/jniLibs/arm64-v8a/li
 O `gb/build.sh` só recria a árvore Gadgetbridge quando mudam o commit
 upstream, patches, overlays ou textos legais. Se for preciso reconstituir o
 upstream mesmo sem mudança nos insumos, use `GB_FORCE_PREPARE=1`.
-O cache JNI do modo `GB_SKIP_RUST=1` é validado pelo hash dos insumos Rust
-(Cargo, fontes e toolchain), falhando quando é desatualizado. Builds de
-release devem continuar executando o caminho completo, sem `GB_SKIP_RUST=1`.
+O cache JNI do modo `GB_SKIP_RUST=1` é validado por
+`scripts/jni_fingerprint.py`: hash do `Cargo.lock`, workspace/toolchain e da
+**árvore de dependências locais do JNI** (`casca-mcp-jni` e seus módulos Rust),
+incluindo manifests, `build.rs` e dados em `src/`. Mudanças em `tests/`,
+`examples/` ou crates que não entram na JNI não invalidam o cache. Novas
+dependências locais ausentes ou inseguras falham de forma conservadora.
+A primeira execução após trocar o algoritmo de hash exige um build Rust
+completo para recriar o stamp; é intencional.
+
+Depois desse primeiro build, para medir o ciclo de compilação Java com
+cache Gradle aquecido, use:
+
+```sh
+GB_SKIP_RUST=1 GB_TASK=compileCascaDebugJavaWithJavac \
+  GB_GRADLE_ARGS="--offline --build-cache --profile" sh gb/build.sh
+```
+
+O relatório `--profile` permite medir gargalos reais e distinguir tarefas
+`UP-TO-DATE`/`FROM-CACHE` das executadas. Primeiro compile normalmente para
+preencher dependências; `--offline` falha se faltarem artefatos. O cache não
+substitui testes Java, nem o build completo de release: para publicar, sempre
+recompilar Rust/JNI e APK sem `GB_SKIP_RUST=1`.
 
 ## Segurança
 
