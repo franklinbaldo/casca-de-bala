@@ -55,10 +55,10 @@ fi
 # 3. The MCP hub, without the BLE lab: casca-mcp through its JNI entry.
 # Source fingerprint prevents Java-only builds from silently using stale Rust JNI.
 rust_hash() {
-    (cd "$ROOT" && find Cargo.toml Cargo.lock rust-toolchain.toml crates \
-        -type f \( -name '*.rs' -o -name 'Cargo.toml' -o -name 'Cargo.lock' \
-                   -o -name 'rust-toolchain.toml' \) -print0 | LC_ALL=C sort -z | \
-        xargs -0 sha256sum | sha256sum | cut -d' ' -f1)
+    # Hash only inputs that can change libcasca_mcp.so. A change to Rust test
+    # fixtures or unrelated crates must not invalidate the Java-only cache.
+    # The script walks local path dependencies and fails closed if incomplete.
+    python3 "$ROOT/scripts/jni_fingerprint.py"
 }
 RUST_HASH=$(rust_hash)
 export CARGO_TARGET_DIR="$ROOT/target/android"
