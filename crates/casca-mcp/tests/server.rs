@@ -259,7 +259,10 @@ fn pairing_tools_and_restart() {
     let service = thread::spawn(|| {
         let mut answered = 0;
         while answered < 13 {
-            for job in ctl(json!({"op": "jobs", "prefixes": ["band."]}))["jobs"].as_array().unwrap() {
+            for job in ctl(json!({"op": "jobs", "prefixes": ["band."]}))["jobs"]
+                .as_array()
+                .unwrap()
+            {
                 let result = match (
                     job["kind"].as_str().unwrap(),
                     job["args"]["device"].as_str(),
@@ -267,7 +270,9 @@ fn pairing_tools_and_restart() {
                     ("band.devices", _) => {
                         json!({"devices": [{"id": "a1b2c3d4e5f6", "name": "Xiaomi Smart Band 7"}]})
                     }
-                    ("band.capabilities", Some("a1b2c3d4e5f6")) => json!({"device":"a1b2c3d4e5f6","service_endpoints":null,"configured_keys":[]}),
+                    ("band.capabilities", Some("a1b2c3d4e5f6")) => {
+                        json!({"device":"a1b2c3d4e5f6","service_endpoints":null,"configured_keys":[]})
+                    }
                     ("band.lists", Some("a1b2c3d4e5f6")) if job["args"]["action"] == "set" => {
                         assert_eq!(job["args"]["kind"], "alarms");
                         assert_eq!(job["args"]["slot"], 0);
@@ -332,13 +337,34 @@ fn pairing_tools_and_restart() {
         .contains("a1b2c3d4e5f6"));
     let caps = call_with("band_capabilities", json!({"device":"a1b2c3d4e5f6"}));
     assert_eq!(caps["result"]["isError"], false);
-    assert!(caps["result"]["content"][0]["text"].as_str().unwrap().contains("service_endpoints"));
-    assert_eq!(call_with("band_capabilities", json!({"device":"AA:BB:CC:DD:EE:FF"}))["error"]["code"], -32602);
-    assert_eq!(call_with("band_capabilities", json!({"extra":1}))["error"]["code"], -32602);
-    let alarms = call_with("band_lists", json!({"action":"get","kind":"alarms","device":"a1b2c3d4e5f6"}));
-    assert!(alarms["result"]["content"][0]["text"].as_str().unwrap().contains("slot"));
-    let reminders = call_with("band_lists", json!({"action":"get","kind":"reminders","device":"a1b2c3d4e5f6"}));
-    assert!(reminders["result"]["content"][0]["text"].as_str().unwrap().contains("consulta"));
+    assert!(caps["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("service_endpoints"));
+    assert_eq!(
+        call_with("band_capabilities", json!({"device":"AA:BB:CC:DD:EE:FF"}))["error"]["code"],
+        -32602
+    );
+    assert_eq!(
+        call_with("band_capabilities", json!({"extra":1}))["error"]["code"],
+        -32602
+    );
+    let alarms = call_with(
+        "band_lists",
+        json!({"action":"get","kind":"alarms","device":"a1b2c3d4e5f6"}),
+    );
+    assert!(alarms["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("slot"));
+    let reminders = call_with(
+        "band_lists",
+        json!({"action":"get","kind":"reminders","device":"a1b2c3d4e5f6"}),
+    );
+    assert!(reminders["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("consulta"));
     for bad in [
         json!({"action":"get"}),
         json!({"kind":"alarms"}),
@@ -351,7 +377,10 @@ fn pairing_tools_and_restart() {
     }
     let write_alarm = json!({"action":"set","kind":"alarms","device":"a1b2c3d4e5f6",
         "slot":0,"enabled":false,"hour":7,"minute":20});
-    assert_eq!(call_with("band_lists", write_alarm.clone())["result"]["isError"], true);
+    assert_eq!(
+        call_with("band_lists", write_alarm.clone())["result"]["isError"],
+        true
+    );
     for bad in [
         json!({"action":"get","kind":"alarms","slot":0}),
         json!({"action":"set","kind":"reminders","slot":0,"enabled":true}),
@@ -366,13 +395,27 @@ fn pairing_tools_and_restart() {
     ] {
         assert_eq!(call_with("band_lists", bad)["error"]["code"], -32602);
     }
-    let setting = json!({"action": "get", "device": "a1b2c3d4e5f6", "key": "screen_auto_brightness"});
-    assert!(call_with("band_settings", setting)["result"]["content"][0]["text"]
-        .as_str().unwrap().contains("observed"));
+    let setting =
+        json!({"action": "get", "device": "a1b2c3d4e5f6", "key": "screen_auto_brightness"});
+    assert!(
+        call_with("band_settings", setting)["result"]["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("observed")
+    );
     let write_setting = json!({"action":"set", "device":"a1b2c3d4e5f6", "key":"screen_auto_brightness", "value":true});
     let write_status = call_with("band_settings", json!({"action":"status"}));
-    assert!(write_status["result"]["content"][0]["text"].as_str().unwrap().contains("write_allowed"));
-    assert_eq!(call_with("band_settings", json!({"action":"status","key":"screen_auto_brightness"}))["error"]["code"], -32602);
+    assert!(write_status["result"]["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("write_allowed"));
+    assert_eq!(
+        call_with(
+            "band_settings",
+            json!({"action":"status","key":"screen_auto_brightness"})
+        )["error"]["code"],
+        -32602
+    );
     let blocked_setting = call_with("band_settings", write_setting.clone());
     assert_eq!(blocked_setting["result"]["isError"], true);
     for bad in [
@@ -402,7 +445,10 @@ fn pairing_tools_and_restart() {
         .contains("48"));
     for hours in [json!(0), json!(169), json!("24")] {
         assert_eq!(
-            call_with("band_read", json!({"device": "a1b2c3d4e5f6", "hours": hours}))["error"]["code"],
+            call_with(
+                "band_read",
+                json!({"device": "a1b2c3d4e5f6", "hours": hours})
+            )["error"]["code"],
             -32602
         );
     }
@@ -480,7 +526,10 @@ fn pairing_tools_and_restart() {
     );
     // huami_import: same phone gate as writes; malformed input never reaches the queue.
     let key = "0x00112233445566778899AABBCCDDEEFF";
-    let import = call_with("huami_import", json!({"device": "a1b2c3d4e5f6", "auth_key": key}));
+    let import = call_with(
+        "huami_import",
+        json!({"device": "a1b2c3d4e5f6", "auth_key": key}),
+    );
     assert_eq!(import["result"]["isError"], true);
     assert!(import["result"]["content"][0]["text"]
         .as_str()
@@ -499,20 +548,29 @@ fn pairing_tools_and_restart() {
     let requested = call_with("band_unlock_write", json!({"minutes":2}));
     assert_eq!(requested["result"]["isError"], false);
     let (approval_id, _) = pending_code("jatoba");
-    assert_eq!(ctl(json!({"op":"decide", "id":approval_id, "approve":true}))["ok"], true);
+    assert_eq!(
+        ctl(json!({"op":"decide", "id":approval_id, "approve":true}))["ok"],
+        true
+    );
     for _ in 0..200 {
-        if ctl(json!({"op":"status"}))["write_allowed"] == true { break; }
+        if ctl(json!({"op":"status"}))["write_allowed"] == true {
+            break;
+        }
         thread::sleep(Duration::from_millis(10));
     }
     assert_eq!(ctl(json!({"op":"status"}))["write_allowed"], true);
     let accepted_alarm = call_with("band_lists", write_alarm);
     assert_eq!(accepted_alarm["result"]["isError"], false);
     assert!(accepted_alarm["result"]["content"][0]["text"]
-        .as_str().unwrap().contains("confirmed"));
+        .as_str()
+        .unwrap()
+        .contains("confirmed"));
     let accepted = call_with("band_settings", write_setting);
     assert_eq!(accepted["result"]["isError"], false);
     assert!(accepted["result"]["content"][0]["text"]
-        .as_str().unwrap().contains("confirmed"));
+        .as_str()
+        .unwrap()
+        .contains("confirmed"));
     service.join().unwrap();
 
     let phone = thread::spawn(|| {

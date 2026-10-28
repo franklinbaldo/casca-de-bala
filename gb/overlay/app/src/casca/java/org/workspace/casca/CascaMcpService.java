@@ -118,7 +118,8 @@ public final class CascaMcpService extends Service {
                 return CascaTermux.result(args);
             }
             case "gb.phone":{
-                return CascaPhone.status(this);
+                return "sensors".equals(args.optString("action"))
+                    ?CascaPhone.sensors(this):CascaPhone.status(this);
             }
             case "gb.bluetooth":{
                 return CascaBluetooth.handle(this,args);
