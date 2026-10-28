@@ -50,8 +50,8 @@ final class CascaGateway {
         if(!known(op))return error("Operação não autorizada no gateway.");
         JSONObject parameters=args.optJSONObject("args");
         if(parameters==null)parameters=new JSONObject();
-        for(String key:JSONObject.getNames(parameters)==null?new String[0]:JSONObject.getNames(parameters))
-            if(!"device".equals(key))return error("Parâmetro desconhecido.");
+        for(java.util.Iterator<String> keys=parameters.keys();keys.hasNext();)
+            if(!"device".equals(keys.next()))return error("Parâmetro desconhecido.");
         GBDevice selected=null;
         for(GBDevice device:devices){
             if(parameters.has("device")&&!CascaMcpService.deviceId(device.getAddress()).equals(parameters.optString("device")))continue;

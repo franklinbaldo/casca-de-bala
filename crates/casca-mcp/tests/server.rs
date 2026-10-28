@@ -263,7 +263,7 @@ fn pairing_tools_and_restart() {
     // Jobs: a simulated Android service takes each job once and answers it.
     let service = thread::spawn(|| {
         let mut answered = 0;
-        while answered < 13 {
+        while answered < 14 {
             for job in ctl(json!({"op": "jobs", "prefixes": ["band."]}))["jobs"]
                 .as_array()
                 .unwrap()
@@ -289,6 +289,13 @@ fn pairing_tools_and_restart() {
                     ("band.lists", Some("a1b2c3d4e5f6")) if job["args"]["kind"] == "alarms" => {
                         assert_eq!(job["args"]["action"], "get");
                         json!({"kind":"alarms","items":[{"slot":0,"enabled":true}]})
+                    }
+                    ("band.lists", Some("a1b2c3d4e5f6"))
+                        if job["args"]["kind"] == "reminders" && job["args"]["action"] == "set" =>
+                    {
+                        assert_eq!(job["args"]["id"], "123e4567-e89b-12d3-a456-426614174000");
+                        assert_eq!(job["args"]["message"], "consulta editada");
+                        json!({"kind":"reminders","requested":true,"confirmed":false})
                     }
                     ("band.lists", Some("a1b2c3d4e5f6")) if job["args"]["kind"] == "reminders" => {
                         json!({"kind":"reminders","items":[{"message":"consulta"}]})
@@ -389,6 +396,9 @@ fn pairing_tools_and_restart() {
     for bad in [
         json!({"action":"get","kind":"alarms","slot":0}),
         json!({"action":"set","kind":"reminders","slot":0,"enabled":true}),
+        json!({"action":"set","kind":"reminders","id":7,"message":"consulta"}),
+        json!({"action":"set","kind":"reminders","id":"","message":"consulta"}),
+        json!({"action":"set","kind":"reminders","id":"abc","message":""}),
         json!({"action":"set","kind":"alarms","slot":0}),
         json!({"action":"set","kind":"alarms","enabled":true}),
         json!({"action":"set","kind":"alarms","slot":-1,"enabled":true}),
@@ -576,6 +586,13 @@ fn pairing_tools_and_restart() {
         .as_str()
         .unwrap()
         .contains("confirmed"));
+    let reminder = call_with(
+        "band_lists",
+        json!({"action":"set","kind":"reminders","device":"a1b2c3d4e5f6",
+            "id":"123e4567-e89b-12d3-a456-426614174000","message":"consulta editada"}),
+    );
+    assert_eq!(reminder["result"]["isError"], false);
+    assert!(reminder["result"]["content"][0]["text"].as_str().unwrap().contains("confirmed"));
     service.join().unwrap();
 
     let phone = thread::spawn(|| {
