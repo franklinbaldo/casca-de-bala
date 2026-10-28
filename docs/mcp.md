@@ -159,6 +159,17 @@ precisa do aparelho enfileira uma tarefa (`band.devices`, `band.read`); o
 devolve um erro legível se o celular não responder. Cada dispositivo novo, como
 o carro, entra como mais um tipo de tarefa.
 
+## Compilação incremental
+
+Após um build completo que produziu `gb/work/app/src/casca/jniLibs/arm64-v8a/libcasca_mcp.so`, execute `GB_SKIP_RUST=1 GB_TASK=compileCascaDebugJavaWithJavac sh gb/build.sh` para verificar apenas Java sem reconstruir Rust. O script falha se a biblioteca JNI não existir ou seu hash de fontes Rust não corresponder ao atual. **Não use `GB_SKIP_RUST=1` para certificar um APK de release**: o modo rápido não substitui os testes e a compilação integral. A validação final exige build completo, testes Rust e verificação do APK.
+
+O `gb/build.sh` só recria a árvore Gadgetbridge quando mudam o commit
+upstream, patches, overlays ou textos legais. Se for preciso reconstituir o
+upstream mesmo sem mudança nos insumos, use `GB_FORCE_PREPARE=1`.
+O cache JNI do modo `GB_SKIP_RUST=1` é validado pelo hash dos insumos Rust
+(Cargo, fontes e toolchain), falhando quando é desatualizado. Builds de
+release devem continuar executando o caminho completo, sem `GB_SKIP_RUST=1`.
+
 ## Segurança
 
 - Só aceita conexões de loopback e da tailnet (100.64.0.0/10,
