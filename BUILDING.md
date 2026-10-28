@@ -126,3 +126,32 @@ Na entrega0.5, Rust/C/receita nativa são idênticos à0.4 (18 arquivos de entra
 comparados byte a byte). Bibliotecas arm64 foram reutilizadas dessa compilação
 NDK27 validada; o build nativo não foi reexecutado na0.5. A receita acima permite
 recriá-las a partir desta fonte. Java Android/UI foram recompilados.
+
+## Loop curto de Rust (Casca)
+
+Após preparar dependências com `cargo fetch --locked`, execute `bacon clippy`
+(`--all-targets`, `--offline`, `-D warnings`) durante edições, `bacon test`
+para o conjunto Rust e `bacon fmt` para conferir a formatação. `bacon` é
+instalado separadamente (`cargo install --locked bacon`); não integra o APK.
+O CI continua executando o gate de testes, JNI/Java, roteamento e APK real.
+
+Os testes de integração do Casca ficam agrupados por **crate**, nunca num
+único executável para todo o workspace: `casca-cli/tests/cli/main.rs` cobre
+a CLI, `casca-core/tests/contracts/main.rs` verifica a API pública e
+`casca-store/tests/storage/main.rs` verifica SQLite e transações. Testes
+puramente sintéticos dos decodificadores estão em `src/*/tests.rs`, sob
+`#[cfg(test)]`. FFI e MCP/HTTP conservam seus executáveis de integração
+porque verificam interfaces efetivas.
+
+Antes/depois de reorganizar os testes, usar a mesma toolchain e executor
+com caches frios equivalentes, registrando tempo e número de executáveis:
+
+```text
+cargo build --locked --timings
+cargo test --locked --no-run --timings
+cargo test --locked
+```
+
+Os relatórios ficam em `target/cargo-timings/`. O `cargo build` sozinho não
+mede a linkedição dos executáveis de teste; para isso use `test --no-run`.
+Resultados de cache quente não são comparáveis diretamente aos de cache frio.

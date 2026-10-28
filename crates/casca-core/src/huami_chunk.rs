@@ -156,3 +156,6 @@ impl Receiver {
         })
     }
 }
+
+#[cfg(test)]
+mod tests;

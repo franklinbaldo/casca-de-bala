@@ -180,3 +180,6 @@ impl Window {
         self.samples.is_empty()
     }
 }
+
+#[cfg(test)]
+mod tests;
