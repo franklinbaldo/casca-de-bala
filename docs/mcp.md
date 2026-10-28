@@ -42,6 +42,10 @@ Nenhuma dessas ferramentas pareia, escreve na pulseira ou expõe endereço
 Bluetooth. `band_notify` só cria uma notificação no próprio celular, no canal
 "Mensagens para a pulseira". O `lab_log` registra quem a mandou, nunca o texto.
 
+### Provedor Android (`phone`)
+
+`gb_phone {"action":"status"}` apresenta o celular como dispositivo `phone` e consulta bateria, modelo, versão Android, armazenamento e transportes de rede (sem SSID, IP ou conta pessoal) por APIs oficiais. `gb_phone {"action":"sensors"}` lista tipos de sensores disponíveis, sem coletar leituras. Não lê contas, IMEI, serial, localização nem identificadores pessoais. O catálogo `gb_discover` também inclui o provedor Android. Eventos e sensores ficam para extensão posterior.
+
 ## Pulseira via Gadgetbridge
 
 O app Casca é o Gadgetbridge com este servidor MCP (veja `gb/`). Quem conduz a
@@ -146,59 +150,6 @@ escrita (`lab_unlock_write`):
 
 Nada disso vai para o `lab_log`, que registra só quem importou e o quê.
 
-## Fila de tarefas
-
-O servidor roda em Rust, mas só o app fala Bluetooth. Uma ferramenta que
-precisa do aparelho enfileira uma tarefa (`band.devices`, `band.read`); o
-`McpService` busca a fila a cada 500 ms (`jobs`), executa e responde
-(`complete`). A chamada MCP espera até 10 s (lista) ou 40 s (leitura) e
-devolve um erro legível se o celular não responder. Cada dispositivo novo, como
-o carro, entra como mais um tipo de tarefa.
-
-## Segurança
-
-- Só aceita conexões de loopback e da tailnet (100.64.0.0/10,
-  fd7a:115c:a1e0::/48). Peers da Wi-Fi local são descartados sem resposta.
-- Toda chamada a `/mcp` exige um token aprovado no celular; o código
-  numérico nas duas telas impede aprovar o pedido de outra pessoa.
-- Requisições com cabeçalho `Origin` são recusadas: clientes MCP não são
-  navegadores, e isso fecha o ataque de DNS rebinding contra `localhost`.
-- O servidor só existe enquanto o serviço está ligado, com notificação fixa.
-
-## Acesso de fora da tailnet
-
-IAs na nuvem (Claude.ai, ChatGPT) chegam pelo Tailscale Funnel rodando no
-Termux do mesmo celular, apontando para `localhost:8765`. Antes de abrir o
-Funnel, o servidor precisa falar OAuth (descoberta, registro dinâmico,
-`/authorize` com aprovação no celular, `/token` com PKCE): é a próxima etapa.
-
-## Desenvolvimento sem celular
-
-```sh
-just mcp-dev        # servidor no host, porta 8765, respostas sintéticas
-```
-
-Os pedidos de pareamento aparecem no terminal; responda `y <id>` ou `n <id>`.
-As tarefas de dispositivo recebem respostas sintéticas no lugar do app.
-O código é o mesmo do APK: crate `casca-mcp` (std + serde_json, sem runtime
-assíncrono), exposto ao app pela função `b7_mcp_json` da C ABI.
-
-`band_settings {"action":"status"}` consulta, sem selecionar dispositivo, se a janela de escrita aprovada está ativa. A confirmação é provisória: todo `set` verifica novamente a permissão no hub e no celular.
-
-Edição de lembretes existentes: `band_lists {"action":"set","kind":"reminders","id":"ID_DO_GET","message":"texto"}`. Exige janela de escrita aprovada, limita mensagem a 200 caracteres e preserva data/repetição. Use o `id` textual opaco (UUID) devolvido pela leitura `band_lists` de lembretes; não um inteiro. Não cria ou exclui lembretes. A confirmação é apenas da persistência local e do envio ao Gadgetbridge.
-
-## Gateway universal (experimental)
-
-`gb_devices`, `gb_discover`, `gb_inspect` e `gb_invoke` introduzem o catálogo comum do Gadgetbridge. A reflexão enumera métodos públicos de consulta do coordinator como **descoberta somente**, não os executa livremente. O registro inicial de execução autoriza `device.sync` em dispositivos inicializados; chamadas não registradas são recusadas. O retorno `requested=true` não significa ACK do hardware. A expansão de operações exige conversores tipados e política explícita de autorização.
-
-`gb_bluetooth` (etapa inicial): `status` consulta estado do adaptador e `paired` lista dispositivos pareados usando IDs opacos. `scan` e `pair` retornam erro explícito até existir coletor de descoberta e confirmação Android; não anunciam operação concluída. Não expõe MAC na resposta.
-
-`gb_phone {"action":"status"}` apresenta o celular como dispositivo `phone` e consulta bateria, modelo, versão Android, armazenamento e transportes de rede (sem SSID, IP ou conta pessoal) por APIs oficiais. `gb_phone {"action":"sensors"}` lista tipos de sensores disponíveis, sem coletar leituras. Não lê contas, IMEI, serial, localização nem identificadores pessoais. O catálogo `gb_discover` também inclui o provedor Android. Eventos e sensores ficam para extensão posterior.
-
-## Compilação incremental
-
-Após um build completo que produziu `gb/work/app/src/casca/jniLibs/arm64-v8a/libcasca_mcp.so`, execute `GB_SKIP_RUST=1 GB_TASK=compileCascaDebugJavaWithJavac sh gb/build.sh` para verificar apenas Java sem reconstruir Rust. O script falha se a biblioteca JNI não existir ou seu hash de fontes Rust não corresponder ao atual. **Não use `GB_SKIP_RUST=1` para certificar um APK de release**: o modo rápido não substitui os testes e a compilação integral. A validação final exige build completo, testes Rust e verificação do APK.
-
 ## Termux pelo MCP (experimental)
 
 A tela Casca MCP inclui **Preparar Termux**. Se o aplicativo não estiver
@@ -219,6 +170,18 @@ reiniciar o processo Casca descarta jobs, e comandos acima de uma hora podem
 expirar. Ainda não há terminal interativo/PTTY, cancelamento ou persistência.
 O retorno `submitted` nunca é uma confirmação de execução no Android.
 
+## Fila de tarefas
+
+O servidor roda em Rust, mas só o app fala Bluetooth. Uma ferramenta que
+precisa do aparelho enfileira uma tarefa (`band.devices`, `band.read`); o
+`McpService` busca a fila a cada 500 ms (`jobs`), executa e responde
+(`complete`). A chamada MCP espera até 10 s (lista) ou 40 s (leitura) e
+devolve um erro legível se o celular não responder. Cada dispositivo novo, como
+o carro, entra como mais um tipo de tarefa.
+
+## Compilação incremental
+
+Após um build completo que produziu `gb/work/app/src/casca/jniLibs/arm64-v8a/libcasca_mcp.so`, execute `GB_SKIP_RUST=1 GB_TASK=compileCascaDebugJavaWithJavac sh gb/build.sh` para verificar apenas Java sem reconstruir Rust. O script falha se a biblioteca JNI não existir ou seu hash de fontes Rust não corresponder ao atual. **Não use `GB_SKIP_RUST=1` para certificar um APK de release**: o modo rápido não substitui os testes e a compilação integral. A validação final exige build completo, testes Rust e verificação do APK.
 
 O `gb/build.sh` só recria a árvore Gadgetbridge quando mudam o commit
 upstream, patches, overlays ou textos legais. Se for preciso reconstituir o
@@ -226,3 +189,44 @@ upstream mesmo sem mudança nos insumos, use `GB_FORCE_PREPARE=1`.
 O cache JNI do modo `GB_SKIP_RUST=1` é validado pelo hash dos insumos Rust
 (Cargo, fontes e toolchain), falhando quando é desatualizado. Builds de
 release devem continuar executando o caminho completo, sem `GB_SKIP_RUST=1`.
+
+## Segurança
+
+- Só aceita conexões de loopback e da tailnet (100.64.0.0/10,
+  fd7a:115c:a1e0::/48). Peers da Wi-Fi local são descartados sem resposta.
+- Toda chamada a `/mcp` exige um token aprovado no celular; o código
+  numérico nas duas telas impede aprovar o pedido de outra pessoa.
+- Requisições com cabeçalho `Origin` são recusadas: clientes MCP não são
+  navegadores, e isso fecha o ataque de DNS rebinding contra `localhost`.
+- O servidor só existe enquanto o serviço está ligado, com notificação fixa.
+
+### Inventário Bluetooth Android
+
+`gb_bluetooth` (etapa inicial): `status` consulta estado do adaptador e `paired` lista dispositivos pareados usando IDs opacos. `scan` e `pair` retornam erro explícito até existir coletor de descoberta e confirmação Android; não anunciam operação concluída. Não expõe MAC na resposta.
+
+## Acesso de fora da tailnet
+
+IAs na nuvem (Claude.ai, ChatGPT) chegam pelo Tailscale Funnel rodando no
+Termux do mesmo celular, apontando para `localhost:8765`. Antes de abrir o
+Funnel, o servidor precisa falar OAuth (descoberta, registro dinâmico,
+`/authorize` com aprovação no celular, `/token` com PKCE): é a próxima etapa.
+
+## Gateway universal (experimental)
+
+`gb_devices`, `gb_discover`, `gb_inspect` e `gb_invoke` introduzem o catálogo comum do Gadgetbridge. A reflexão enumera métodos públicos de consulta do coordinator como **descoberta somente**, não os executa livremente. O registro inicial de execução autoriza `device.sync` em dispositivos inicializados; chamadas não registradas são recusadas. O retorno `requested=true` não significa ACK do hardware. A expansão de operações exige conversores tipados e política explícita de autorização.
+
+
+## Desenvolvimento sem celular
+
+```sh
+just mcp-dev        # servidor no host, porta 8765, respostas sintéticas
+```
+
+Os pedidos de pareamento aparecem no terminal; responda `y <id>` ou `n <id>`.
+As tarefas de dispositivo recebem respostas sintéticas no lugar do app.
+O código é o mesmo do APK: crate `casca-mcp` (std + serde_json, sem runtime
+assíncrono), exposto ao app pela função `b7_mcp_json` da C ABI.
+
+`band_settings {"action":"status"}` consulta, sem selecionar dispositivo, se a janela de escrita aprovada está ativa. A confirmação é provisória: todo `set` verifica novamente a permissão no hub e no celular.
+
+Edição de lembretes existentes: `band_lists {"action":"set","kind":"reminders","id":"ID_DO_GET","message":"texto"}`. Exige janela de escrita aprovada, limita mensagem a 200 caracteres e preserva data/repetição. Use o `id` textual opaco (UUID) devolvido pela leitura `band_lists` de lembretes; não um inteiro. Não cria ou exclui lembretes. A confirmação é apenas da persistência local e do envio ao Gadgetbridge.
