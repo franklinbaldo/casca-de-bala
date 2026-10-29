@@ -118,7 +118,7 @@ pub(crate) fn result(owner: &str, id: u64) -> Result<Value, &'static str> {
         .ok_or("shell_not_found")?;
     Ok(
         json!({"request_id":j.id.to_string(), "backend":"android-isolated", "state":j.state,
-        "requested":true, "executed":j.state=="finished" || j.state=="running" || j.result.as_ref().is_some_and(|r| r["executed"]==true),
+        "requested":true, "executed":j.result.as_ref().is_some_and(|r| r["executed"]==true),
         "confirmed":j.state=="finished", "result":j.result}),
     )
 }
