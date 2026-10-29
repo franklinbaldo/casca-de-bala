@@ -62,6 +62,18 @@ class IsolatedShellProbeContractTest(unittest.TestCase):
         self.assertIn('private_marker_missing', main_service)
         self.assertNotIn('com.termux.permission.RUN_COMMAND', service)
 
+    def test_gadgetbridge_bootstrap_skipped_for_isolated_process(self):
+        patch = (ROOT / "gb/patches/0003-casca-isolated-shell-bootstrap.patch").read_text()
+        self.assertIn('":casca_shell_isolated"', patch)
+        self.assertIn('android.app.Application.getProcessName()', patch)
+        self.assertIn('super.onCreate();', patch)
+        self.assertIn('return;', patch)
+        self.assertIn('Do not start', patch)
+        # An explicit product-flavor/process-name gate prevents changes to the
+        # normal GB application lifecycle on Android devices and other flavors.
+        self.assertIn('getPackageName()', patch)
+        self.assertNotIn('+        android.os.Process.killProcess(', patch)
+
     def test_no_new_permission_or_remote_door(self):
         root = ET.parse(OVERLAY / "AndroidManifest.xml").getroot()
         dangerous = [
