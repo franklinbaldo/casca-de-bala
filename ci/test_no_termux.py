@@ -39,8 +39,9 @@ class NoTermuxContractTest(unittest.TestCase):
 
     def test_no_termux_in_mcp_or_host_tests(self):
         rpc = (ROOT / 'crates/casca-mcp/src/rpc.rs').read_text()
-        self.assertNotIn('"gb_shell"', rpc)
-        self.assertNotIn('"gb_shell_result"', rpc)
+        # Names now belong to the native isolated Android backend, not Termux.
+        self.assertIn('"gb_shell"', rpc)
+        self.assertIn('"gb_shell_result"', rpc)
         self.assertNotIn('"gb.shell"', rpc)
         host_tests = (ROOT / 'scripts/test_java_host.py').read_text()
         self.assertNotIn('CascaTermux', host_tests)

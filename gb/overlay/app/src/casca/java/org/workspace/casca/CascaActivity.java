@@ -2,6 +2,7 @@ package org.workspace.casca;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
@@ -30,6 +31,8 @@ import java.net.NetworkInterface;
 import java.util.Collections;
 import nodomain.freeyourgadget.gadgetbridge.R;
 import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONArray;
 
 /** "Casca MCP" launcher entry: turns the MCP server on and off and shows how
  * to pair an AI. The devices themselves are managed in Gadgetbridge. */
@@ -58,6 +61,12 @@ public final class CascaActivity extends Activity {
                     + ", timeout=" + result.getBoolean("timedOut")
                     + ", erro=" + result.getString("failure", "nenhum")
                     + "\nComando fixo (id; pwd):\n" + result.getString("output", "");
+            if (isolated && privateDenied && shellWorks && CascaMcpService.running) {
+                try {
+                    JSONObject enabled = McpNative.call(new JSONObject().put("op", "shell_enable").put("enabled", true));
+                    if (!enabled.optBoolean("enabled", false)) status = "Não foi possível habilitar Shell no MCP";
+                } catch (JSONException | RuntimeException | LinkageError ignored) { status = "Não foi possível habilitar Shell no MCP"; }
+            }
             finishShellProbe(status + "\n" + details);
         }
     });
@@ -73,9 +82,51 @@ public final class CascaActivity extends Activity {
         shellInfo=new TextView(this);shellInfo.setText(R.string.casca_shell_probe_warning);
         shellInfo.setTextIsSelectable(true);root.addView(shellInfo);
         ScrollView scroll=new ScrollView(this);scroll.addView(root);setContentView(scroll);
+        handler.post(() -> showShellApproval(getIntent()));
     }
 
     @Override protected void onResume(){super.onResume();render();}
+    @Override protected void onNewIntent(Intent intent){
+        super.onNewIntent(intent);setIntent(intent);showShellApproval(intent);
+    }
+    private void showShellApproval(Intent intent){
+        if (intent == null || !intent.hasExtra("shell_approval_id")) return;
+        long id = intent.getLongExtra("shell_approval_id", -1);
+        intent.removeExtra("shell_approval_id");
+        if (id <= 0) return;
+        try {
+            JSONArray pending = McpNative.op("shell_pending").getJSONArray("requests");
+            for (int i = 0; i < pending.length(); i++) {
+                JSONObject request = pending.getJSONObject(i);
+                if (request.getLong("id") != id) continue;
+                String details = "Cliente: " + request.getString("client")
+                    + "\nEfeito: EXECUTAR comando no Shell isolado Android (sem ADB/root)"
+                    + "\nLimite: " + request.getLong("timeout_ms") + " ms"
+                    + "\n\nCOMANDO COMPLETO:\n" + request.getString("command");
+                TextView full = new TextView(this);
+                full.setText(details);full.setTextIsSelectable(true);full.setPadding(32,32,32,32);
+                ScrollView view = new ScrollView(this);view.addView(full);
+                new AlertDialog.Builder(this).setTitle("Autorizar comando Shell?")
+                    .setView(view).setPositiveButton("Executar uma vez", (dialog, which) -> decideShell(id, true))
+                    .setNegativeButton("Negar", (dialog, which) -> decideShell(id, false))
+                    .setOnCancelListener(dialog -> decideShell(id, false)).show();
+                return;
+            }
+            shellInfo.setText("Pedido Shell não encontrado ou expirado.");
+        } catch (JSONException | RuntimeException | LinkageError failed) {
+            shellInfo.setText("Não foi possível validar o pedido Shell; execução bloqueada.");
+        }
+    }
+    private void decideShell(long id, boolean approve){
+        try {
+            JSONObject reply = McpNative.call(new JSONObject().put("op", "shell_decide")
+                .put("id", id).put("approve", approve));
+            shellInfo.setText(reply.has("error") ? "Pedido expirado ou recusado: " + reply.optString("error")
+                : approve ? "Comando autorizado UMA VEZ; consulte gb_shell_result." : "Comando negado.");
+        } catch (JSONException | RuntimeException | LinkageError failed) {
+            shellInfo.setText("Não foi possível registrar a decisão; comando não autorizado.");
+        }
+    }
     @Override protected void onPause(){handler.removeCallbacks(refresh);super.onPause();}
     @Override protected void onDestroy(){
         if (shellConnection != null) {
@@ -136,7 +187,8 @@ public final class CascaActivity extends Activity {
             unbindService(shellConnection);
             shellConnection = null;
         }
-        new File(getFilesDir(), CascaIsolatedShellService.SENTINEL).delete();
+        if (!CascaMcpService.running)
+            new File(getFilesDir(), CascaIsolatedShellService.SENTINEL).delete();
         shellInfo.setText(result);
         shellProbe.setEnabled(true);
     }

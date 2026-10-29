@@ -1,4 +1,4 @@
-use crate::{http, peer::allowed};
+use crate::{http, peer::allowed, shell};
 use serde_json::{json, Map, Value};
 use std::{
     collections::{HashMap, VecDeque},
@@ -232,6 +232,10 @@ fn execute(request: &Map<String, Value>) -> Result<Value, &'static str> {
             Ok(json!({"ok": true}))
         }
         Some("status") => Ok(status()),
+        Some("shell_enable" | "shell_pending" | "shell_decide" | "shell_take" | "shell_complete") => {
+            let op = request.get("op").and_then(Value::as_str).unwrap_or("");
+            shell::control(op, request)
+        },
         Some("decide") => {
             let id = request
                 .get("id")
@@ -363,6 +367,7 @@ fn start(request: &Map<String, Value>) -> Result<Value, &'static str> {
     let dir = PathBuf::from(dir);
     fs::create_dir_all(&dir).map_err(|_| "token_store")?;
     hub.clients = load(&dir)?;
+    shell::disable(); // Fresh local isolation proof required after restart.
     hub.dir = Some(dir);
     let listener = bind(port).map_err(|_| "bind")?;
     let port = listener.local_addr().map_err(|_| "bind")?.port();
@@ -377,6 +382,7 @@ fn start(request: &Map<String, Value>) -> Result<Value, &'static str> {
 }
 
 fn stop() {
+    shell::disable();
     let mut hub = lock();
     if let Some((port, flag)) = hub.running.take() {
         flag.store(true, Ordering::SeqCst);

@@ -47,10 +47,13 @@ class IsolatedShellProbeContractTest(unittest.TestCase):
         self.assertIn("MAX_OUTPUT_BYTES", service)
         self.assertIn("bindService(", activity)
         self.assertIn("CascaIsolatedShellService.class", activity)
-        self.assertNotIn('"gb_shell"', rpc)
-        self.assertNotIn('"gb_shell_result"', rpc)
-        # No arbitrary command is accepted from the binder or the MCP.
-        self.assertNotRegex(service, r'getString\([^)]*command')
+        self.assertIn('"gb_shell"', rpc)
+        self.assertIn('"gb_shell_result"', rpc)
+        # Unverified probes are hard-coded; remote execution requires a distinct
+        # approved-only operation in the isolated service.
+        self.assertIn('return execute("id; pwd", TIMEOUT_MS', service)
+        self.assertIn('MSG_EXEC', service)
+        self.assertIn('Process.isIsolated()', service)
         self.assertNotIn('com.termux.permission.RUN_COMMAND', service)
 
     def test_no_new_permission_or_remote_door(self):
