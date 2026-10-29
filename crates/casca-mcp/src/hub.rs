@@ -232,10 +232,12 @@ fn execute(request: &Map<String, Value>) -> Result<Value, &'static str> {
             Ok(json!({"ok": true}))
         }
         Some("status") => Ok(status()),
-        Some("shell_enable" | "shell_pending" | "shell_decide" | "shell_take" | "shell_complete") => {
+        Some(
+            "shell_enable" | "shell_pending" | "shell_decide" | "shell_take" | "shell_complete",
+        ) => {
             let op = request.get("op").and_then(Value::as_str).unwrap_or("");
             shell::control(op, request)
-        },
+        }
         Some("decide") => {
             let id = request
                 .get("id")

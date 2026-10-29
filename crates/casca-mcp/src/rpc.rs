@@ -313,23 +313,56 @@ fn call(id: Value, params: &Value, client: &str, owner: &str) -> Value {
     }
     match params["name"].as_str() {
         Some("gb_shell") => {
-            let Some(args) = arguments.as_object() else { return error(id,-32602,"object required"); };
-            if args.keys().any(|k|k!="command"&&k!="timeout_ms") {return error(id,-32602,"unknown argument");}
-            let Some(command) = args.get("command").and_then(Value::as_str).filter(|s|!s.is_empty() && s.len()<=1024 && !s.contains('\0'))
-                else {return error(id,-32602,"command must be 1..1024 bytes without NUL");};
-            let timeout_ms = match args.get("timeout_ms") { None=>5000, Some(v)=>match v.as_u64() {Some(x @ 100..=5000)=>x,_=>return error(id,-32602,"invalid timeout_ms")}};
-            return match shell::submit(owner, client, command, timeout_ms) {
-                Ok(request_id)=>text(id,pretty(&json!({"request_id":request_id.to_string(),"backend":"android-isolated","state":"pending_approval","requested":true,"executed":false,"confirmed":false,"timeout_ms":timeout_ms}))),
-                Err(code)=>failure(id,code),
+            let Some(args) = arguments.as_object() else {
+                return error(id, -32602, "object required");
             };
-        },
+            if args.keys().any(|k| k != "command" && k != "timeout_ms") {
+                return error(id, -32602, "unknown argument");
+            }
+            let Some(command) = args
+                .get("command")
+                .and_then(Value::as_str)
+                .filter(|s| !s.is_empty() && s.len() <= 1024 && !s.contains('\0'))
+            else {
+                return error(id, -32602, "command must be 1..1024 bytes without NUL");
+            };
+            let timeout_ms = match args.get("timeout_ms") {
+                None => 5000,
+                Some(v) => match v.as_u64() {
+                    Some(x @ 100..=5000) => x,
+                    _ => return error(id, -32602, "invalid timeout_ms"),
+                },
+            };
+            return match shell::submit(owner, client, command, timeout_ms) {
+                Ok(request_id) => text(
+                    id,
+                    pretty(
+                        &json!({"request_id":request_id.to_string(),"backend":"android-isolated","state":"pending_approval","requested":true,"executed":false,"confirmed":false,"timeout_ms":timeout_ms}),
+                    ),
+                ),
+                Err(code) => failure(id, code),
+            };
+        }
         Some("gb_shell_result") => {
-            let Some(args) = arguments.as_object() else{return error(id,-32602,"object required");};
-            if args.len()!=1 {return error(id,-32602,"request_id required");}
-            let Some(request_id)=args.get("request_id").and_then(Value::as_str).and_then(|s|s.parse::<u64>().ok()).filter(|x|*x>0 && *x <= i64::MAX as u64)
-                else{return error(id,-32602,"invalid request_id");};
-            return match shell::result(owner,request_id) {Ok(result)=>text(id,pretty(&result)),Err(code)=>failure(id,code)};
-        },
+            let Some(args) = arguments.as_object() else {
+                return error(id, -32602, "object required");
+            };
+            if args.len() != 1 {
+                return error(id, -32602, "request_id required");
+            }
+            let Some(request_id) = args
+                .get("request_id")
+                .and_then(Value::as_str)
+                .and_then(|s| s.parse::<u64>().ok())
+                .filter(|x| *x > 0 && *x <= i64::MAX as u64)
+            else {
+                return error(id, -32602, "invalid request_id");
+            };
+            return match shell::result(owner, request_id) {
+                Ok(result) => text(id, pretty(&result)),
+                Err(code) => failure(id, code),
+            };
+        }
         Some("gb_phone") => {
             let Some(a) = arguments.as_object() else {
                 return error(id, -32602, "object required");
