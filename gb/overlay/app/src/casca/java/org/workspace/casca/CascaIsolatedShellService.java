@@ -129,11 +129,17 @@ public final class CascaIsolatedShellService extends Service {
                 int read;
                 while ((read = input.read(chunk)) != -1) {
                     int keep = Math.min(read, Math.max(0, cap - buffer.size()));
-                    if (keep > 0) buffer.write(chunk, 0, keep);
-                    if (keep < read) truncated = true;
+                    synchronized (buffer) {
+                        if (keep > 0) buffer.write(chunk, 0, keep);
+                        if (keep < read) truncated = true;
+                    }
                 }
             } catch (IOException ignored) { /* process killed / pipe closed */ }
         }
-        String text() { return new String(buffer.toByteArray(), StandardCharsets.UTF_8); }
+        String text() {
+            synchronized (buffer) {
+                return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
+            }
+        }
     }
 }

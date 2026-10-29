@@ -35,10 +35,6 @@ fn ok(id: Value, result: Value) -> Value {
 
 /// One JSON-RPC message in, at most one reply out. Notifications and client
 /// responses (no `id` or no `method`) get no reply: HTTP 202.
-pub(crate) fn dispatch(message: &Value, client: &str) -> Option<Value> {
-    dispatch_authenticated(message, client, client)
-}
-
 /// owner is the exact authenticated token; never returned to client or Android.
 pub(crate) fn dispatch_authenticated(message: &Value, client: &str, owner: &str) -> Option<Value> {
     let Some(object) = message.as_object() else {
