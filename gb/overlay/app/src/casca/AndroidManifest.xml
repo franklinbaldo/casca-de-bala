@@ -2,9 +2,13 @@
 <!-- Casca flavor: the MCP hub on top of Gadgetbridge. The server listens on
      loopback and the tailnet, so this flavor needs INTERNET (removed in main,
      re-added here as the banglejs flavor does). -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Gadgetbridge upstream declares RUN_COMMAND in its main manifest.
+         Remove it from the merged Casca APK, not just this flavor's declarations. -->
+    <uses-permission android:name="com.termux.permission.RUN_COMMAND" tools:node="remove" />
     <application>
         <activity
             android:name="org.workspace.casca.CascaActivity"

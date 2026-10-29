@@ -15,9 +15,16 @@ JAVA = ROOT / 'gb/overlay/app/src/casca/java/org/workspace/casca'
 class NoTermuxContractTest(unittest.TestCase):
     def test_no_termux_in_android_flavor(self):
         manifest = (ROOT / 'gb/overlay/app/src/casca/AndroidManifest.xml').read_text()
-        ET.fromstring(manifest)
-        self.assertNotIn('com.termux', manifest)
-        self.assertNotIn('Termux', manifest)
+        root = ET.fromstring(manifest)
+        # Upstream Gadgetbridge declares this permission. The flavor must
+        # explicitly delete it from the merged APK with a manifest-merger rule.
+        android_name = '{http://schemas.android.com/apk/res/android}name'
+        tools_node = '{http://schemas.android.com/tools}node'
+        removed = [element for element in root.findall('uses-permission')
+                   if element.get(android_name) == 'com.termux.permission.RUN_COMMAND']
+        self.assertEqual(len(removed), 1)
+        self.assertEqual(removed[0].get(tools_node), 'remove')
+        self.assertNotIn('<package android:name="com.termux"', manifest)
         self.assertFalse(list(JAVA.glob('*Termux*')))
         activity = (JAVA / 'CascaActivity.java').read_text()
         self.assertNotIn('Termux', activity)
