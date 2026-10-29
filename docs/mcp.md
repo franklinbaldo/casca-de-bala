@@ -150,26 +150,6 @@ escrita (`lab_unlock_write`):
 
 Nada disso vai para o `lab_log`, que registra só quem importou e o quê.
 
-## Termux pelo MCP (experimental)
-
-A tela Casca MCP inclui **Preparar Termux**. Se o aplicativo não estiver
-instalado, abre sua página oficial do F-Droid; se estiver, oferece solicitar
-`com.termux.permission.RUN_COMMAND` ao Android ou abrir as configurações de
-permissões do Casca. No Termux, o usuário ainda precisa configurar
-`allow-external-apps = true` em `~/.termux/termux.properties` e reiniciar
-Termux. Não há instalação silenciosa nem contorno de permissão.
-
-`gb_shell {"command":"pwd"}` envia um comando `bash -lc` pelo `RUN_COMMAND`
-oficial, após janela de escrita aprovada no celular, e responde com `job_id`,
-`status=submitted` e `confirmed=false`. Em seguida,
-`gb_shell_result {"job_id":"..."}` devolve `running` ou `finished`
-com `stdout`, `stderr`, `exit_code` e indicação de truncamento. Os resultados
-estão vinculados ao mesmo cliente MCP, limitados a quatro execuções
-simultâneas, 32 resultados e 8192 caracteres por fluxo. São **voláteis**:
-reiniciar o processo Casca descarta jobs, e comandos acima de uma hora podem
-expirar. Ainda não há terminal interativo/PTTY, cancelamento ou persistência.
-O retorno `submitted` nunca é uma confirmação de execução no Android.
-
 ## Sensores e rede do celular (somente leitura)
 
 `gb_phone {"action":"status"}` inclui transportes de rede (Wi-Fi, celular, VPN, Ethernet e validação), sem SSID, IP ou contas. `gb_phone {"action":"sensors"}` lista nomes e tipos disponíveis; não recolhe medições nem localização. A coleta real de amostras permanece fora do escopo desta versão.
@@ -229,10 +209,11 @@ recompilar Rust/JNI e APK sem `GB_SKIP_RUST=1`.
 
 ## Acesso de fora da tailnet
 
-IAs na nuvem (Claude.ai, ChatGPT) chegam pelo Tailscale Funnel rodando no
-Termux do mesmo celular, apontando para `localhost:8765`. Antes de abrir o
-Funnel, o servidor precisa falar OAuth (descoberta, registro dinâmico,
-`/authorize` com aprovação no celular, `/token` com PKCE): é a próxima etapa.
+IAs na nuvem (Claude.ai, ChatGPT) exigem uma ponte externa explicitamente
+configurada pelo dono. O Casca não inclui shell remota, Termux ou Funnel;
+a API MCP já atende clientes autorizados na tailnet. Qualquer ponte pública
+futura precisa antes de OAuth (descoberta, registro dinâmico,
+`/authorize` com aprovação no celular, `/token` com PKCE).
 
 ## Gateway universal (experimental)
 
@@ -259,10 +240,9 @@ Edição de lembretes existentes: `band_lists {"action":"set","kind":"reminders"
 Os testes Java rápidos do flavor Casca ficam em
 `gb/overlay/app/src/testCasca/java/org/workspace/casca/` (JUnit 4):
 `CascaHealthStatsTest` verifica agregações de registros já armazenados;
-`CascaTermuxJobBookTest` cobre isolamento entre clientes, expiração, limitação
-4 em execução/32 registros e callbacks repetidos; `CascaJobDispatchTest`
-garante a afinidade de thread. As regras puras foram extraídas de Android para
-`CascaTermuxJobBook` e `CascaJobDispatch`. Use
+`CascaJobDispatchTest` garante a afinidade de thread, e
+`CascaHealthStatsTest` cobre as agregações de saúde. As regras puras
+foram extraídas do Android para `CascaJobDispatch` e `CascaHealthStats`. Use
 `GB_SKIP_RUST=1 GB_TASK=testCascaDebugUnitTest GB_TEST_FILTER='org.workspace.casca.*' sh gb/build.sh` somente após
 build JNI válido. O polling JNI do serviço usa executor separado do Looper;
 notificações e comandos Gadgetbridge mantêm afinidade de main thread.

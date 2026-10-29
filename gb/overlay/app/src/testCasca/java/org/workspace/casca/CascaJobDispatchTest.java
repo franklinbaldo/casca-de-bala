@@ -6,8 +6,7 @@ import org.junit.Test;
 public class CascaJobDispatchTest {
     @Test public void blockingReadsAreOffTheMainLooper() {
         for (String kind : new String[] {"band.read", "band.capabilities",
-                "gb.bluetooth", "gb.phone",
-                "gb.shell", "gb.shell.result"})
+                "gb.bluetooth", "gb.phone"})
             assertFalse(kind, CascaJobDispatch.mainThreadRequired(kind, "status"));
         assertFalse(CascaJobDispatch.mainThreadRequired("band.lists", "get"));
     }

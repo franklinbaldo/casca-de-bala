@@ -1,7 +1,7 @@
 package org.workspace.casca;
 
 /** Thread-affinity contract. Keep Gadgetbridge device commands on Android's main thread.
- * Read-only database and Android queries, JSON conversion, Termux and JNI completion
+ * Read-only database and Android queries, JSON conversion and JNI completion
  * must not block the main looper. New operations default to main until reviewed. */
 final class CascaJobDispatch {
     private CascaJobDispatch() {}
@@ -12,8 +12,6 @@ final class CascaJobDispatch {
             case "band.capabilities":
             case "gb.bluetooth":
             case "gb.phone":
-            case "gb.shell":
-            case "gb.shell.result":
                 return false;
             case "band.lists":
                 return "set".equals(action);

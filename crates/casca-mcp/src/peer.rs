@@ -1,6 +1,6 @@
 use std::net::IpAddr;
 
-/// Loopback (Termux Funnel, local tools) and Tailscale addresses only:
+/// Loopback (local tools) and Tailscale addresses only:
 /// 100.64.0.0/10 and fd7a:115c:a1e0::/48. Wi-Fi LAN peers are dropped.
 pub fn allowed(ip: IpAddr) -> bool {
     match ip.to_canonical() {

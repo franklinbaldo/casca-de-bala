@@ -111,7 +111,7 @@ public final class CascaMcpService extends Service {
         }catch(JSONException|RuntimeException ignored){}
     }
 
-    /** Gadgetbridge device access stays on the UI thread; DB/Termux are queued
+    /** Gadgetbridge device access stays on the UI thread; DB reads are queued
      * on a background executor. Each executor is FIFO; cross-executor completion
      * order is unspecified (jobs are identified by their native IDs). */
     private void runJobs()throws JSONException{
@@ -154,12 +154,6 @@ public final class CascaMcpService extends Service {
 
     private JSONObject handle(String kind,JSONObject args)throws JSONException{
         switch(kind){
-            case "gb.shell":{
-                return CascaTermux.run(this,args);
-            }
-            case "gb.shell.result":{
-                return CascaTermux.result(args);
-            }
             case "gb.phone":{
                 return "sensors".equals(args.optString("action"))
                     ?CascaPhone.sensors(this):CascaPhone.status(this);
@@ -173,7 +167,7 @@ public final class CascaMcpService extends Service {
                 list.put(new JSONObject().put("id","phone")
                     .put("type","android").put("model",android.os.Build.MODEL)
                     .put("provider","Android").put("operations",new JSONArray()
-                        .put("gb_phone").put("gb_bluetooth").put("gb_shell").put("gb_shell_result")));
+                        .put("gb_phone").put("gb_bluetooth")));
                 return new JSONObject().put("devices",list)
                     .put("providers",new JSONArray().put("Gadgetbridge").put("Android"));
             }
