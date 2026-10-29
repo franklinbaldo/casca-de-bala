@@ -32,8 +32,11 @@ def verify(apk, signed=False):
     expected_permissions = {line for line in reviewed.read_text().split('\n')
                             if line and not line.startswith('#')}
     assert permissions == expected_permissions, sorted(permissions ^ expected_permissions)
+    assert 'com.termux.permission.RUN_COMMAND' not in permissions
     xml = run(tools / 'aapt', 'dump', 'xmltree', apk, 'AndroidManifest.xml')
     assert not re.search(r'android:(debuggable|testOnly).*0xffffffff', xml)
+    assert 'org.workspace.casca.CascaIsolatedShellService' in xml, 'Isolated Shell Service missing from APK'
+    assert re.search(r'android:isolatedProcess[^\n]*(0xffffffff|0x1|true)', xml), 'APK lacks isolatedProcess=true'
     with zipfile.ZipFile(apk) as z:
         assert z.testzip() is None
         assert {n.split('/')[1] for n in z.namelist() if n.startswith('lib/')} == {'arm64-v8a'}

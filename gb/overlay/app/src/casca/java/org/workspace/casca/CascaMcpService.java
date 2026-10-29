@@ -58,7 +58,8 @@ public final class CascaMcpService extends Service {
     private long shellId;
     private final Messenger shellReplies = new Messenger(new Handler(Looper.getMainLooper()) {
         @Override public void handleMessage(Message response) {
-            if (response.what != CascaIsolatedShellService.MSG_EXEC_RESULT || shellConnection == null) return;
+            if (response.what != CascaIsolatedShellService.MSG_EXEC_RESULT ||
+                    shellConnection == null || response.arg1 != (int)shellId) return;
             Bundle data = response.getData();
             JSONObject result = new JSONObject();
             try {
@@ -202,6 +203,7 @@ public final class CascaMcpService extends Service {
             @Override public void onServiceConnected(ComponentName name, IBinder binder) {
                 if (shellConnection != this) return;
                 Message request = Message.obtain(null, CascaIsolatedShellService.MSG_EXEC);
+                request.arg1 = (int)shellId;
                 request.replyTo = shellReplies;
                 Bundle data = new Bundle();
                 data.putString("command", job.optString("command", ""));

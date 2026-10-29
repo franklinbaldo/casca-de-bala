@@ -49,11 +49,12 @@ Bluetooth. `band_notify` só cria uma notificação no próprio celular, no cana
 ### Shell nativo Android (autorização por comando)
 
 Ferramentas MCP `gb_shell {"command":"id", "timeout_ms":5000}` e
-`gb_shell_result {"request_id":123}` usam um ledger efêmero do servidor.
+`gb_shell_result {"request_id":"123"}` usam um ledger efêmero do servidor.
 O primeiro pedido retorna `pending_approval`, `requested=true`,
 `executed=false`, `confirmed=false`. O agente consulta o segundo método
 para acompanhar `pending_approval`, `running`, `finished`, `rejected`,
-`expired` ou `failed`; somente o **mesmo token MCP** pode ler o resultado.
+`expired` ou `failed`; somente o **mesmo token MCP** pode ler o resultado. O `request_id` é
+string decimal opaca, evitando perda de precisão em clientes JavaScript.
 
 Cada comando deve ser aprovado na tela **Casca MCP**: a notificação só abre
 a Activity, que exibe cliente, comando completo e tempo. Não existe aprovação

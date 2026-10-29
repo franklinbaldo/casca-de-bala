@@ -121,7 +121,7 @@ fn tools() -> Value {
             "name": "gb_shell_result",
             "title": "Consultar tarefa Shell isolada",
             "description": "Consulta uma tarefa já solicitada pelo mesmo token MCP; não revela resultados a outros clientes.",
-            "inputSchema":{"type":"object","properties":{"request_id":{"type":"integer","minimum":1}},"required":["request_id"],"additionalProperties":false},
+            "inputSchema":{"type":"object","properties":{"request_id":{"type":"string","pattern":"^[0-9]{1,19}$"}},"required":["request_id"],"additionalProperties":false},
             "annotations":read_only,
         },
         {
@@ -323,14 +323,14 @@ fn call(id: Value, params: &Value, client: &str, owner: &str) -> Value {
                 else {return error(id,-32602,"command must be 1..1024 bytes without NUL");};
             let timeout_ms = match args.get("timeout_ms") { None=>5000, Some(v)=>match v.as_u64() {Some(x @ 100..=5000)=>x,_=>return error(id,-32602,"invalid timeout_ms")}};
             return match shell::submit(owner, client, command, timeout_ms) {
-                Ok(request_id)=>text(id,pretty(&json!({"request_id":request_id,"backend":"android-isolated","state":"pending_approval","requested":true,"executed":false,"confirmed":false,"timeout_ms":timeout_ms}))),
+                Ok(request_id)=>text(id,pretty(&json!({"request_id":request_id.to_string(),"backend":"android-isolated","state":"pending_approval","requested":true,"executed":false,"confirmed":false,"timeout_ms":timeout_ms}))),
                 Err(code)=>failure(id,code),
             };
         },
         Some("gb_shell_result") => {
             let Some(args) = arguments.as_object() else{return error(id,-32602,"object required");};
             if args.len()!=1 {return error(id,-32602,"request_id required");}
-            let Some(request_id)=args.get("request_id").and_then(Value::as_u64).filter(|x|*x>0)
+            let Some(request_id)=args.get("request_id").and_then(Value::as_str).and_then(|s|s.parse::<u64>().ok()).filter(|x|*x>0 && *x <= i64::MAX as u64)
                 else{return error(id,-32602,"invalid request_id");};
             return match shell::result(owner,request_id) {Ok(result)=>text(id,pretty(&result)),Err(code)=>failure(id,code)};
         },
