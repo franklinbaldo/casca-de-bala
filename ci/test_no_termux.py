@@ -19,7 +19,12 @@ class NoTermuxContractTest(unittest.TestCase):
         self.assertNotIn('com.termux', manifest)
         self.assertNotIn('Termux', manifest)
         self.assertFalse(list(JAVA.glob('*Termux*')))
-        self.assertNotIn('Termux', (JAVA / 'CascaActivity.java').read_text())
+        activity = (JAVA / 'CascaActivity.java').read_text()
+        self.assertNotIn('Termux', activity)
+        # Removing the old setup UI must not remove Android's notification
+        # permission checks (or the import they still require).
+        if 'PackageManager.PERMISSION_GRANTED' in activity:
+            self.assertIn('import android.content.pm.PackageManager;', activity)
         self.assertNotIn('gb.shell', (JAVA / 'CascaMcpService.java').read_text())
         self.assertNotIn('gb_shell', (JAVA / 'CascaGateway.java').read_text())
         self.assertNotIn('com.termux.permission.RUN_COMMAND',
