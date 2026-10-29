@@ -173,7 +173,7 @@ fn mcp(stream: &TcpStream, request: &Request) {
             &rpc::error(Value::Null, -32700, "parse error"),
         );
     };
-    match rpc::dispatch(&message, &client) {
+    match rpc::dispatch_authenticated(&message, &client, token.unwrap_or_default()) {
         Some(reply) => respond_json(stream, 200, "", &reply),
         None => respond(stream, 202, "application/json", "", b""),
     }

@@ -1,4 +1,4 @@
-use crate::hub;
+use crate::{hub, shell};
 use serde_json::{json, Value};
 use std::time::{Duration, Instant};
 
@@ -35,7 +35,8 @@ fn ok(id: Value, result: Value) -> Value {
 
 /// One JSON-RPC message in, at most one reply out. Notifications and client
 /// responses (no `id` or no `method`) get no reply: HTTP 202.
-pub(crate) fn dispatch(message: &Value, client: &str) -> Option<Value> {
+/// owner is the exact authenticated token; never returned to client or Android.
+pub(crate) fn dispatch_authenticated(message: &Value, client: &str, owner: &str) -> Option<Value> {
     let Some(object) = message.as_object() else {
         return Some(error(
             Value::Null,
@@ -75,7 +76,7 @@ pub(crate) fn dispatch(message: &Value, client: &str) -> Option<Value> {
             list.extend(crate::lab::tools());
             ok(id, json!({"tools": list}))
         }
-        "tools/call" => call(id, &params, client),
+        "tools/call" => call(id, &params, client, owner),
         _ => error(id, -32601, "method not found"),
     })
 }
@@ -104,6 +105,20 @@ fn tools() -> Value {
             "description": "Telemetria do próprio celular: bateria, armazenamento e informações gerais do Android, sem identificadores pessoais.",
             "inputSchema": {"type":"object","properties":{"action":{"type":"string","enum":["status","sensors"]}},"required":["action"],"additionalProperties":false},
             "annotations": read_only,
+        },
+        {
+            "name": "gb_shell",
+            "title": "Solicitar comando Shell nativo isolado",
+            "description": "Solicita aprovação individual no celular; só funciona depois de prova local de isolamento. Não é ADB/root. Use gb_shell_result para consultar.",
+            "inputSchema": {"type":"object","properties":{"command":{"type":"string","minLength":1,"maxLength":1024},"timeout_ms":{"type":"integer","minimum":100,"maximum":5000}},"required":["command"],"additionalProperties":false},
+            "annotations":{"readOnlyHint":false,"destructiveHint":true,"openWorldHint":false},
+        },
+        {
+            "name": "gb_shell_result",
+            "title": "Consultar tarefa Shell isolada",
+            "description": "Consulta uma tarefa já solicitada pelo mesmo token MCP; não revela resultados a outros clientes.",
+            "inputSchema":{"type":"object","properties":{"request_id":{"type":"string","pattern":"^[0-9]{1,19}$"}},"required":["request_id"],"additionalProperties":false},
+            "annotations":read_only,
         },
         {
             "name": "gb_bluetooth",
@@ -287,7 +302,7 @@ pub(crate) fn on_phone(id: Value, kind: &'static str, args: Value, wait: Duratio
     }
 }
 
-fn call(id: Value, params: &Value, client: &str) -> Value {
+fn call(id: Value, params: &Value, client: &str, owner: &str) -> Value {
     let arguments = &params["arguments"];
     #[cfg(feature = "lab")]
     if let Some(reply) = params["name"]
@@ -297,6 +312,57 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
         return reply;
     }
     match params["name"].as_str() {
+        Some("gb_shell") => {
+            let Some(args) = arguments.as_object() else {
+                return error(id, -32602, "object required");
+            };
+            if args.keys().any(|k| k != "command" && k != "timeout_ms") {
+                return error(id, -32602, "unknown argument");
+            }
+            let Some(command) = args
+                .get("command")
+                .and_then(Value::as_str)
+                .filter(|s| !s.is_empty() && s.len() <= 1024 && !s.contains('\0'))
+            else {
+                return error(id, -32602, "command must be 1..1024 bytes without NUL");
+            };
+            let timeout_ms = match args.get("timeout_ms") {
+                None => 5000,
+                Some(v) => match v.as_u64() {
+                    Some(x @ 100..=5000) => x,
+                    _ => return error(id, -32602, "invalid timeout_ms"),
+                },
+            };
+            return match shell::submit(owner, client, command, timeout_ms) {
+                Ok(request_id) => text(
+                    id,
+                    pretty(
+                        &json!({"request_id":request_id.to_string(),"backend":"android-isolated","state":"pending_approval","requested":true,"executed":false,"confirmed":false,"timeout_ms":timeout_ms}),
+                    ),
+                ),
+                Err(code) => failure(id, code),
+            };
+        }
+        Some("gb_shell_result") => {
+            let Some(args) = arguments.as_object() else {
+                return error(id, -32602, "object required");
+            };
+            if args.len() != 1 {
+                return error(id, -32602, "request_id required");
+            }
+            let Some(request_id) = args
+                .get("request_id")
+                .and_then(Value::as_str)
+                .and_then(|s| s.parse::<u64>().ok())
+                .filter(|x| *x > 0 && *x <= i64::MAX as u64)
+            else {
+                return error(id, -32602, "invalid request_id");
+            };
+            return match shell::result(owner, request_id) {
+                Ok(result) => text(id, pretty(&result)),
+                Err(code) => failure(id, code),
+            };
+        }
         Some("gb_phone") => {
             let Some(a) = arguments.as_object() else {
                 return error(id, -32602, "object required");
@@ -506,7 +572,7 @@ fn call(id: Value, params: &Value, client: &str) -> Value {
                     "id": "phone",
                     "model": "Android",
                     "access": "Estado do celular e Bluetooth por APIs nativas do Android",
-                    "tools": ["gb_phone", "gb_bluetooth", "gb_devices", "gb_discover", "gb_inspect", "gb_invoke"],
+                    "tools": ["gb_phone", "gb_bluetooth", "gb_shell", "gb_shell_result", "gb_devices", "gb_discover", "gb_inspect", "gb_invoke"],
                 }],
             });
             text(id, pretty(&body))

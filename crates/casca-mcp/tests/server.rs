@@ -202,6 +202,8 @@ fn pairing_tools_and_restart() {
             "casca_capabilities",
             "band_devices",
             "gb_phone",
+            "gb_shell",
+            "gb_shell_result",
             "gb_bluetooth",
             "gb_devices",
             "gb_discover",
@@ -228,8 +230,9 @@ fn pairing_tools_and_restart() {
         ]
     );
 
-    assert!(!names.contains(&"gb_shell"));
-    assert!(!names.contains(&"gb_shell_result"));
+    assert!(names.contains(&"gb_shell"));
+    assert!(names.contains(&"gb_shell_result"));
+    assert!(!names.contains(&"termux_shell"));
 
     let call = |name: &str| -> Value {
         let message = json!({"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": name, "arguments": {}}});

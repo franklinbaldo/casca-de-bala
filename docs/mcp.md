@@ -46,6 +46,54 @@ Bluetooth. `band_notify` só cria uma notificação no próprio celular, no cana
 
 `gb_phone {"action":"status"}` apresenta o celular como dispositivo `phone` e consulta bateria, modelo, versão Android e armazenamento por APIs oficiais. Não lê contas, IMEI, serial, localização nem identificadores pessoais. O catálogo `gb_discover` também inclui o provedor Android. Eventos e leituras de sensores ficam para extensão posterior.
 
+### Shell nativo Android (autorização por comando)
+
+Ferramentas MCP `gb_shell {"command":"id", "timeout_ms":5000}` e
+`gb_shell_result {"request_id":"123"}` usam um ledger efêmero do servidor.
+O primeiro pedido retorna `pending_approval`, `requested=true`,
+`executed=false`, `confirmed=false`. O agente consulta o segundo método
+para acompanhar `pending_approval`, `running`, `finished`, `rejected`,
+`expired` ou `failed`; somente o **mesmo token MCP** pode ler o resultado. O `request_id` é
+string decimal opaca, evitando perda de precisão em clientes JavaScript.
+
+Cada comando deve ser aprovado na tela **Casca MCP**: a notificação só abre
+a Activity, que exibe cliente, comando completo e tempo. Não existe aprovação
+genérica nem silenciosa. Pedidos não aprovados expiram em 120 segundos.
+Um único job roda por vez; há até quatro pedidos pendentes, timeout de
+100–5000 ms, limite de saída de 4 KiB por stream e retenção de resultados
+por no máximo dez minutos. O aplicativo mantém o processo com
+`android:isolatedProcess=true` e revalida UID e inacessibilidade do marcador
+privado a cada execução; falhas cancelam a tarefa. Reiniciar o servidor
+revoga a liberação do Shell, que deverá ser revalidado localmente.
+
+**Pré-condição obrigatória:** pressionar **Testar Shell isolado (local)**
+com o servidor MCP ligado e observar prova favorável no Android real.
+Se o SELinux negar /system/bin/sh, o backend continuará indisponível;
+não cairemos para Shell executado sob UID principal do aplicativo.
+As ferramentas não equivalem a ADB/root e não prometem instalar aplicativos
+silenciosamente, mudar configurações protegidas ou manipular janelas alheias.
+
+### Prova local de isolamento e diagnóstico
+
+O app oferece o botão **Testar Shell isolado (local)**. A ação é iniciada
+somente na tela do celular; vincula uma Service privada declarada com
+`isolatedProcess=true` e `android:exported=false`. A Service tenta apenas
+`/system/bin/sh -c "id; pwd"` (comando fixo), por até 5 segundos, e retorna
+UID, disponibilidade de Shell e resultado da tentativa de abrir um marcador
+não secreto criado no diretório privado do Casca. A saída é limitada a 4 KiB.
+O botão em si não executa comandos arbitrários; habilita os novos métodos MCP
+apenas quando a prova local é favorável e o servidor está em execução.
+
+Esta é **uma prova de viabilidade**, não uma autorização para execução remota.
+É possível que a política SELinux do aparelho proíba abrir o Shell ou que o
+Application do Gadgetbridge não inicialize no processo isolado. Por isso,
+resultado positivo de teste estático/compilação não comprova segurança;
+precisamos observar no aparelho real um UID distinto, a leitura privada negada
+e a execução do comando fixo. Se qualquer passo falhar, **não habilitar**
+o Shell remoto. Aprovação por comando, vínculo por cliente, expiração e limites estão
+implementados, mas a validade do isolamento e o funcionamento no dispositivo
+continuam dependentes da prova em hardware (issue #35).
+
 ## Pulseira via Gadgetbridge
 
 O app Casca é o Gadgetbridge com este servidor MCP (veja `gb/`). Quem conduz a

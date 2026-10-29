@@ -1,0 +1,19 @@
+--- a/app/src/main/java/nodomain/freeyourgadget/gadgetbridge/GBApplication.java
++++ b/app/src/main/java/nodomain/freeyourgadget/gadgetbridge/GBApplication.java
+@@ -224,6 +224,16 @@
+ 
+     @Override
+     public void onCreate() {
++        // The Casca shell service uses an Android isolated UID. Do not start
++        // Gadgetbridge's DB, Bluetooth, logging or permission-dependent workers
++        // inside that process; only the isolated service itself should run.
++        // Its actual UID/SELinux/file-access boundary is verified at runtime.
++        if (android.os.Build.VERSION.SDK_INT >= 28
++                && (getPackageName() + ":casca_shell_isolated")
++                    .equals(android.app.Application.getProcessName())) {
++            super.onCreate();
++            return;
++        }
+         if (app != null) {
+             super.onCreate();
+             // guard against multiple invocations (robolectric)

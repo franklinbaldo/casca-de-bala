@@ -4,6 +4,9 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.ServiceConnection;
 import android.app.Service;
 import android.content.SharedPreferences;
 import android.content.Intent;
@@ -11,7 +14,13 @@ import android.content.pm.ServiceInfo;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.Bundle;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -43,6 +52,30 @@ public final class CascaMcpService extends Service {
     static volatile boolean running;static volatile int port;
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final Set<Long> shown=new HashSet<>();
+    private final Set<Long> shownShell=new HashSet<>();
+    private static final int SHELL_APPROVAL_BASE = APPROVAL_BASE + 3000;
+    private ServiceConnection shellConnection;
+    private long shellId;
+    private final Messenger shellReplies = new Messenger(new Handler(Looper.getMainLooper()) {
+        @Override public void handleMessage(Message response) {
+            if (response.what != CascaIsolatedShellService.MSG_EXEC_RESULT ||
+                    shellConnection == null || response.arg1 != (int)shellId) return;
+            Bundle data = response.getData();
+            JSONObject result = new JSONObject();
+            try {
+                result.put("uid", data.getInt("uid", -1));
+                result.put("isolated", data.getBoolean("isolated"));
+                result.put("executed", data.getBoolean("executed"));
+                if (data.containsKey("exitCode")) result.put("exit_code", data.getInt("exitCode"));
+                result.put("stdout", data.getString("stdout", ""));
+                result.put("stderr", data.getString("stderr", ""));
+                result.put("truncated", data.getBoolean("truncated"));
+                result.put("timed_out", data.getBoolean("timedOut"));
+                if (data.containsKey("failure")) result.put("error", data.getString("failure"));
+            } catch (JSONException failed) { result = new JSONObject(); }
+            finishShellJob(result);
+        }
+    });
     private final Runnable poll=this::poll;
     // JNI polling and JSON parsing never run on Android's main looper.
     // Distinct serial executor keeps long database reads from delaying approvals.
@@ -67,6 +100,10 @@ public final class CascaMcpService extends Service {
             if(reply.has("error")&&!"already_running".equals(reply.getString("error")))throw new JSONException(reply.getString("error"));
             port=reply.optInt("port",McpNative.DEFAULT_PORT);
         }catch(JSONException|RuntimeException|LinkageError failure){stopSelf();return START_NOT_STICKY;}
+        // Marker must exist while Shell runs; isolated UID must NOT read it.
+        try (FileOutputStream marker = new FileOutputStream(new File(getFilesDir(), CascaIsolatedShellService.SENTINEL))) {
+            marker.write(1);
+        } catch (IOException | SecurityException failed) { stopSelf(); return START_NOT_STICKY; }
         McpNative.log("app: servidor ligado na porta "+port+" (Gadgetbridge)");
         active=true;running=true;notifications.notify(RUNNING_ID,ongoing(getString(R.string.casca_running,port)));handler.post(poll);
         return START_NOT_STICKY;
@@ -76,8 +113,13 @@ public final class CascaMcpService extends Service {
         boolean wasRunning=running;
         active=false;running=false;handler.removeCallbacksAndMessages(null);poller.shutdownNow();reads.shutdownNow();
         if(wasRunning){try{McpNative.op("stop");}catch(JSONException|RuntimeException|LinkageError ignored){}}
-        if(notifications!=null)for(long id:shown)notifications.cancel(APPROVAL_BASE+(int)id);
-        shown.clear();super.onDestroy();
+        if (shellConnection != null) { unbindService(shellConnection); shellConnection = null; }
+        if(notifications!=null) {
+            for(long id:shown)notifications.cancel(APPROVAL_BASE+(int)id);
+            for(long id:shownShell)notifications.cancel(SHELL_APPROVAL_BASE+(int)id);
+        }
+        new File(getFilesDir(), CascaIsolatedShellService.SENTINEL).delete();
+        shown.clear();shownShell.clear();super.onDestroy();
     }
 
     /** Poll JNI off the UI thread. Never stack poll requests if the native hub is busy. */
@@ -89,7 +131,10 @@ public final class CascaMcpService extends Service {
                     JSONArray pending=McpNative.op("status").getJSONArray("pending");
                     if(!active)return;
                     handler.post(()->showApprovals(pending));
+                    JSONArray shellPending = McpNative.op("shell_pending").getJSONArray("requests");
+                    handler.post(()->showShellApprovals(shellPending));
                     runJobs();
+                    runShellJobs();
                 }catch(JSONException|RuntimeException|LinkageError ignored){}
                 finally{polling.set(false);}
             });}
@@ -109,6 +154,101 @@ public final class CascaMcpService extends Service {
             }
             for(long id:new HashSet<>(shown))if(!now.contains(id)){shown.remove(id);notifications.cancel(APPROVAL_BASE+(int)id);}
         }catch(JSONException|RuntimeException ignored){}
+    }
+
+    /** Notifications only OPEN an Activity; no approval action over notification. */
+    private void showShellApprovals(JSONArray requests) {
+        if (!active) return;
+        try {
+            Set<Long> now = new HashSet<>();
+            for (int i = 0; i < requests.length(); i++) {
+                JSONObject req = requests.getJSONObject(i);
+                long id = req.getLong("id"); now.add(id);
+                if (!shownShell.add(id)) continue;
+                Intent open = new Intent(this, CascaActivity.class)
+                    .putExtra("shell_approval_id", id)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                PendingIntent action = PendingIntent.getActivity(this, (int)id, open,
+                    PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+                String text = req.getString("client") + " solicita execução isolada por "
+                    + req.getLong("timeout_ms") + " ms; abra para ler o comando completo.";
+                notifications.notify(SHELL_APPROVAL_BASE+(int)id, new Notification.Builder(this, CHANNEL_APPROVAL)
+                    .setSmallIcon(R.drawable.ic_notifications).setContentTitle("Autorizar comando Shell?")
+                    .setContentText(text).setStyle(new Notification.BigTextStyle().bigText(text))
+                    .setContentIntent(action).setAutoCancel(true).setTimeoutAfter(120_000).build());
+            }
+            for(long id:new HashSet<>(shownShell)) if(!now.contains(id)) {
+                shownShell.remove(id);notifications.cancel(SHELL_APPROVAL_BASE+(int)id);
+            }
+        } catch (JSONException | RuntimeException ignored) { /* fail closed */ }
+    }
+
+    /** One job at a time; bind to isolatedProcess rather than running sh here. */
+    private void runShellJobs() throws JSONException {
+        if (!active || shellConnection != null) return;
+        JSONArray jobs = McpNative.op("shell_take").getJSONArray("jobs");
+        if (jobs.length() == 0) return;
+        JSONObject job = jobs.getJSONObject(0);
+        handler.post(() -> executeShellJob(job));
+    }
+    private void executeShellJob(JSONObject job) {
+        if (!active || shellConnection != null) return;
+        shellId = job.optLong("id", 0);
+        if (shellId == 0) return;
+        if (!new File(getFilesDir(), CascaIsolatedShellService.SENTINEL).isFile()) {
+            finishShellJob(shellFailure("private_marker_missing"));
+            return;
+        }
+        shellConnection = new ServiceConnection() {
+            @Override public void onServiceConnected(ComponentName name, IBinder binder) {
+                if (shellConnection != this) return;
+                Message request = Message.obtain(null, CascaIsolatedShellService.MSG_EXEC);
+                request.arg1 = (int)shellId;
+                request.replyTo = shellReplies;
+                Bundle data = new Bundle();
+                data.putString("command", job.optString("command", ""));
+                data.putLong("timeout_ms", job.optLong("timeout_ms", 0));
+                data.putString("private_path", new File(getFilesDir(), CascaIsolatedShellService.SENTINEL).getAbsolutePath());
+                request.setData(data);
+                try { new Messenger(binder).send(request); }
+                catch (RemoteException failure) { finishShellJob(shellFailure("binder_send_failed")); }
+            }
+            @Override public void onServiceDisconnected(ComponentName name) {
+                if (shellConnection == this) finishShellJob(shellFailure("isolated_process_disconnected"));
+            }
+        };
+        try {
+            if (!bindService(new Intent(this,CascaIsolatedShellService.class), shellConnection, Context.BIND_AUTO_CREATE)) {
+                shellConnection = null;
+                finishShellJob(shellFailure("bind_refused"));
+            }
+        } catch (RuntimeException failure) {
+            shellConnection = null;
+            finishShellJob(shellFailure("bind_failed"));
+        }
+        handler.postDelayed(() -> {
+            if (shellConnection != null && shellId == job.optLong("id", -1))
+                finishShellJob(shellFailure("executor_timeout"));
+        }, Math.min(8_000, job.optLong("timeout_ms",5_000)+1500));
+    }
+    private static JSONObject shellFailure(String error) {
+        JSONObject result = new JSONObject();
+        try {result.put("executed",false).put("error",error);}
+        catch(JSONException ignored){}
+        return result;
+    }
+    private void finishShellJob(JSONObject result) {
+        long completedId = shellId;
+        if (shellConnection != null) {
+            unbindService(shellConnection);shellConnection=null;
+        }
+        shellId=0;
+        if (!active || completedId == 0) return;
+        try { reads.execute(() -> {
+            try { McpNative.call(new JSONObject().put("op","shell_complete")
+                .put("id", completedId).put("result", result)); }
+            catch (JSONException | RuntimeException | LinkageError ignored) { /* server TTL applies */ }
+        }); } catch (RejectedExecutionException ignored) { /* stopped */ }
     }
 
     /** Gadgetbridge device access stays on the UI thread; DB reads are queued

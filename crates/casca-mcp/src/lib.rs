@@ -10,6 +10,7 @@ mod hub;
 mod lab;
 mod peer;
 mod rpc;
+mod shell;
 
 pub use hub::{control, log, write_allowed};
 pub use peer::allowed;
