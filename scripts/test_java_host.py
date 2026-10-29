@@ -26,8 +26,8 @@ JARS = {
     'hamcrest-core-1.3.jar': ('https://repo.maven.apache.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar',
                               '66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9'),
 }
-PRODUCTION = ('CascaJobDispatch.java', 'CascaTermuxJobBook.java', 'CascaHealthStats.java')
-TEST_CLASSES = ('CascaJobDispatchTest', 'CascaTermuxJobBookTest', 'CascaHealthStatsTest')
+PRODUCTION = ('CascaJobDispatch.java', 'CascaHealthStats.java')
+TEST_CLASSES = ('CascaJobDispatchTest', 'CascaHealthStatsTest')
 
 
 def jars(cache: Path, prepare_network: bool) -> list[Path]:

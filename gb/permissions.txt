@@ -64,7 +64,6 @@ android.permission.health.WRITE_WEIGHT
 app.comaps.fdroid.permission.READ_NAVIGATION_DATA
 app.comaps.google.permission.READ_NAVIGATION_DATA
 app.comaps.permission.READ_NAVIGATION_DATA
-com.termux.permission.RUN_COMMAND
 cyanogenmod.permission.ACCESS_WEATHER_MANAGER
 cyanogenmod.permission.READ_WEATHER
 lineageos.permission.ACCESS_WEATHER_MANAGER
