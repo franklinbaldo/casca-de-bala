@@ -54,6 +54,12 @@ class IsolatedShellProbeContractTest(unittest.TestCase):
         self.assertIn('return execute("id; pwd", TIMEOUT_MS', service)
         self.assertIn('MSG_EXEC', service)
         self.assertIn('Process.isIsolated()', service)
+        # The proof must read the *main app's* marker path, not a possibly
+        # different getFilesDir() in the isolated UID.
+        self.assertIn('args.getString("private_path"', service)
+        self.assertIn('evidence.putString("private_path"', activity)
+        main_service = (JAVA / 'CascaMcpService.java').read_text()
+        self.assertIn('private_marker_missing', main_service)
         self.assertNotIn('com.termux.permission.RUN_COMMAND', service)
 
     def test_no_new_permission_or_remote_door(self):
