@@ -156,6 +156,10 @@ public final class CascaActivity extends Activity {
                 Message request = Message.obtain(null, CascaIsolatedShellService.MSG_PROBE);
                 request.arg1 = shellProbeGeneration;
                 request.replyTo = shellReplies;
+                Bundle evidence = new Bundle();
+                evidence.putString("private_path", new File(getFilesDir(),
+                    CascaIsolatedShellService.SENTINEL).getAbsolutePath());
+                request.setData(evidence);
                 try { new Messenger(binder).send(request); }
                 catch (RemoteException failed) { finishShellProbe("Falha ao enviar teste ao processo isolado."); }
             }

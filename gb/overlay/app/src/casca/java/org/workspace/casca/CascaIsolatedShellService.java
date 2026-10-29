@@ -42,7 +42,7 @@ public final class CascaIsolatedShellService extends Service {
             }
             new Thread(() -> {
                 try {
-                    Bundle result = type == MSG_PROBE ? runLocalProbe() : runApprovedCommand(args);
+                    Bundle result = type == MSG_PROBE ? runLocalProbe(args) : runApprovedCommand(args);
                     sendResult(reply, requestId, type, result);
                 } finally { busy.set(false); }
             }, "casca-isolated-shell-worker").start();
@@ -69,8 +69,10 @@ public final class CascaIsolatedShellService extends Service {
         result.putBoolean("privateFileReadable", privateFileReadable);
         return result;
     }
-    private Bundle runLocalProbe() {
-        return execute("id; pwd", TIMEOUT_MS, new File(getFilesDir(), SENTINEL).getAbsolutePath());
+    private Bundle runLocalProbe(Bundle args) {
+        String privatePath = args.getString("private_path", "");
+        if (privatePath.isEmpty()) return failure("missing_private_marker_path");
+        return execute("id; pwd", TIMEOUT_MS, privatePath);
     }
     private Bundle runApprovedCommand(Bundle args) {
         String command = args.getString("command", "");
