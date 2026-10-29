@@ -46,6 +46,27 @@ Bluetooth. `band_notify` só cria uma notificação no próprio celular, no cana
 
 `gb_phone {"action":"status"}` apresenta o celular como dispositivo `phone` e consulta bateria, modelo, versão Android e armazenamento por APIs oficiais. Não lê contas, IMEI, serial, localização nem identificadores pessoais. O catálogo `gb_discover` também inclui o provedor Android. Eventos e leituras de sensores ficam para extensão posterior.
 
+### Shell nativo Android — teste de isolamento (ainda sem ferramenta MCP)
+
+O app oferece o botão **Testar Shell isolado (local)**. A ação é iniciada
+somente na tela do celular; vincula uma Service privada declarada com
+`isolatedProcess=true` e `android:exported=false`. A Service tenta apenas
+`/system/bin/sh -c "id; pwd"` (comando fixo), por até 5 segundos, e retorna
+UID, disponibilidade de Shell e resultado da tentativa de abrir um marcador
+não secreto criado no diretório privado do Casca. A saída é limitada a 4 KiB.
+O botão não dá ao MCP controle sobre o Shell; não existe ferramenta
+`gb_shell` nesta etapa.
+
+Esta é **uma prova de viabilidade**, não uma autorização para execução remota.
+É possível que a política SELinux do aparelho proíba abrir o Shell ou que o
+Application do Gadgetbridge não inicialize no processo isolado. Por isso,
+resultado positivo de teste estático/compilação não comprova segurança;
+precisamos observar no aparelho real um UID distinto, a leitura privada negada
+e a execução do comando fixo. Se qualquer passo falhar, **não habilitar**
+o Shell remoto. Só depois disso adicionar aprovação visível por comando,
+isolamento por cliente MCP autenticado, expiração, concorrência e limites
+numa PR separada (issue #35).
+
 ## Pulseira via Gadgetbridge
 
 O app Casca é o Gadgetbridge com este servidor MCP (veja `gb/`). Quem conduz a

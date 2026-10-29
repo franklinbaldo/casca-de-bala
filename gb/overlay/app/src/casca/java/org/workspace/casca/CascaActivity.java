@@ -2,16 +2,28 @@ package org.workspace.casca;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.ServiceConnection;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.Process;
+import android.os.RemoteException;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -25,6 +37,30 @@ public final class CascaActivity extends Activity {
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final Runnable refresh=this::render;
     private TextView info;private Button toggle;
+    private TextView shellInfo;private Button shellProbe;
+    private ServiceConnection shellConnection;
+    private int shellProbeGeneration;
+    private final Messenger shellReplies = new Messenger(new Handler(Looper.getMainLooper()) {
+        @Override public void handleMessage(Message msg) {
+            if (msg.what != CascaIsolatedShellService.MSG_RESULT ||
+                    shellConnection == null || msg.arg1 != shellProbeGeneration) return;
+            Bundle result = msg.getData();
+            int uid = result.getInt("uid", -1);
+            boolean isolated = result.getBoolean("isolated") && uid != Process.myUid();
+            boolean privateDenied = !result.getBoolean("privateFileReadable", true);
+            boolean shellWorks = result.containsKey("exitCode") && result.getInt("exitCode") == 0;
+            String status = isolated && privateDenied && shellWorks
+                    ? "PROVA LOCAL FAVORÁVEL (ainda precisa de teste instrumental)"
+                    : "NÃO HABILITAR SHELL MCP: prova incompleta ou bloqueada";
+            String details = "UID app=" + Process.myUid() + ", UID isolado=" + uid
+                    + ", isolated=" + isolated + ", arquivo privado negado=" + privateDenied
+                    + ", exit=" + result.getInt("exitCode", -1)
+                    + ", timeout=" + result.getBoolean("timedOut")
+                    + ", erro=" + result.getString("failure", "nenhum")
+                    + "\nComando fixo (id; pwd):\n" + result.getString("output", "");
+            finishShellProbe(status + "\n" + details);
+        }
+    });
 
     @Override protected void onCreate(Bundle state){
         super.onCreate(state);
@@ -32,11 +68,78 @@ public final class CascaActivity extends Activity {
         TextView title=new TextView(this);title.setText(R.string.casca_title);title.setTextSize(24);root.addView(title);
         info=new TextView(this);info.setTextSize(16);info.setTextIsSelectable(true);info.setPadding(0,32,0,32);root.addView(info);
         toggle=new Button(this);toggle.setOnClickListener(v->toggle());root.addView(toggle);
+        shellProbe=new Button(this);shellProbe.setText(R.string.casca_shell_probe_button);
+        shellProbe.setOnClickListener(v->probeShell());root.addView(shellProbe);
+        shellInfo=new TextView(this);shellInfo.setText(R.string.casca_shell_probe_warning);
+        shellInfo.setTextIsSelectable(true);root.addView(shellInfo);
         ScrollView scroll=new ScrollView(this);scroll.addView(root);setContentView(scroll);
     }
 
     @Override protected void onResume(){super.onResume();render();}
     @Override protected void onPause(){handler.removeCallbacks(refresh);super.onPause();}
+    @Override protected void onDestroy(){
+        if (shellConnection != null) {
+            unbindService(shellConnection);
+            shellConnection = null;
+        }
+        handler.removeCallbacksAndMessages(null);
+        super.onDestroy();
+    }
+
+    /** User-initiated, fixed-command proof. Never accepts a command from MCP. */
+    private void probeShell(){
+        if (shellConnection != null) return;
+        shellProbe.setEnabled(false);
+        shellProbeGeneration++;
+        shellInfo.setText(R.string.casca_shell_probe_running);
+        try (FileOutputStream out = new FileOutputStream(new File(
+                getFilesDir(), CascaIsolatedShellService.SENTINEL))) {
+            out.write("Casca isolation test; not a secret".getBytes(StandardCharsets.UTF_8));
+        } catch (IOException | SecurityException failed) {
+            finishShellProbe("Não foi possível criar o marcador privado para a prova.");
+            return;
+        }
+        shellConnection = new ServiceConnection() {
+            @Override public void onServiceConnected(ComponentName name, IBinder binder) {
+                if (shellConnection != this) return;
+                Message request = Message.obtain(null, CascaIsolatedShellService.MSG_PROBE);
+                request.arg1 = shellProbeGeneration;
+                request.replyTo = shellReplies;
+                try { new Messenger(binder).send(request); }
+                catch (RemoteException failed) { finishShellProbe("Falha ao enviar teste ao processo isolado."); }
+            }
+            @Override public void onServiceDisconnected(ComponentName name) {
+                if (shellConnection == this)
+                    finishShellProbe("Processo isolado desconectado antes da resposta.");
+            }
+        };
+        try {
+            if (!bindService(new Intent(this, CascaIsolatedShellService.class),
+                    shellConnection, Context.BIND_AUTO_CREATE)) {
+                shellConnection = null;
+                finishShellProbe("Android recusou iniciar o serviço isolado.");
+                return;
+            }
+        } catch (RuntimeException denied) {
+            // A failed bind does not establish a connection that can be unbound.
+            shellConnection = null;
+            finishShellProbe("O Android bloqueou o bind do serviço isolado.");
+            return;
+        }
+        handler.postDelayed(() -> {
+            if (shellConnection != null) finishShellProbe("Tempo esgotado aguardando o serviço isolado.");
+        }, 8_000);
+    }
+
+    private void finishShellProbe(String result) {
+        if (shellConnection != null) {
+            unbindService(shellConnection);
+            shellConnection = null;
+        }
+        new File(getFilesDir(), CascaIsolatedShellService.SENTINEL).delete();
+        shellInfo.setText(result);
+        shellProbe.setEnabled(true);
+    }
 
     private void toggle(){
         if(CascaMcpService.running){startService(new Intent(this,CascaMcpService.class).setAction(CascaMcpService.ACTION_STOP));}

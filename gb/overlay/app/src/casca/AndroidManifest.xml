@@ -25,6 +25,13 @@
             android:name="org.workspace.casca.CascaMcpService"
             android:exported="false"
             android:foregroundServiceType="connectedDevice" />
+        <!-- Experimental, local-only probe. No MCP command dispatch until the
+             Android isolated UID and SELinux restrictions pass on real hardware. -->
+        <service
+            android:name="org.workspace.casca.CascaIsolatedShellService"
+            android:process=":casca_shell_isolated"
+            android:isolatedProcess="true"
+            android:exported="false" />
         <receiver
             android:name="org.workspace.casca.CascaDecisionReceiver"
             android:exported="false" />

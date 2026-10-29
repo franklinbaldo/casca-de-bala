@@ -19,4 +19,7 @@
     <string name="casca_allow">Permitir</string>
     <string name="casca_deny">Negar</string>
     <string name="casca_permission">Para manter o servidor ativo e pedir sua aprovação, o Casca precisa de notificações.</string>
+    <string name="casca_shell_probe_button">Testar Shell isolado (local)</string>
+    <string name="casca_shell_probe_warning">Experimento local: verifica se um processo Android isolado pode executar id/pwd sem ler arquivos privados do Casca. Nenhum comando MCP está habilitado.</string>
+    <string name="casca_shell_probe_running">Verificando isolamento e execução do Shell…</string>
 </resources>
